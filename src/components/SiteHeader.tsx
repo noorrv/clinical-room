@@ -276,7 +276,7 @@ function AccountPanel({ id, open, onDone }: { id: string; open: boolean; onDone:
             {isAdmin && (
               <li>
                 <Link to="/admin" onClick={onDone}>
-                  Registrations (admin)
+                  Admin dashboard
                 </Link>
               </li>
             )}

@@ -321,3 +321,133 @@
     font-size: 1.02rem;
   }
 }
+
+/* ── inside the archive (admin dashboard) ── */
+.admin-archive .index__vol {
+  font-family: var(--font-display);
+}
+
+.admin-loading {
+  margin: 22px 0;
+}
+
+.admin-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 18px 0;
+  padding: 12px 16px;
+  color: #7d1d1f;
+  background: rgba(176, 80, 74, 0.08);
+  border-left: 3px solid #b0504a;
+}
+
+.admin-alert p {
+  margin: 0;
+}
+
+.admin-attention {
+  margin-top: 10px;
+  font-size: 1.02rem;
+}
+
+.admin-attention a {
+  font-weight: 600;
+  color: var(--accent-ink);
+  text-underline-offset: 3px;
+}
+
+.gtable tfoot th,
+.gtable tfoot td {
+  padding: 10px 12px;
+  border-top: 1px solid var(--plum);
+  font-weight: 600;
+  text-align: left;
+}
+
+.admin-ledger-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 28px;
+  margin: 16px 0 0;
+  font-size: 0.98rem;
+}
+
+.admin-ledger-line dt {
+  display: inline;
+  font-style: italic;
+  color: var(--plum-soft);
+}
+
+.admin-ledger-line dt::after {
+  content: ': ';
+}
+
+.admin-ledger-line dd {
+  display: inline;
+  margin: 0;
+}
+
+/* the activity log, like entries in a register */
+.admin-activity {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid rgba(59, 35, 48, 0.25);
+  background: rgba(255, 252, 244, 0.7);
+}
+
+.admin-activity li {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 14px;
+}
+
+.admin-activity li + li {
+  border-top: 1px dotted rgba(59, 35, 48, 0.35);
+}
+
+.admin-activity__mark {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--st-none);
+  border: 1px solid rgba(59, 35, 48, 0.5);
+}
+
+.admin-activity__mark--created,
+.admin-activity__mark--published {
+  background: var(--st-mastered);
+}
+
+.admin-activity__mark--deleted,
+.admin-activity__mark--unpublished {
+  background: var(--st-revision);
+}
+
+.admin-activity__mark--updated,
+.admin-activity__mark--status {
+  background: var(--st-progress);
+}
+
+.admin-activity__meta {
+  font-size: 0.88rem;
+  font-style: italic;
+  color: var(--plum-soft);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .admin-activity li {
+    grid-template-columns: 14px minmax(0, 1fr);
+  }
+
+  .admin-activity__meta {
+    grid-column: 2;
+    white-space: normal;
+  }
+}

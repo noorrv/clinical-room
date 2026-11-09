@@ -4,7 +4,9 @@ import { AuthProvider } from './auth/AuthProvider';
 import { RequireAdmin, RequireApproved } from './auth/guards';
 import { SiteHeader } from './components/SiteHeader';
 import { ContentGate } from './content/ContentGate';
-import { AdminPage } from './pages/admin/AdminPage';
+import { AdminLayout } from './pages/admin/AdminLayout';
+import { OverviewPage } from './pages/admin/OverviewPage';
+import { RegistrationsPage } from './pages/admin/RegistrationsPage';
 import { AccountPage, CheckEmailPage, ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage } from './pages/auth/AuthPages';
 import { HomePage } from './pages/HomePage';
 import { SpecialtyRoutes } from './pages/specialty/SpecialtyRoutes';
@@ -61,10 +63,14 @@ export default function App() {
             path="/admin"
             element={
               <RequireAdmin>
-                <AdminPage />
+                <AdminLayout />
               </RequireAdmin>
             }
-          />
+          >
+            <Route index element={<OverviewPage />} />
+            <Route path="registrations" element={<RegistrationsPage />} />
+            <Route path="*" element={<Navigate to="/admin" replace />} />
+          </Route>
           {StreakPreview && (
             <Route
               path="/_preview/streak"

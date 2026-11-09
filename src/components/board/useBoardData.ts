@@ -20,8 +20,8 @@ function where(specialtyId: SpecialtyId) {
 
 async function load(): Promise<BoardData> {
   const [ann, qs, docs, tops] = await Promise.all([
-    supabase.from('announcements').select('id, title, body, pinned, created_at').order('pinned', { ascending: false }).order('created_at', { ascending: false }).limit(4),
-    supabase.from('questions').select('specialty_id, id, title, created_at').order('created_at', { ascending: false }).limit(RECENT_COUNT),
+    supabase.from('announcements').select('id, title, body, pinned, created_at').eq('published', true).order('pinned', { ascending: false }).order('created_at', { ascending: false }).limit(4),
+    supabase.from('questions').select('specialty_id, id, title, created_at').eq('status', 'published').order('created_at', { ascending: false }).limit(RECENT_COUNT),
     supabase.from('doctors').select('specialty_id, id, name, created_at').order('created_at', { ascending: false }).limit(RECENT_COUNT),
     supabase.from('topics').select('specialty_id, id, name, created_at').order('created_at', { ascending: false }).limit(RECENT_COUNT),
   ]);

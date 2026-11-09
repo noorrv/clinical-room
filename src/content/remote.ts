@@ -35,7 +35,8 @@ export async function fetchContent(): Promise<Record<SpecialtyId, SpecialtyConte
     supabase.from('specialties').select('id, description'),
     supabase.from('doctors').select('specialty_id, id, name, role, note').order('sort').order('name'),
     supabase.from('topics').select('specialty_id, id, name, description').order('sort').order('name'),
-    supabase.from('questions').select('*').order('sort').order('title'),
+    // drafts stay in the admin dashboard; only published questions reach the study pages
+    supabase.from('questions').select('*').eq('status', 'published').order('sort').order('title'),
     supabase.from('question_doctors').select('specialty_id, question_id, doctor_id'),
     supabase.from('question_topics').select('specialty_id, question_id, topic_id'),
   ]);

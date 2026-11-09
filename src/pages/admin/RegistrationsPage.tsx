@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useOutletContext, useSearchParams } from 'react-router-dom';
 import { useAuth, type AccountStatus, type Profile } from '../../auth/AuthProvider';
 import { supabase } from '../../lib/supabase';
 import '../auth/auth.css';
-import './admin.css';
+import type { AdminOutletContext } from './AdminLayout';
 
 /*
   The administrator's ledger of registrations. Every change goes through the database function
@@ -43,8 +43,9 @@ const ACTION: Record<Action, { to: AccountStatus; title: string; button: string;
 const fmt = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 
-export function AdminPage() {
+export function RegistrationsPage() {
   const { session } = useAuth();
+  const { refreshCounts } = useOutletContext<AdminOutletContext>();
   const me = session?.user.id;
   const [params, setParams] = useSearchParams();
   const tab: Tab = (['pending', 'approved', 'rejected'] as Tab[]).includes(params.get('tab') as Tab) ? (params.get('tab') as Tab) : 'pending';
@@ -78,16 +79,21 @@ export function AdminPage() {
 
   const shown = groups[tab].filter(matches);
 
-  const applied = (updated: Profile) => setRows((rs) => (rs ?? []).map((r) => (r.id === updated.id ? updated : r)));
+  const applied = (updated: Profile) => {
+    setRows((rs) => (rs ?? []).map((r) => (r.id === updated.id ? updated : r)));
+    refreshCounts();
+  };
 
   return (
-    <main id="main" className="auth-page admin-page">
-      <section className="auth-card auth-card--admin" aria-labelledby="admin-title">
-        <p className="auth-kicker">The Clinical Room · Administration</p>
-        <h1 id="admin-title" className="auth-title">
-          Registrations
-        </h1>
-        <span className="auth-rule" aria-hidden />
+    <section className="view admin-view" aria-labelledby="admin-title">
+        <header className="view__head">
+          <div>
+            <h1 id="admin-title" className="view__title">
+              Registrations
+            </h1>
+            <p className="view__intro">Approve new students, revoke access, or restore it. Every decision is logged.</p>
+          </div>
+        </header>
 
         <div className="admin-tools">
           <label className="visually-hidden" htmlFor="admin-search">
@@ -202,10 +208,9 @@ export function AdminPage() {
             </details>
           )}
         </div>
-      </section>
 
       {pendingAction && <ConfirmDialog {...pendingAction} onClose={() => setPendingAction(null)} onDone={applied} />}
-    </main>
+    </section>
   );
 }
 
