@@ -118,6 +118,18 @@ export function switchRecord(userId: string | null, initial: StudyState, saveDir
   commit(initial);
 }
 
+/** Used by sync.ts for guests: progress kept in this browser only (under the pre-accounts key,
+    so it is moved into their account if they register and are approved). */
+export function switchToGuestRecord() {
+  storageKey = LEGACY_KEY;
+  onDirty = null;
+  dirty.questions.clear();
+  dirty.recent.clear();
+  dirty.sessions.clear();
+  dirty.mocks.clear();
+  commit(loadFrom(LEGACY_KEY));
+}
+
 export const currentState = () => state;
 
 if (typeof window !== 'undefined') {

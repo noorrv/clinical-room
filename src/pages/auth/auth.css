@@ -340,3 +340,64 @@
     background-size: 56px 56px, 56px 56px, 56px 56px, 56px 56px, 360px, 260px, 900px, auto;
   }
 }
+
+/* ── "Enter as a guest", under the main form ── */
+.auth-guest {
+  margin-top: 22px;
+  text-align: center;
+}
+
+.auth-guest__rule {
+  display: block;
+  height: 10px;
+  margin: 0 auto 14px;
+  background:
+    radial-gradient(circle, rgba(138, 44, 52, 0.55) 0 2px, transparent 2.5px) center / 10px 10px no-repeat,
+    linear-gradient(rgba(138, 44, 52, 0.3), rgba(138, 44, 52, 0.3)) left center / calc(50% - 12px) 1px no-repeat,
+    linear-gradient(rgba(138, 44, 52, 0.3), rgba(138, 44, 52, 0.3)) right center / calc(50% - 12px) 1px no-repeat;
+}
+
+.auth-guest__text {
+  margin: 0 0 10px;
+  font-size: 0.98rem;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+/* ── ribbon over the study pages while browsing as a guest ── */
+.guest-ribbon {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 18px;
+  padding: 10px var(--gutter);
+  font-size: 0.98rem;
+  color: var(--ink);
+  text-align: center;
+  background:
+    var(--paper-tooth),
+    linear-gradient(180deg, #efe2c4, #e6d4ae);
+  background-size: 260px, auto;
+  background-blend-mode: multiply, normal;
+  border-bottom: 1px solid rgba(138, 44, 52, 0.35);
+  box-shadow: inset 0 -3px 0 -2px rgba(138, 44, 52, 0.18);
+}
+
+.guest-ribbon p {
+  margin: 0;
+}
+
+.guest-ribbon strong {
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+  color: var(--burgundy);
+}
+
+.guest-ribbon__links a {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--burgundy-2);
+  text-underline-offset: 3px;
+}

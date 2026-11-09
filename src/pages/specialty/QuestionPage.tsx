@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { doctorName, questionKey, questionPath, questionsOf, topicName, TYPE_LABEL, type Question, type Specialty } from '../../content';
 import { record, study, useStudy } from '../../study/store';
+import { useGuestBrowsing } from '../../auth/guest';
 import { EmptyState, PreviewBanner, Ribbon, StatusPicker } from './ui';
 
 /*
@@ -115,6 +116,7 @@ function Notes({ k }: { k: string }) {
 export function QuestionPage({ sp }: { sp: Specialty }) {
   const { qid = '' } = useParams();
   const st = useStudy();
+  const guest = useGuestBrowsing();
   const list = questionsOf(sp);
   const index = list.findIndex((q) => q.id === qid);
   const q = list[index];
@@ -125,6 +127,17 @@ export function QuestionPage({ sp }: { sp: Specialty }) {
   useEffect(() => {
     if (exists) study.viewed(k);
   }, [k, exists]);
+
+  if (!q && guest) {
+    return (
+      <EmptyState title="This page is for registered students">
+        <p>
+          Guests can see the open pages only. <Link to="/register">Create an account</Link> or{' '}
+          <Link to={`/login?next=${encodeURIComponent(questionPath(sp, qid))}`}>sign in</Link> to read it.
+        </p>
+      </EmptyState>
+    );
+  }
 
   if (!q) {
     return (

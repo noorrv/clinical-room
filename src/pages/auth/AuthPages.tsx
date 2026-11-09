@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { authErrorMessage, useAuth } from '../../auth/AuthProvider';
+import { enterGuest, leaveGuest } from '../../auth/guest';
 import { supabase } from '../../lib/supabase';
 import { AuthShell, Field, FormMessage, SetupNotice } from './AuthShell';
 
@@ -10,6 +11,27 @@ const MIN_PASSWORD = 8;
 /** Only ever send people to a page on this site after signing in. */
 function safeNext(raw: string | null): string {
   return raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : '/';
+}
+
+/** "Enter as a guest": a quiet second way in, under the main form. */
+function GuestEntry({ next, lead = 'Just looking?' }: { next?: string; lead?: string }) {
+  const navigate = useNavigate();
+  return (
+    <div className="auth-guest">
+      <span className="auth-guest__rule" aria-hidden />
+      <p className="auth-guest__text">{lead} Browse the open pages without an account.</p>
+      <button
+        type="button"
+        className="auth-btn auth-btn--quiet"
+        onClick={() => {
+          enterGuest();
+          navigate(next && next !== '/' ? next : '/#specialties');
+        }}
+      >
+        Enter as a guest
+      </button>
+    </div>
+  );
 }
 
 const longDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
@@ -46,6 +68,7 @@ export function LoginPage() {
       setError(authErrorMessage(err));
       return;
     }
+    leaveGuest();
     navigate(`/account?next=${encodeURIComponent(next)}`, { replace: true });
   };
 
@@ -76,6 +99,7 @@ export function LoginPage() {
         <span aria-hidden> · </span>
         New here? <Link to="/register">Create an account</Link>
       </p>
+      <GuestEntry next={params.get('next') ?? undefined} />
     </AuthShell>
   );
 }
@@ -157,6 +181,7 @@ export function RegisterPage() {
       <p className="auth-foot">
         Already registered? <Link to="/login">Sign in</Link>
       </p>
+      <GuestEntry />
     </AuthShell>
   );
 }
@@ -309,6 +334,7 @@ export function AccountPage() {
           Still awaiting review.
         </p>
       )}
+      <GuestEntry lead="While you wait:" />
     </AuthShell>
   );
 }

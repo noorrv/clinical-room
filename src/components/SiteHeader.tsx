@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
+import { enterGuest, leaveGuest, useGuestFlag } from '../auth/guest';
 import { allSpecialties, questionPath, questionsOf, TYPE_LABEL, useContentVersion } from '../content';
 import { continueStudying, navLinks, recentlyAdded, specialties } from '../data/homepage';
 import { AntiqueBell, CloseLines, Garland, IvT, MenuLines, SearchGlass } from './HeaderArt';
@@ -253,6 +254,7 @@ const STATUS_WORD = { pending: 'Awaiting review', approved: 'Approved', rejected
 
 function AccountPanel({ id, open, onDone }: { id: string; open: boolean; onDone: () => void }) {
   const { configured, session, profile, isAdmin, signOut } = useAuth();
+  const guest = useGuestFlag();
   return (
     <div className={`header-panel alerts-panel account-panel${open ? ' is-open' : ''}`} id={id} role="region" aria-label="Your account">
       <p className="alerts-panel__title">Your account</p>
@@ -291,18 +293,46 @@ function AccountPanel({ id, open, onDone }: { id: string; open: boolean; onDone:
           </button>
         </>
       ) : (
-        <ul>
-          <li>
-            <Link to="/login" onClick={onDone}>
-              Sign in
-            </Link>
-          </li>
-          <li>
-            <Link to="/register" onClick={onDone}>
-              Create an account
-            </Link>
-          </li>
-        </ul>
+        <>
+          {guest && <p className="account-panel__guest">You’re browsing as a guest: open pages only.</p>}
+          <ul>
+            <li>
+              <Link to="/login" onClick={onDone}>
+                Sign in
+              </Link>
+            </li>
+            <li>
+              <Link to="/register" onClick={onDone}>
+                Create an account
+              </Link>
+            </li>
+            {!guest && (
+              <li>
+                <Link
+                  to="/#specialties"
+                  onClick={() => {
+                    enterGuest();
+                    onDone();
+                  }}
+                >
+                  Enter as a guest
+                </Link>
+              </li>
+            )}
+          </ul>
+          {guest && (
+            <button
+              type="button"
+              className="alerts-panel__clear"
+              onClick={() => {
+                leaveGuest();
+                onDone();
+              }}
+            >
+              Leave guest mode
+            </button>
+          )}
+        </>
       )}
     </div>
   );

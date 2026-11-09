@@ -42,9 +42,11 @@ Every content table has an `access` column:
 - `approved` (default): only approved students and the administrator can read the row.
 - `public`: anyone can read it, signed in or not.
 
-The database enforces this (Row Level Security), whatever the website does. Today every study
-page also asks for an approved account; making a page public needs a small change to its route
-as well, so ask when you're ready to open something up.
+The database enforces this (Row Level Security), whatever the website does. Visitors who choose
+**Enter as a guest** (on the sign-in and register pages, or in the account menu) can open every
+study page, but only rows marked `public` come back to them. To open something to guests, set its
+`access` to `public` in Table Editor: for a question, also make its doctor and topic public so it
+appears under them on the dashboard.
 
 ## Preview before content exists
 

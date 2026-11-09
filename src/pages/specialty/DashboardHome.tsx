@@ -4,6 +4,7 @@ import { SpecialtyArt } from '../../components/art/SpecialtyArt';
 import { questionsOf, type QuestionRef, type Specialty } from '../../content';
 import { byDoctor, byTopic, matches, pct, tally, topicsMastered, type GroupProgress } from '../../study/derive';
 import { useStudy } from '../../study/store';
+import { useGuestBrowsing } from '../../auth/guest';
 import { EmptyState, Ledger, PreviewBanner, QuestionRow, StatusLegend } from './ui';
 
 type Tab = 'doctors' | 'topics';
@@ -57,6 +58,7 @@ function Drawer({ g, sp, open, kind, query }: { g: GroupProgress; sp: Specialty;
 
 export function DashboardHome({ sp }: { sp: Specialty }) {
   const st = useStudy();
+  const guest = useGuestBrowsing();
   const [params, setParams] = useSearchParams();
   const tab: Tab = params.get('tab') === 'topics' ? 'topics' : 'doctors';
   const open = params.get('open');
@@ -187,11 +189,20 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
         </div>
         <div className="tabs__panel" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
           {groups.length === 0 && loose.length === 0 ? (
-            <EmptyState title={tab === 'doctors' ? 'No examiners in this volume yet' : 'No topics in this volume yet'}>
-              <p>
-                {sp.title} questions, {tab === 'doctors' ? 'examiners' : 'topics'} and study material will appear here as soon as they’re added.
-              </p>
-            </EmptyState>
+            guest ? (
+              <EmptyState title={`Nothing in ${sp.title} is open to guests yet`}>
+                <p>
+                  The full {sp.title} library is for registered students. <Link to="/register">Create an account</Link> or{' '}
+                  <Link to={`/login?next=${encodeURIComponent(`/specialties/${sp.slug}`)}`}>sign in</Link> to open it.
+                </p>
+              </EmptyState>
+            ) : (
+              <EmptyState title={tab === 'doctors' ? 'No examiners in this volume yet' : 'No topics in this volume yet'}>
+                <p>
+                  {sp.title} questions, {tab === 'doctors' ? 'examiners' : 'topics'} and study material will appear here as soon as they’re added.
+                </p>
+              </EmptyState>
+            )
           ) : (
             <div className={`drawers${groups.length >= 8 ? ' drawers--grid' : ''}`}>
               {groups.map((g) => (

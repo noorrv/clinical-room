@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { AuthShell, SetupNotice } from '../pages/auth/AuthShell';
 import { useAuth } from './AuthProvider';
+import { useGuestFlag } from './guest';
 
 /*
   Page guards. They keep people on the right screen; the database's Row Level Security is what
@@ -18,16 +19,44 @@ function Waiting() {
   );
 }
 
-/** Approved students (and admins) only. */
+/** A slim ribbon over the study pages while browsing as a guest. */
+function GuestRibbon() {
+  const loc = useLocation();
+  const next = encodeURIComponent(loc.pathname + loc.search);
+  return (
+    <div className="guest-ribbon" role="note">
+      <p className="guest-ribbon__text">
+        <strong>Browsing as a guest.</strong> You’re seeing the open pages only, and your progress stays on this device.
+      </p>
+      <p className="guest-ribbon__links">
+        <Link to="/register">Create an account</Link>
+        <span aria-hidden> · </span>
+        <Link to={`/login?next=${next}`}>Sign in</Link>
+      </p>
+    </div>
+  );
+}
+
+/** Approved students and admins; guests too, who only receive open (public) content. */
 export function RequireApproved({ children }: { children: ReactNode }) {
   const { configured, loading, session, profile, isAdmin } = useAuth();
+  const guest = useGuestFlag();
   const loc = useLocation();
   if (!configured) return <SetupNotice />;
   if (loading) return <Waiting />;
+  const full = Boolean(session) && (isAdmin || profile?.status === 'approved');
+  if (full) return <>{children}</>;
+  if (guest) {
+    return (
+      <>
+        <GuestRibbon />
+        {children}
+      </>
+    );
+  }
   const next = encodeURIComponent(loc.pathname + loc.search);
   if (!session) return <Navigate to={`/login?next=${next}`} replace />;
-  if (!isAdmin && profile?.status !== 'approved') return <Navigate to={`/account?next=${next}`} replace />;
-  return <>{children}</>;
+  return <Navigate to={`/account?next=${next}`} replace />;
 }
 
 /** The administrator only. */

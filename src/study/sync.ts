@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useAuth } from '../auth/AuthProvider';
+import { leaveGuest, useGuestFlag } from '../auth/guest';
 import { contentLoadedFor, setRemoteContent } from '../content';
 import { supabase } from '../lib/supabase';
 import {
@@ -10,6 +11,7 @@ import {
   loadFrom,
   onReset,
   switchRecord,
+  switchToGuestRecord,
   type MockResult,
   type QuestionRecord,
   type Session,
@@ -222,7 +224,10 @@ async function attach(userId: string) {
   }
 }
 
+let guestAttached = false;
+
 function detach() {
+  guestAttached = false;
   if (attached === null) return;
   window.clearTimeout(timer);
   attached = null;
@@ -230,20 +235,38 @@ function detach() {
   switchRecord(null, EMPTY, null);
 }
 
+function attachGuest() {
+  if (guestAttached) return;
+  if (attached !== null) {
+    window.clearTimeout(timer);
+    attached = null;
+    onReset(null);
+  }
+  guestAttached = true;
+  switchToGuestRecord();
+}
+
 /** Mounted once in App: follows the account and attaches or detaches its study record. */
 export function StudySync() {
   const { session, profile, isAdmin } = useAuth();
+  const guest = useGuestFlag();
   const uid = session?.user.id ?? null;
   const allowed = Boolean(uid && (profile?.status === 'approved' || isAdmin));
+  // what the loaded content was fetched as: the account, or a guest (open rows only)
+  const contentOwner = allowed ? uid : guest ? 'guest' : null;
 
   useEffect(() => {
-    // content belongs to one account: drop it when someone else (or nobody) is signed in
+    // content belongs to one viewer: drop it when that changes
     const loaded = contentLoadedFor();
-    if (loaded !== undefined && loaded !== uid) setRemoteContent(null);
+    if (loaded !== undefined && loaded !== contentOwner) setRemoteContent(null);
 
-    if (allowed && uid) void attach(uid);
+    if (allowed && uid) {
+      guestAttached = false;
+      if (guest) leaveGuest(); // a full account replaces guest browsing
+      void attach(uid);
+    } else if (guest) attachGuest();
     else detach();
-  }, [uid, allowed]);
+  }, [uid, allowed, guest, contentOwner]);
 
   // try to send unsaved changes before the tab closes
   useEffect(() => {
