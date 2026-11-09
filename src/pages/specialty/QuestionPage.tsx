@@ -11,14 +11,14 @@ import { EmptyState, PreviewBanner, Ribbon, StatusPicker } from './ui';
   shown, in an order that suits its type.
 */
 
-type Section = { key: keyof Question; label: string };
+export type Section = { key: keyof Question; label: string };
 
-const GIVEN: Section[] = [
+export const GIVEN: Section[] = [
   { key: 'scenario', label: 'Clinical scenario' },
   { key: 'question', label: 'Question' },
 ];
 
-const ANSWER_ORDER: Record<Question['type'], Section[]> = {
+export const ANSWER_ORDER: Record<Question['type'], Section[]> = {
   station: [
     { key: 'examinerExpects', label: 'What the examiner expects' },
     { key: 'examination', label: 'Examination' },
@@ -56,7 +56,7 @@ const ANSWER_ORDER: Record<Question['type'], Section[]> = {
   ],
 };
 
-function SectionBody({ value, ordered }: { value: unknown; ordered?: boolean }) {
+export function SectionBody({ value, ordered }: { value: unknown; ordered?: boolean }) {
   if (Array.isArray(value)) {
     const List = ordered ? 'ol' : 'ul';
     return (

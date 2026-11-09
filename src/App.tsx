@@ -7,6 +7,8 @@ import { ContentGate } from './content/ContentGate';
 import { AdminLayout } from './pages/admin/AdminLayout';
 import { DirectoryPage } from './pages/admin/DirectoryPage';
 import { OverviewPage } from './pages/admin/OverviewPage';
+import { QuestionEditorPage } from './pages/admin/QuestionEditorPage';
+import { QuestionsPage } from './pages/admin/QuestionsPage';
 import { SpecialtiesPage } from './pages/admin/SpecialtiesPage';
 import { RegistrationsPage } from './pages/admin/RegistrationsPage';
 import { AccountPage, CheckEmailPage, ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage } from './pages/auth/AuthPages';
@@ -70,6 +72,9 @@ export default function App() {
             }
           >
             <Route index element={<OverviewPage />} />
+            <Route path="questions" element={<QuestionsPage />} />
+            <Route path="questions/new" element={<QuestionEditorPage key="new" />} />
+            <Route path="questions/edit/:sp/:id" element={<QuestionEditorPage />} />
             <Route path="examiners" element={<DirectoryPage key="doctors" kind="doctors" />} />
             <Route path="topics" element={<DirectoryPage key="topics" kind="topics" />} />
             <Route path="specialties" element={<SpecialtiesPage />} />

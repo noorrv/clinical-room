@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
+import { setRemoteContent } from '../../content';
 import { supabase } from '../../lib/supabase';
 import { ToastProvider } from './ui';
 import '../specialty/specialty.css';
@@ -25,6 +26,7 @@ export interface AdminCounts {
 
 const SECTIONS: Array<{ to: string; label: string; end?: boolean; count?: keyof AdminCounts }> = [
   { to: '/admin', label: 'Overview', end: true },
+  { to: '/admin/questions', label: 'Questions', count: 'drafts' },
   { to: '/admin/examiners', label: 'Examiners' },
   { to: '/admin/topics', label: 'Topics' },
   { to: '/admin/specialties', label: 'Specialties' },
@@ -39,7 +41,9 @@ export interface AdminOutletContext {
 export function AdminLayout() {
   const [counts, setCounts] = useState<AdminCounts>({ pending: 0, drafts: 0 });
 
+  // every page calls this after a change: refresh the badges, and make the study pages fetch fresh content
   const refreshCounts = useCallback(async () => {
+    setRemoteContent(null);
     const [p, d] = await Promise.all([
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'pending').not('email_confirmed_at', 'is', null),
       supabase.from('questions').select('id', { count: 'exact', head: true }).eq('status', 'draft'),
