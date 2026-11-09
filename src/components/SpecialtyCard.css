@@ -1,0 +1,275 @@
+.spec-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.spec-grid > li {
+  display: flex;
+}
+
+/* ── Card: a parchment plate with a fine inner rule ── */
+.spec-card {
+  --lift: 0px;
+  --rule: rgba(122, 84, 48, 0.32);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 14px 14px 22px;
+  border-radius: 12px;
+  border: 1px solid var(--rule);
+  /* a smoother, brighter sheet laid on the panel's rougher paper */
+  background:
+    var(--paper-tooth-fine),
+    var(--paper-fibres),
+    linear-gradient(180deg, #fbf4e4, #f4e8cf);
+  background-size: 260px, 420px, auto;
+  background-blend-mode: multiply, soft-light, normal;
+  box-shadow:
+    0 1px 0 rgba(255, 250, 238, 0.8) inset,
+    0 2px 3px rgba(74, 40, 18, 0.07),
+    0 12px 24px -16px rgba(74, 40, 18, 0.4);
+  color: var(--ink);
+  text-decoration: none;
+  transform: translateY(var(--lift));
+  transition:
+    transform var(--dur-hover) var(--ease-out),
+    box-shadow var(--dur-hover) var(--ease-out);
+}
+
+.spec-card::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(122, 84, 48, 0.2);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+/* ── Arched window ── */
+.spec-card__window {
+  --arch: 50% 50% 4px 4px / 64% 64% 4px 4px;
+  position: relative;
+  width: 88%;
+  margin: 8px auto 0;
+  padding: 4px;
+  border: 1px solid rgba(140, 100, 50, 0.55);
+  border-radius: var(--arch);
+  transition: border-color var(--dur-hover) var(--ease-out);
+}
+
+.spec-card__art {
+  position: relative;
+  aspect-ratio: 400 / 320;
+  border-radius: var(--arch);
+  overflow: hidden;
+  background: #3a2a22;
+  /* keeps the rounded clip crisp while the art scales on hover */
+  isolation: isolate;
+}
+
+.spec-card__art-inner {
+  position: absolute;
+  inset: 0;
+  transform: scale(1.001);
+  transition:
+    transform 900ms var(--ease-out),
+    filter 900ms var(--ease-out);
+}
+
+.spec-card__art-inner .art-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* a whisper of varnish over every picture so drawn and painted art sit together */
+.spec-card__art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 50% 30%, transparent 55%, rgba(60, 30, 10, 0.28)),
+    var(--grain);
+  mix-blend-mode: multiply;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* one diagonal pass of gilt light on hover */
+.spec-card__shimmer {
+  position: absolute;
+  inset: -20% -60%;
+  z-index: 2;
+  background: linear-gradient(
+    105deg,
+    transparent 38%,
+    rgba(255, 236, 190, 0.08) 44%,
+    rgba(255, 240, 200, 0.4) 50%,
+    rgba(255, 236, 190, 0.08) 56%,
+    transparent 62%
+  );
+  transform: translateX(-70%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Text ── */
+.spec-card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--s-4) var(--s-3) 0;
+  text-align: center;
+}
+
+.spec-card__title {
+  font-family: var(--font-display);
+  font-size: clamp(1.65rem, 1.3rem + 0.7vw, 2rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.005em;
+  color: var(--burgundy);
+  text-wrap: balance;
+}
+
+.spec-card__points {
+  margin: var(--s-3) 0 var(--s-4);
+  padding: 0 0 0 1.1em;
+  text-align: left;
+  font-size: 0.98rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.spec-card__points li::marker {
+  color: var(--burgundy);
+  font-size: 0.8em;
+}
+
+.spec-card__explore {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-bottom: 3px;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--burgundy);
+}
+
+.spec-card__explore::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.45;
+  transform-origin: left;
+  transition:
+    opacity var(--dur-hover) var(--ease-out),
+    transform var(--dur-hover) var(--ease-out);
+}
+
+.spec-card__explore svg {
+  transition: transform var(--dur-hover) var(--ease-out);
+}
+
+/* ── Hover & keyboard focus share one treatment ── */
+.spec-card:hover,
+.spec-card:focus-visible {
+  --lift: -4px;
+  box-shadow:
+    0 1px 0 rgba(255, 250, 238, 0.8) inset,
+    0 6px 10px rgba(74, 40, 18, 0.1),
+    0 24px 40px -18px rgba(74, 40, 18, 0.5);
+}
+
+.spec-card:focus-visible {
+  outline: 2px solid var(--burgundy);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
+.spec-card:hover .spec-card__window,
+.spec-card:focus-visible .spec-card__window {
+  border-color: var(--gold);
+}
+
+.spec-card:hover .spec-card__art-inner,
+.spec-card:focus-visible .spec-card__art-inner {
+  transform: scale(1.055);
+  filter: brightness(1.05) saturate(1.05);
+}
+
+.spec-card:hover .spec-card__shimmer,
+.spec-card:focus-visible .spec-card__shimmer {
+  opacity: 1;
+  transform: translateX(70%);
+  transition:
+    transform var(--dur-shimmer) var(--ease-in-out),
+    opacity 200ms ease;
+}
+
+.spec-card:hover .spec-card__explore::after,
+.spec-card:focus-visible .spec-card__explore::after {
+  opacity: 1;
+}
+
+.spec-card:hover .spec-card__explore svg,
+.spec-card:focus-visible .spec-card__explore svg {
+  transform: translateX(4px);
+}
+
+.spec-card:active {
+  --lift: -1px;
+}
+
+@media (max-width: 1100px) {
+  .spec-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .spec-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .spec-card__window {
+    width: 92%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spec-card,
+  .spec-card__art-inner,
+  .spec-card__shimmer,
+  .spec-card__explore svg {
+    transition: none !important;
+  }
+
+  .spec-card:hover,
+  .spec-card:focus-visible {
+    --lift: 0px;
+  }
+
+  .spec-card:hover .spec-card__art-inner,
+  .spec-card:focus-visible .spec-card__art-inner {
+    transform: none;
+  }
+
+  .spec-card:hover .spec-card__shimmer,
+  .spec-card:focus-visible .spec-card__shimmer {
+    opacity: 0;
+  }
+
+}

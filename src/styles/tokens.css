@@ -1,0 +1,80 @@
+:root {
+  /* Palette — drawn from the reference: candlelit hall, parchment, burgundy, gold, winter teal */
+  --night: #2a1912;
+  --night-2: #3a2216;
+  --ink: #3b2416;
+  --ink-soft: #6a4a36;
+  --ink-faint: #8a6a52;
+
+  --parchment: #f4e8d0;
+  --parchment-2: #ecdcbd;
+  --parchment-3: #e2cca5;
+  --parchment-edge: #d4b98c;
+  --cream: #fbf4e4;
+
+  --burgundy: #6f1d1b;
+  --burgundy-2: #82262a;
+  --burgundy-deep: #4c1312;
+
+  --gold: #c9a24a;
+  --gold-soft: #e6c987;
+  --gold-deep: #9c7a2c;
+
+  --teal: #2e5d5a;
+  --teal-deep: #1d3f3d;
+  --sage: #5d7d64;
+
+  /* Type */
+  --font-display: 'Cormorant Garamond', 'Amiri', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-body: 'EB Garamond', 'Amiri', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+
+  --step--1: 0.875rem;
+  --step-0: 1rem;
+  --step-1: 1.125rem;
+  --step-2: 1.4rem;
+  --step-3: clamp(1.5rem, 1.25rem + 0.9vw, 1.9rem);
+  --step-4: clamp(2.3rem, 1.6rem + 2.6vw, 3.55rem);
+
+  /* Space (8pt rhythm) */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+
+  --gutter: clamp(16px, 2.4vw, 24px);
+  --container: 1240px;
+
+  /* Shape & depth */
+  --r-sm: 10px;
+  --r-md: 18px;
+  --r-lg: 26px;
+  --r-panel: 34px;
+
+  --shadow-card: 0 1px 0 rgba(255, 248, 230, 0.7) inset, 0 2px 4px rgba(74, 40, 18, 0.08),
+    0 10px 24px -12px rgba(74, 40, 18, 0.28);
+  --shadow-lift: 0 1px 0 rgba(255, 248, 230, 0.7) inset, 0 6px 10px rgba(74, 40, 18, 0.1),
+    0 22px 40px -16px rgba(74, 40, 18, 0.42);
+  --shadow-panel: 0 -18px 50px -20px rgba(20, 8, 2, 0.6);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-quick: 160ms;
+  --dur-hover: 420ms;
+  --dur-shimmer: 1100ms;
+
+  /* Paper grain, generated once and cached by the browser */
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.35  0 0 0 0 0.22  0 0 0 0 0.1  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  --fibers: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='0.012 0.04' numOctaves='3' seed='4'/><feColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.38  0 0 0 0 0.18  0 0 0 0.16 0'/></filter><rect width='100%' height='100%' filter='url(%23f)'/></svg>");
+
+  /* Handmade paper: tooth, curly fibres, a few specks and soft aging */
+  --paper-tooth: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='t'><feTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='3' seed='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.42  0 0 0 0 0.28  0 0 0 0 0.14  0 0 0 0.42 -0.02'/></filter><rect width='100%' height='100%' filter='url(%23t)'/></svg>");
+  --paper-tooth-fine: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='t'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' seed='5' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.42  0 0 0 0 0.28  0 0 0 0 0.14  0 0 0 0.24 -0.02'/></filter><rect width='100%' height='100%' filter='url(%23t)'/></svg>");
+  --paper-fibres: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='420' height='420'><filter id='f'><feTurbulence type='turbulence' baseFrequency='0.045' numOctaves='1' seed='11' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.36  0 0 0 0 0.2  0 0 0 -6 0.34'/></filter><rect width='100%' height='100%' filter='url(%23f)'/></svg>");
+  --paper-specks: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='360' height='360'><filter id='s'><feTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='1' seed='19' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.3  0 0 0 0 0.18  0 0 0 0 0.08  0 0 0 9 -7.4'/></filter><rect width='100%' height='100%' filter='url(%23s)'/></svg>");
+  --paper-age: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='900' height='900'><filter id='a'><feTurbulence type='fractalNoise' baseFrequency='0.004' numOctaves='3' seed='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.62  0 0 0 0 0.42  0 0 0 0 0.18  0 0 0 0.55 -0.12'/></filter><rect width='100%' height='100%' filter='url(%23a)'/></svg>");
+}

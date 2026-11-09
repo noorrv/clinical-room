@@ -1,0 +1,236 @@
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { allSpecialties, questionPath, questionsOf, TYPE_LABEL } from '../content';
+import { continueStudying, navLinks, recentlyAdded, specialties } from '../data/homepage';
+import { AntiqueBell, CloseLines, Garland, IvT, MenuLines, SearchGlass } from './HeaderArt';
+import './SiteHeader.css';
+
+type Panel = 'menu' | 'search' | 'alerts' | null;
+
+function Avatar() {
+  return (
+    <svg viewBox="0 0 40 40" width="40" height="40" aria-hidden>
+      <circle cx="20" cy="20" r="20" fill="#e9d6b4" />
+      <path d="M8 36 Q10 26 20 26 Q30 26 32 36 Z" fill="#6f1d1b" />
+      <path d="M16 26 L20 31 L24 26" fill="#f4e8d0" />
+      <circle cx="20" cy="17" r="7.5" fill="#d7a77e" />
+      <path d="M12.4 16 Q12 8 20 8 Q28 8 27.6 16 Q25 12 20 12.6 Q15 12 12.4 16 Z" fill="#3b2416" />
+    </svg>
+  );
+}
+
+/** Router link for in-app addresses, plain link for anything else. */
+function AppLink({ href, children, ...rest }: { href: string; children: ReactNode; onClick?: () => void; 'aria-current'?: 'page' }) {
+  return href.startsWith('/') ? (
+    <Link to={href} {...rest}>
+      {children}
+    </Link>
+  ) : (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  );
+}
+
+/** Everything a visitor might look for: specialties, every question, topic and doctor, and pages. */
+function useSearchIndex() {
+  return useMemo(
+    () => [
+      ...allSpecialties().flatMap((sp) => [
+        ...questionsOf(sp).map((q) => ({ title: q.title, hint: `${sp.shortName} · ${TYPE_LABEL[q.type]}`, href: questionPath(sp, q.id) })),
+        ...sp.topics.map((t) => ({ title: t.name, hint: `${sp.shortName} topic`, href: `/specialties/${sp.slug}?tab=topics&open=${t.id}` })),
+        ...sp.doctors.map((d) => ({ title: d.name, hint: `${sp.shortName} examiner`, href: `/specialties/${sp.slug}?tab=doctors&open=${d.id}` })),
+      ]),
+      ...specialties.flatMap((s) => [
+        { title: s.title, hint: 'Specialty', href: s.href },
+        ...s.points.map((p) => ({ title: p, hint: s.title, href: s.href })),
+      ]),
+      ...recentlyAdded.map((r) => ({ title: r.title, hint: 'Recently added', href: `/${r.href}` })),
+      { title: continueStudying.title, hint: continueStudying.meta.join(' · '), href: `/${continueStudying.href}` },
+      ...navLinks.map((l) => ({ title: l.label, hint: 'Page', href: l.href })),
+    ],
+    [],
+  );
+}
+
+export function SiteHeader() {
+  const [open, setOpen] = useState<Panel>(null);
+  const [query, setQuery] = useState('');
+  const [unread, setUnread] = useState(recentlyAdded.filter((r) => r.isNew));
+  const index = useSearchIndex();
+  const { pathname } = useLocation();
+
+  // close panels when the page changes
+  useEffect(() => setOpen(null), [pathname]);
+  const headerRef = useRef<HTMLElement>(null);
+  const searchInput = useRef<HTMLInputElement>(null);
+  const ids = useId().replace(/:/g, '');
+
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return [];
+    return index.filter((i) => i.title.toLowerCase().includes(q) || i.hint.toLowerCase().includes(q)).slice(0, 7);
+  }, [query, index]);
+
+  const toggle = (p: Exclude<Panel, null>) => setOpen((cur) => (cur === p ? null : p));
+
+  // Esc and clicks outside close whichever panel is open
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(null);
+    const onDown = (e: PointerEvent) => {
+      if (headerRef.current && !headerRef.current.contains(e.target as Node)) setOpen(null);
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('pointerdown', onDown);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('pointerdown', onDown);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (open === 'search') searchInput.current?.focus();
+  }, [open]);
+
+  return (
+    <header className="site-header" ref={headerRef}>
+      <div className="site-header__inner container">
+        <Link className="brand" to="/" aria-label="The Clinical Room, home">
+          <span className="brand__word" aria-hidden>
+            <IvT className="brand__t" />
+            <span className="brand__rest">e Clinical Room</span>
+          </span>
+        </Link>
+
+        <div className="header-actions">
+          <button
+            type="button"
+            className="icon-btn icon-btn--search"
+            aria-label="Search the guide"
+            aria-expanded={open === 'search'}
+            aria-controls={`${ids}-search`}
+            onClick={() => toggle('search')}
+          >
+            <SearchGlass />
+          </button>
+          <span className="header-actions__rule" aria-hidden />
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label={unread.length ? `Notifications, ${unread.length} unread` : 'Notifications'}
+            aria-expanded={open === 'alerts'}
+            aria-controls={`${ids}-alerts`}
+            onClick={() => toggle('alerts')}
+          >
+            <AntiqueBell />
+            {unread.length > 0 && <span className="icon-btn__dot" aria-hidden />}
+          </button>
+          <span className="header-actions__rule" aria-hidden />
+          <button type="button" className="avatar-btn" aria-label="Your account">
+            <Avatar />
+          </button>
+          <button
+            type="button"
+            className="icon-btn menu-btn"
+            aria-expanded={open === 'menu'}
+            aria-controls="primary-nav"
+            aria-label={open === 'menu' ? 'Close menu' : 'Open menu'}
+            onClick={() => toggle('menu')}
+          >
+            {open === 'menu' ? <CloseLines /> : <MenuLines />}
+          </button>
+        </div>
+      </div>
+
+      {/* bottom rule with its garland */}
+      <div className="site-header__rule" aria-hidden>
+        <span className="site-header__spark site-header__spark--l" />
+        <span className="site-header__spark site-header__spark--r" />
+        <Garland className="site-header__garland" />
+      </div>
+
+      {/* main menu */}
+      <nav className={`header-panel primary-nav${open === 'menu' ? ' is-open' : ''}`} id="primary-nav" aria-label="Main">
+        <ul>
+          {navLinks.map((l) => (
+            <li key={l.label}>
+              <AppLink href={l.href} aria-current={l.href === '/' && pathname === '/' ? 'page' : undefined} onClick={() => setOpen(null)}>
+                {l.label}
+              </AppLink>
+            </li>
+          ))}
+          <li className="primary-nav__search">
+            <button type="button" onClick={() => setOpen('search')}>
+              Search the guide
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      {/* search */}
+      <div className={`header-panel search-panel${open === 'search' ? ' is-open' : ''}`} id={`${ids}-search`}>
+        <form role="search" onSubmit={(e) => e.preventDefault()}>
+          <label className="visually-hidden" htmlFor={`${ids}-q`}>
+            Search the guide
+          </label>
+          <SearchGlass size={22} />
+          <input
+            ref={searchInput}
+            id={`${ids}-q`}
+            type="search"
+            placeholder="Search stations, cases and topics"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            autoComplete="off"
+          />
+        </form>
+        {query.trim().length >= 2 && (
+          <ul className="search-panel__results" aria-live="polite">
+            {results.length ? (
+              results.map((r, i) => (
+                <li key={`${r.title}-${i}`}>
+                  <AppLink href={r.href} onClick={() => setOpen(null)}>
+                    <span>{r.title}</span>
+                    <small>{r.hint}</small>
+                  </AppLink>
+                </li>
+              ))
+            ) : (
+              <li className="search-panel__empty">Nothing matches “{query.trim()}” yet. Try a specialty, such as Paediatrics.</li>
+            )}
+          </ul>
+        )}
+      </div>
+
+      {/* notifications */}
+      <div
+        className={`header-panel alerts-panel${open === 'alerts' ? ' is-open' : ''}`}
+        id={`${ids}-alerts`}
+        role="region"
+        aria-label="Notifications"
+      >
+        <p className="alerts-panel__title">Notifications</p>
+        {unread.length ? (
+          <>
+            <ul>
+              {unread.map((n) => (
+                <li key={n.title}>
+                  <AppLink href={`/${n.href}`} onClick={() => setOpen(null)}>
+                    <span className="alerts-panel__badge">New</span>
+                    {n.title}
+                  </AppLink>
+                </li>
+              ))}
+            </ul>
+            <button type="button" className="alerts-panel__clear" onClick={() => setUnread([])}>
+              Mark all as read
+            </button>
+          </>
+        ) : (
+          <p className="alerts-panel__empty">You’re all caught up.</p>
+        )}
+      </div>
+    </header>
+  );
+}
