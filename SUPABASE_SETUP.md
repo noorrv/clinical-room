@@ -59,3 +59,39 @@ Each one should finish with "Success. No rows returned".
 - **Admins** can only be added in the SQL Editor (step 4), never from the website.
 - **Students' progress, bookmarks and notes** are saved to their account. Anything a student had saved in their browser before accounts existed is moved into their account the first time they sign in after approval.
 - **Content** (doctors, topics, questions) is edited in **Table Editor**. See `src/content/README.md` for the columns.
+
+## 6. Emails that reach real students
+
+Supabase's built-in email only reaches your Supabase team's addresses (a few per hour), so
+students need a real email service before they can confirm their registration.
+
+### For now, without a domain: a dedicated Gmail account
+
+1. Create a new Gmail account just for the site (don't use your personal one).
+2. In that account: **Google Account → Security → 2-Step Verification**: turn it on.
+3. Then open **myaccount.google.com/apppasswords**, create an app password named "Supabase",
+   and keep the 16-character password it shows (you'll paste it into Supabase only).
+4. In Supabase: **Authentication → Emails → SMTP Settings → Enable custom SMTP**:
+   - Sender email: the new Gmail address
+   - Sender name: `The Clinical Room`
+   - Host: `smtp.gmail.com`, Port: `587`
+   - Username: the new Gmail address
+   - Password: the app password
+5. **Authentication → Rate Limits**: raise "emails per hour" to about `100`.
+
+Gmail allows roughly 500 emails a day, plenty while the site is small.
+
+### Later, with your own domain
+
+Create a Resend account, verify the domain, and replace the SMTP settings with
+`smtp.resend.com`, port `465`, username `resend`, password = a Resend API key, sender
+`no-reply@yourdomain`. Nothing in the website changes.
+
+### Branded emails
+
+In **Authentication → Emails → Templates**, paste the contents of:
+
+- `supabase/email-templates/confirm-signup.html` into **Confirm signup**
+  (subject: `Confirm your email · The Clinical Room`)
+- `supabase/email-templates/reset-password.html` into **Reset password**
+  (subject: `Reset your password · The Clinical Room`)
