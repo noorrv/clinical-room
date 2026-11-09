@@ -15,7 +15,7 @@ select set_config('test.results', '', false);
 
 do $$ begin
   if current_setting('test.pending') = '' or current_setting('test.admin') = '' then
-    raise exception 'Put the pending and admin email addresses on the lines marked ▶ first (one was not found).';
+    raise exception 'The pending or admin email address was not found in auth.users. Check the lines marked ▶.';
   end if;
 end $$;
 
@@ -78,16 +78,22 @@ begin
 
   begin
     insert into public.admins (user_id) values ((select auth.uid()));
-    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: make self admin', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
-  exception when others then
-    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: make self admin', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+    raise exception using errcode = 'U0002';  -- undo
+  exception
+    when sqlstate 'U0002' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: make self admin', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: make self admin', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
   end;
 
   begin
     insert into public.question_progress (question_key, note) values ('surgery/security-test', 'x');
-    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: save study notes', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
-  exception when others then
-    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: save study notes', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+    raise exception using errcode = 'U0002';  -- undo
+  exception
+    when sqlstate 'U0002' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: save study notes', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: save study notes', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
   end;
 
   begin
@@ -160,9 +166,12 @@ begin
 
   begin
     insert into public.question_progress (user_id, question_key) values (current_setting('test.pending')::uuid, 'surgery/security-test');
-    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: write another student''s notes', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
-  exception when others then
-    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: write another student''s notes', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+    raise exception using errcode = 'U0002';  -- undo
+  exception
+    when sqlstate 'U0002' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: write another student''s notes', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: write another student''s notes', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
   end;
 
   select count(*) into n from public.questions where status = 'draft';
@@ -200,9 +209,12 @@ begin
 
   begin
     perform public.set_account_status(current_setting('test.pending')::uuid, 'approved');
-    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: approve someone else', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
-  exception when others then
-    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: approve someone else', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+    raise exception using errcode = 'U0002';  -- undo
+  exception
+    when sqlstate 'U0002' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: approve someone else', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: approve someone else', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
   end;
 end $$;
 reset role;
@@ -220,9 +232,12 @@ begin
 
   begin
     perform public.set_account_status((select auth.uid()), 'rejected');
-    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: change own status', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
-  exception when others then
-    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: change own status', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+    raise exception using errcode = 'U0002';  -- undo
+  exception
+    when sqlstate 'U0002' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: change own status', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: change own status', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
   end;
 
   begin
