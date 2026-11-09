@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════════════════════════
---  Security checks · run in Supabase → SQL Editor after the migrations and admin setup.
+--  Security checks · run in Supabase → SQL Editor after all migrations (including the admin dashboard one) and admin setup.
 --
 --  It pretends to be each kind of visitor and tries what they should and shouldn't be able to do,
 --  straight against the database (no website involved). Every change it makes is undone.
@@ -90,6 +90,39 @@ begin
     perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: save study notes', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
   end;
 
+  begin
+    insert into public.questions (specialty_id, id, title, type) values ('surgery', 'security-test', 'x', 'case');
+    raise exception using errcode = 'U0002';  -- undo
+  exception
+    when sqlstate 'U0002' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: add a question', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: add a question', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+  end;
+
+  begin
+    insert into public.announcements (title) values ('security test');
+    raise exception using errcode = 'U0002';  -- undo
+  exception
+    when sqlstate 'U0002' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: post a notice', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: post a notice', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+  end;
+
+  begin
+    perform public.admin_student_overview();
+    raise exception using errcode = 'U0002';  -- undo
+  exception
+    when sqlstate 'U0002' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: view student progress', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: view student progress', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+  end;
+
+  select count(*) into n from public.admin_activity;
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: read the activity log', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
+
   select count(*) into n from public.question_progress;
   perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: read study notes', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
 end $$;
@@ -132,6 +165,39 @@ begin
     perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: write another student''s notes', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
   end;
 
+  select count(*) into n from public.questions where status = 'draft';
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: see draft questions', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
+
+  begin
+    insert into public.doctors (specialty_id, id, name) values ('surgery', 'security-test', 'x');
+    raise exception using errcode = 'U0002';  -- undo
+  exception
+    when sqlstate 'U0002' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: add a doctor', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: add a doctor', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+  end;
+
+  begin
+    update public.doctors set name = 'x' where specialty_id = 'surgery' and id = 'walaa' returning 1 into strict n;
+    raise exception using errcode = 'U0002';  -- undo
+  exception
+    when sqlstate 'U0002' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: edit a doctor', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: edit a doctor', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+  end;
+
+  begin
+    perform public.admin_student_detail(current_setting('test.pending')::uuid);
+    raise exception using errcode = 'U0002';  -- undo
+  exception
+    when sqlstate 'U0002' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: view another student''s progress', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: view another student''s progress', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+  end;
+
   begin
     perform public.set_account_status(current_setting('test.pending')::uuid, 'approved');
     perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: approve someone else', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
@@ -167,6 +233,57 @@ begin
       perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: reject a student', 'allowed', 'allowed', coalesce((true)::text, 'skipped')) || E'\n', false);
     when others then
       perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: reject a student', 'allowed', sqlerrm, coalesce((false)::text, 'skipped')) || E'\n', false);
+  end;
+
+  begin
+    insert into public.questions (specialty_id, id, title, type) values ('surgery', 'security-test', 'Security test', 'case');
+    update public.questions set status = 'published' where specialty_id = 'surgery' and id = 'security-test';
+    raise exception using errcode = 'U0001';  -- undo
+  exception
+    when sqlstate 'U0001' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: add a draft question and publish it', 'allowed', 'allowed', coalesce((true)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: add a draft question and publish it', 'allowed', sqlerrm, coalesce((false)::text, 'skipped')) || E'\n', false);
+  end;
+
+  begin
+    insert into public.announcements (id, title) values ('00000000-0000-0000-0000-00000000c0de', 'Security test');
+    update public.announcements set published = false where id = '00000000-0000-0000-0000-00000000c0de';
+    delete from public.announcements where id = '00000000-0000-0000-0000-00000000c0de';
+    raise exception using errcode = 'U0001';  -- undo
+  exception
+    when sqlstate 'U0001' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: post, unpublish and delete a notice', 'allowed', 'allowed', coalesce((true)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: post, unpublish and delete a notice', 'allowed', sqlerrm, coalesce((false)::text, 'skipped')) || E'\n', false);
+  end;
+
+  select count(*) into n from public.admin_activity;
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: read the activity log', 'allowed', n || ' rows', coalesce((n >= 0)::text, 'skipped')) || E'\n', false);
+
+  begin
+    select count(*) into n from public.admin_student_overview();
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: view student progress', 'allowed', n || ' students', coalesce((n >= 1)::text, 'skipped')) || E'\n', false);
+  exception when others then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: view student progress', 'allowed', sqlerrm, coalesce((false)::text, 'skipped')) || E'\n', false);
+  end;
+
+  begin
+    perform 1 where public.admin_student_detail(current_setting('test.pending')::uuid)::text ilike '%"note%';
+    get diagnostics n = row_count;
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: progress never includes notes', 'no notes', case when n = 0 then 'no notes' else 'notes found' end, coalesce((n = 0)::text, 'skipped')) || E'\n', false);
+  exception when others then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: progress never includes notes', 'no notes', sqlerrm, coalesce((false)::text, 'skipped')) || E'\n', false);
+  end;
+
+  begin
+    delete from public.specialties where id = 'surgery';
+    raise exception using errcode = 'U0002';  -- undo
+  exception
+    when sqlstate 'U0002' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: delete a specialty that still has doctors', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: delete a specialty that still has doctors', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
   end;
 
   begin
