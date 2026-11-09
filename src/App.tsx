@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
 import { RequireAdmin, RequireApproved } from './auth/guards';
@@ -9,6 +9,9 @@ import { AccountPage, CheckEmailPage, ForgotPasswordPage, LoginPage, RegisterPag
 import { HomePage } from './pages/HomePage';
 import { SpecialtyRoutes } from './pages/specialty/SpecialtyRoutes';
 import { StudySync } from './study/sync';
+
+// development-only comparison page; dropped from the built site
+const BoardPreview = import.meta.env.DEV ? lazy(() => import('./pages/BoardPreview').then((m) => ({ default: m.BoardPreview }))) : null;
 
 /** New page: start at the top. A #hash: scroll to that section once it has rendered. */
 function ScrollManager() {
@@ -61,6 +64,16 @@ export default function App() {
               </RequireAdmin>
             }
           />
+          {BoardPreview && (
+            <Route
+              path="/_preview/board"
+              element={
+                <Suspense fallback={null}>
+                  <BoardPreview />
+                </Suspense>
+              }
+            />
+          )}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

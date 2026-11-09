@@ -1,0 +1,183 @@
+/* ── the noticeboard as pixel art ── */
+.px {
+  --px-ink: #2b1d12;
+  container-type: inline-size;
+  position: relative;
+  height: 100%;
+  margin: 4px;
+  font-family: 'VT323', ui-monospace, monospace;
+  font-size: 1.2rem;
+  line-height: 1.05;
+  color: var(--px-ink);
+  /* pixel corkboard: two-tone speckle drawn as crisp squares */
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' shape-rendering='crispEdges'><rect width='12' height='12' fill='%23c79a62'/><rect x='1' y='2' width='1' height='1' fill='%23a87a45'/><rect x='7' y='1' width='1' height='1' fill='%23dcb47c'/><rect x='4' y='6' width='1' height='1' fill='%23a87a45'/><rect x='10' y='8' width='1' height='1' fill='%23a87a45'/><rect x='2' y='10' width='1' height='1' fill='%23dcb47c'/><rect x='8' y='5' width='1' height='1' fill='%23b88a52'/></svg>")
+    0 0 / 36px 36px;
+  image-rendering: pixelated;
+  /* stepped pixel frame: notched corners, a wooden rim and a hard shadow */
+  box-shadow:
+    0 -4px 0 0 var(--px-ink),
+    0 4px 0 0 var(--px-ink),
+    -4px 0 0 0 var(--px-ink),
+    4px 0 0 0 var(--px-ink),
+    inset 0 0 0 4px #7a4a26,
+    inset 0 0 0 8px #9c6436,
+    8px 8px 0 0 rgba(43, 29, 18, 0.35);
+}
+
+.px-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 12px 8px;
+  background: #8a2a2c;
+  border-bottom: 4px solid var(--px-ink);
+  box-shadow: inset 0 -4px 0 #6a1d1f, inset 0 4px 0 #a8403f;
+}
+
+.px-bar h2 {
+  margin: 0;
+  font-family: 'Pixelify Sans', 'VT323', monospace;
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f3e6cc;
+  text-shadow: 3px 3px 0 var(--px-ink);
+}
+
+.px-body {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 14px;
+  padding: 14px 16px 18px;
+}
+
+@container (max-width: 520px) {
+  .px-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.px-label {
+  display: inline-block;
+  margin: 0 0 10px;
+  padding: 2px 8px;
+  font-family: 'Pixelify Sans', 'VT323', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #f3e6cc;
+  background: #4e6b47;
+  box-shadow: 0 -3px 0 0 var(--px-ink), 0 3px 0 0 var(--px-ink), -3px 0 0 0 var(--px-ink), 3px 0 0 0 var(--px-ink);
+}
+
+.px ul {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* pinned paper notices */
+.px-note {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding: 14px 10px 8px;
+  background: #f3e6cc;
+  box-shadow: 0 -3px 0 0 var(--px-ink), 0 3px 0 0 var(--px-ink), -3px 0 0 0 var(--px-ink), 3px 0 0 0 var(--px-ink), 6px 6px 0 0 rgba(43, 29, 18, 0.3);
+  rotate: var(--tilt, 0deg);
+}
+
+.px-note strong {
+  font-family: 'Pixelify Sans', 'VT323', monospace;
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.px-note time,
+.px-item span {
+  font-size: 1rem;
+  color: #6a4a36;
+}
+
+.px-pin {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  translate: -50% 0;
+}
+
+/* inventory slots for new arrivals */
+.px-recent li {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  background: rgba(243, 230, 204, 0.92);
+  box-shadow: 0 -3px 0 0 var(--px-ink), 0 3px 0 0 var(--px-ink), -3px 0 0 0 var(--px-ink), 3px 0 0 0 var(--px-ink);
+}
+
+.px-slot {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  background: #4e6b47;
+  box-shadow: inset 3px 3px 0 #3a5235, inset -3px -3px 0 #6c8d5d;
+}
+
+.px-item {
+  display: grid;
+  min-width: 0;
+}
+
+.px-item a {
+  font-size: 1.25rem;
+  color: var(--px-ink);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.px-item a:hover,
+.px-item a:focus-visible {
+  color: #8a2a2c;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+.px-new {
+  padding: 2px 6px 1px;
+  font-family: 'Pixelify Sans', 'VT323', monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--px-ink);
+  background: #d9a93e;
+  box-shadow: 0 -2px 0 0 var(--px-ink), 0 2px 0 0 var(--px-ink), -2px 0 0 0 var(--px-ink), 2px 0 0 0 var(--px-ink);
+  animation: px-blink 1.6s steps(1, end) 3;
+}
+
+@keyframes px-blink {
+  50% {
+    background: #f3e6cc;
+  }
+}
+
+.px-quiet {
+  margin: 0;
+  padding: 6px 8px;
+  background: rgba(243, 230, 204, 0.92);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .px-new {
+    animation: none;
+  }
+}

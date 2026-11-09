@@ -1,0 +1,49 @@
+.bp {
+  min-height: 100dvh;
+  padding: 32px var(--gutter) 64px;
+  background:
+    var(--paper-specks),
+    var(--paper-tooth),
+    radial-gradient(140% 90% at 40% 20%, #f2ebdc, #e6dcc8);
+  background-size: 360px, 260px, auto;
+  background-blend-mode: multiply, multiply, normal;
+}
+
+.bp-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  color: var(--burgundy);
+}
+
+.bp-lead {
+  margin: 4px 0 28px;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.bp-row + .bp-row {
+  margin-top: 44px;
+}
+
+.bp-name {
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--ink);
+}
+
+.bp-frames {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: 32px;
+}
+
+.bp-slot {
+  width: min(100%, 440px);
+}
+
+.bp-wide {
+  width: min(100%, 780px);
+}
