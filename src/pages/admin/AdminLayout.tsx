@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { ToastProvider } from './ui';
 import '../specialty/specialty.css';
 import './admin.css';
 
@@ -24,6 +25,9 @@ export interface AdminCounts {
 
 const SECTIONS: Array<{ to: string; label: string; end?: boolean; count?: keyof AdminCounts }> = [
   { to: '/admin', label: 'Overview', end: true },
+  { to: '/admin/examiners', label: 'Examiners' },
+  { to: '/admin/topics', label: 'Topics' },
+  { to: '/admin/specialties', label: 'Specialties' },
   { to: '/admin/registrations', label: 'Registrations', count: 'pending' },
 ];
 
@@ -72,7 +76,9 @@ export function AdminLayout() {
           </ul>
         </nav>
         <main id="main" className="archive__main">
-          <Outlet context={{ refreshCounts } satisfies AdminOutletContext} />
+          <ToastProvider>
+            <Outlet context={{ refreshCounts } satisfies AdminOutletContext} />
+          </ToastProvider>
         </main>
       </div>
     </div>
