@@ -4,156 +4,186 @@
 --  It pretends to be each kind of visitor and tries what they should and shouldn't be able to do,
 --  straight against the database (no website involved). Every change it makes is undone.
 --
---  Before running, create three accounts on the website and confirm their emails:
---    • one you leave PENDING, • one you APPROVE in the admin area, • your ADMIN account.
---  Put their emails in the three lines marked ▶ below. Every row of the result should say ok = true.
+--  Fill in the emails on the three lines marked ▶ (the approved one is optional: leave it as is
+--  to skip those checks). Every row of the result should say ok = true.
 -- ════════════════════════════════════════════════════════════════════════════════════════════
 
-drop table if exists pg_temp.who, pg_temp.rls_results;
-create temp table who (label text primary key, id uuid);
-create temp table rls_results (n serial, check_name text, expected text, actual text, ok boolean);
-
-insert into who select 'pending',  id from auth.users where email = 'PENDING-STUDENT@example.com';   -- ▶
-insert into who select 'approved', id from auth.users where email = 'APPROVED-STUDENT@example.com';  -- ▶
-insert into who select 'admin',    id from auth.users where email = 'YOUR-ADMIN-EMAIL@example.com';  -- ▶
-
-grant select on who to anon, authenticated;
-grant select, insert on rls_results to anon, authenticated;
-grant usage on sequence rls_results_n_seq to anon, authenticated;
+select set_config('test.pending',  coalesce((select id::text from auth.users where email = 'PENDING-STUDENT@example.com'), ''), false);   -- ▶ pending account
+select set_config('test.admin',    coalesce((select id::text from auth.users where email = 'YOUR-ADMIN-EMAIL@example.com'), ''), false);  -- ▶ your admin account
+select set_config('test.approved', coalesce((select id::text from auth.users where email = 'APPROVED-STUDENT@example.com'), ''), false); -- ▶ optional
+select set_config('test.results', '', false);
 
 do $$ begin
-  if (select count(*) from who) < 3 then
-    raise exception 'Fill in all three email addresses at the top first (one or more were not found).';
+  if current_setting('test.pending') = '' or current_setting('test.admin') = '' then
+    raise exception 'Put the pending and admin email addresses on the lines marked ▶ first (one was not found).';
   end if;
 end $$;
 
+-- results are collected in a session setting (test.results), so they survive switching roles
+
 -- ── a visitor who is not signed in ──
+select set_config('request.jwt.claims', '', false);
 set role anon;
 do $$
 declare n int;
 begin
   select count(*) into n from public.questions where access <> 'public';
-  insert into rls_results (check_name, expected, actual, ok) values ('anon: read protected questions', '0 rows', n || ' rows', n = 0);
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: read protected questions', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
   select count(*) into n from public.doctors where access <> 'public';
-  insert into rls_results (check_name, expected, actual, ok) values ('anon: read protected doctors', '0 rows', n || ' rows', n = 0);
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: read protected doctors', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
   begin
     select count(*) into n from public.profiles;
-    insert into rls_results (check_name, expected, actual, ok) values ('anon: read accounts', 'refused', n || ' rows', false);
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: read accounts', 'refused', n || ' rows', coalesce((false)::text, 'skipped')) || E'\n', false);
   exception when insufficient_privilege then
-    insert into rls_results (check_name, expected, actual, ok) values ('anon: read accounts', 'refused', 'refused', true);
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: read accounts', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+  end;
+  begin
+    perform public.set_account_status(current_setting('test.pending')::uuid, 'approved');
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: approve an account', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+  exception when others then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: approve an account', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
   end;
 end $$;
 reset role;
 
--- ── a PENDING student ──
-select set_config('request.jwt.claims', json_build_object('sub', (select id from who where label = 'pending'), 'role', 'authenticated')::text, false);
+-- ── the PENDING student ──
+select set_config('request.jwt.claims', json_build_object('sub', current_setting('test.pending'), 'role', 'authenticated')::text, false);
 set role authenticated;
 do $$
 declare n int;
 begin
   select count(*) into n from public.questions where access <> 'public';
-  insert into rls_results (check_name, expected, actual, ok) values ('pending: read protected questions', '0 rows', n || ' rows', n = 0);
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: read protected questions', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
   select count(*) into n from public.doctors where access <> 'public';
-  insert into rls_results (check_name, expected, actual, ok) values ('pending: read protected doctors', '0 rows', n || ' rows', n = 0);
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: read protected doctors', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
   select count(*) into n from public.profiles;
-  insert into rls_results (check_name, expected, actual, ok) values ('pending: sees only own account', '1 row', n || ' rows', n = 1);
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: sees only own account', '1 row', n || ' rows', coalesce((n = 1)::text, 'skipped')) || E'\n', false);
+  select count(*) into n from public.admins;
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: sees the admins list', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
 
   begin
     update public.profiles set status = 'approved' where id = (select auth.uid());
     get diagnostics n = row_count;
-    insert into rls_results (check_name, expected, actual, ok) values ('pending: approve self by update', 'refused', n || ' rows changed', n = 0);
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: approve self by editing account', 'refused', n || ' rows changed', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
   exception when insufficient_privilege then
-    insert into rls_results (check_name, expected, actual, ok) values ('pending: approve self by update', 'refused', 'refused', true);
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: approve self by editing account', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
   end;
 
   begin
     perform public.set_account_status((select auth.uid()), 'approved');
-    insert into rls_results (check_name, expected, actual, ok) values ('pending: approve self by function', 'refused', 'allowed', false);
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: approve self by function', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
   exception when others then
-    insert into rls_results (check_name, expected, actual, ok) values ('pending: approve self by function', 'refused', 'refused', true);
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: approve self by function', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
   end;
 
   begin
     insert into public.admins (user_id) values ((select auth.uid()));
-    insert into rls_results (check_name, expected, actual, ok) values ('pending: make self admin', 'refused', 'allowed', false);
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: make self admin', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
   exception when others then
-    insert into rls_results (check_name, expected, actual, ok) values ('pending: make self admin', 'refused', 'refused', true);
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: make self admin', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
   end;
 
   begin
-    insert into public.question_progress (question_key, note) values ('surgery/test', 'x');
-    insert into rls_results (check_name, expected, actual, ok) values ('pending: save study notes', 'refused', 'allowed', false);
+    insert into public.question_progress (question_key, note) values ('surgery/security-test', 'x');
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: save study notes', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
   exception when others then
-    insert into rls_results (check_name, expected, actual, ok) values ('pending: save study notes', 'refused', 'refused', true);
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: save study notes', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
   end;
+
+  select count(*) into n from public.question_progress;
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: read study notes', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
 end $$;
 reset role;
 
--- ── an APPROVED student ──
-select set_config('request.jwt.claims', json_build_object('sub', (select id from who where label = 'approved'), 'role', 'authenticated')::text, false);
+-- ── an APPROVED student (optional) ──
+select set_config('request.jwt.claims',
+  case when current_setting('test.approved') = '' then ''
+       else json_build_object('sub', current_setting('test.approved'), 'role', 'authenticated')::text end, false);
 set role authenticated;
 do $$
 declare n int;
 begin
+  if current_setting('test.approved') = '' then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: (no approved test account given)', '-', '-', coalesce((null)::text, 'skipped')) || E'\n', false);
+    return;
+  end if;
+
   select count(*) into n from public.doctors;
-  insert into rls_results (check_name, expected, actual, ok) values ('approved: read doctors', 'all rows', n || ' rows', n > 0);
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: read doctors', 'all rows', n || ' rows', coalesce((n > 0)::text, 'skipped')) || E'\n', false);
   select count(*) into n from public.profiles;
-  insert into rls_results (check_name, expected, actual, ok) values ('approved: sees only own account', '1 row', n || ' rows', n = 1);
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: sees only own account', '1 row', n || ' rows', coalesce((n = 1)::text, 'skipped')) || E'\n', false);
   select count(*) into n from public.question_progress where user_id <> (select auth.uid());
-  insert into rls_results (check_name, expected, actual, ok) values ('approved: read other students'' notes', '0 rows', n || ' rows', n = 0);
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: read other students'' notes', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
 
   begin
-    insert into public.question_progress (question_key, note) values ('surgery/test', 'x');
+    insert into public.question_progress (question_key, note) values ('surgery/security-test', 'x');
     raise exception using errcode = 'U0001';  -- undo the test write
   exception
     when sqlstate 'U0001' then
-      insert into rls_results (check_name, expected, actual, ok) values ('approved: save own study notes', 'allowed', 'allowed', true);
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: save own study notes', 'allowed', 'allowed', coalesce((true)::text, 'skipped')) || E'\n', false);
     when others then
-      insert into rls_results (check_name, expected, actual, ok) values ('approved: save own study notes', 'allowed', sqlerrm, false);
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: save own study notes', 'allowed', sqlerrm, coalesce((false)::text, 'skipped')) || E'\n', false);
   end;
 
   begin
-    insert into public.question_progress (user_id, question_key) values ((select id from who where label = 'pending'), 'surgery/test');
-    insert into rls_results (check_name, expected, actual, ok) values ('approved: write another student''s notes', 'refused', 'allowed', false);
+    insert into public.question_progress (user_id, question_key) values (current_setting('test.pending')::uuid, 'surgery/security-test');
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: write another student''s notes', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
   exception when others then
-    insert into rls_results (check_name, expected, actual, ok) values ('approved: write another student''s notes', 'refused', 'refused', true);
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: write another student''s notes', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
   end;
 
   begin
-    perform public.set_account_status((select id from who where label = 'pending'), 'approved');
-    insert into rls_results (check_name, expected, actual, ok) values ('approved: approve someone else', 'refused', 'allowed', false);
+    perform public.set_account_status(current_setting('test.pending')::uuid, 'approved');
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: approve someone else', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
   exception when others then
-    insert into rls_results (check_name, expected, actual, ok) values ('approved: approve someone else', 'refused', 'refused', true);
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: approve someone else', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
   end;
 end $$;
 reset role;
 
 -- ── the ADMIN ──
-select set_config('request.jwt.claims', json_build_object('sub', (select id from who where label = 'admin'), 'role', 'authenticated')::text, false);
+select set_config('request.jwt.claims', json_build_object('sub', current_setting('test.admin'), 'role', 'authenticated')::text, false);
 set role authenticated;
 do $$
 declare n int;
 begin
   select count(*) into n from public.profiles;
-  insert into rls_results (check_name, expected, actual, ok) values ('admin: sees all accounts', 'more than 1', n || ' rows', n > 1);
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: sees all accounts', 'more than 1', n || ' rows', coalesce((n > 1)::text, 'skipped')) || E'\n', false);
+  select count(*) into n from public.doctors;
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: read doctors', 'all rows', n || ' rows', coalesce((n > 0)::text, 'skipped')) || E'\n', false);
 
   begin
     perform public.set_account_status((select auth.uid()), 'rejected');
-    insert into rls_results (check_name, expected, actual, ok) values ('admin: change own status', 'refused', 'allowed', false);
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: change own status', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
   exception when others then
-    insert into rls_results (check_name, expected, actual, ok) values ('admin: change own status', 'refused', 'refused', true);
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: change own status', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
   end;
 
   begin
-    perform public.set_account_status((select id from who where label = 'approved'), 'rejected', 'test');
+    perform public.set_account_status(current_setting('test.pending')::uuid, 'rejected', 'security test');
     raise exception using errcode = 'U0001';  -- undo
   exception
     when sqlstate 'U0001' then
-      insert into rls_results (check_name, expected, actual, ok) values ('admin: revoke a student', 'allowed', 'allowed', true);
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: reject a student', 'allowed', 'allowed', coalesce((true)::text, 'skipped')) || E'\n', false);
     when others then
-      insert into rls_results (check_name, expected, actual, ok) values ('admin: revoke a student', 'allowed', sqlerrm, false);
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: reject a student', 'allowed', sqlerrm, coalesce((false)::text, 'skipped')) || E'\n', false);
+  end;
+
+  begin
+    update public.profiles set status = 'approved' where id = current_setting('test.pending')::uuid;
+    get diagnostics n = row_count;
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: edit accounts directly (must use the function)', 'refused', n || ' rows changed', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
+  exception when insufficient_privilege then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: edit accounts directly (must use the function)', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
   end;
 end $$;
 reset role;
+select set_config('request.jwt.claims', '', false);
 
-select check_name, expected, actual, ok from rls_results order by n;
+-- ── results ──
+select split_part(line, '|', 1) as check_name,
+       split_part(line, '|', 2) as expected,
+       split_part(line, '|', 3) as actual,
+       split_part(line, '|', 4) as ok
+  from string_to_table(rtrim(current_setting('test.results'), E'\n'), E'\n') with ordinality as t(line, n)
+ order by n;

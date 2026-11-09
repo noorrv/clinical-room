@@ -78,14 +78,14 @@ language plpgsql security definer
 set search_path = ''
 as $$
 declare
-  name text := left(btrim(coalesce(new.raw_user_meta_data ->> 'full_name', '')), 100);
+  display_name text := left(btrim(coalesce(new.raw_user_meta_data ->> 'full_name', '')), 100);
 begin
-  if char_length(name) < 2 then
-    name := 'Unnamed student';
+  if char_length(display_name) < 2 then
+    display_name := 'Unnamed student';
   end if;
   -- status is not taken from anything the visitor sent: every account starts pending.
   insert into public.profiles (id, full_name, email, email_confirmed_at, status)
-  values (new.id, name, coalesce(new.email, ''), new.email_confirmed_at, 'pending');
+  values (new.id, display_name, coalesce(new.email, ''), new.email_confirmed_at, 'pending');
   return new;
 end;
 $$;
