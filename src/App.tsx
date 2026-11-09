@@ -11,6 +11,7 @@ import { SpecialtyRoutes } from './pages/specialty/SpecialtyRoutes';
 import { StudySync } from './study/sync';
 
 // development-only comparison page; dropped from the built site
+const StreakPreview = import.meta.env.DEV ? lazy(() => import('./pages/StreakPreview').then((m) => ({ default: m.StreakPreview }))) : null;
 const BoardPreview = import.meta.env.DEV ? lazy(() => import('./pages/BoardPreview').then((m) => ({ default: m.BoardPreview }))) : null;
 
 /** New page: start at the top. A #hash: scroll to that section once it has rendered. */
@@ -64,6 +65,16 @@ export default function App() {
               </RequireAdmin>
             }
           />
+          {StreakPreview && (
+            <Route
+              path="/_preview/streak"
+              element={
+                <Suspense fallback={null}>
+                  <StreakPreview />
+                </Suspense>
+              }
+            />
+          )}
           {BoardPreview && (
             <Route
               path="/_preview/board"

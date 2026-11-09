@@ -55,6 +55,8 @@ export interface MockResult {
 
 export interface StudyState {
   version: 1;
+  /** local date (YYYY-MM-DD) → questions the student actually worked on that day (for the streak) */
+  days: Record<string, string[]>;
   questions: Record<string, QuestionRecord>;
   recent: Array<{ key: string; at: number }>;
   sessions: Session[];
@@ -64,7 +66,7 @@ export interface StudyState {
 /** The old single-browser record, from before accounts. Moved into the first account that signs in. */
 export const LEGACY_KEY = 'clinical-room:study:v1';
 const SESSION_GAP = 30 * 60 * 1000;
-export const EMPTY: StudyState = { version: 1, questions: {}, recent: [], sessions: [], mocks: [] };
+export const EMPTY: StudyState = { version: 1, days: {}, questions: {}, recent: [], sessions: [], mocks: [] };
 
 /** localStorage key of the signed-in account's copy, or null when nobody is attached. */
 let storageKey: string | null = null;
@@ -85,6 +87,7 @@ const listeners = new Set<() => void>();
 
 /** What changed since the last save to the server. */
 export const dirty = {
+  days: new Set<string>(),
   questions: new Set<string>(),
   recent: new Set<string>(),
   sessions: new Set<string>(),
@@ -110,6 +113,7 @@ export function switchRecord(userId: string | null, initial: StudyState, saveDir
   storageKey = userId ? `${LEGACY_KEY}:${userId}` : null;
   onDirty = saveDirty;
   if (!userId) {
+    dirty.days.clear();
     dirty.questions.clear();
     dirty.recent.clear();
     dirty.sessions.clear();
@@ -123,6 +127,7 @@ export function switchRecord(userId: string | null, initial: StudyState, saveDir
 export function switchToGuestRecord() {
   storageKey = LEGACY_KEY;
   onDirty = null;
+  dirty.days.clear();
   dirty.questions.clear();
   dirty.recent.clear();
   dirty.sessions.clear();
@@ -155,6 +160,26 @@ export function useStudy(): StudyState {
 
 export const record = (s: StudyState, key: string): QuestionRecord =>
   s.questions[key] ?? { status: 'not-started', bookmarked: false, note: '', updatedAt: 0 };
+
+/** The student's own calendar day for a moment, as YYYY-MM-DD (local time, not UTC). */
+export function localDay(ms: number = Date.now()): string {
+  const d = new Date(ms);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/** Count a question toward today's streak goal (once per question per day). */
+function withDay(s: StudyState, key: string, now: number): Pick<StudyState, 'days'> {
+  const day = localDay(now);
+  const today = s.days[day] ?? [];
+  if (today.includes(key)) return { days: s.days };
+  dirty.days.add(day);
+  // keep roughly a year and a bit of history
+  const kept = Object.keys(s.days).sort().slice(-420);
+  const days = Object.fromEntries(kept.map((d) => [d, s.days[d]]));
+  days[day] = [...today, key];
+  return { days };
+}
 
 const uid = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 
@@ -207,9 +232,11 @@ export const study = {
     commit({ ...state, recent, sessions, questions });
   },
 
+  /** Marking a status by hand (not the automatic "in progress" on opening) counts toward the streak. */
   setStatus(key: string, status: Status) {
     setRecord(key, { status }, (s, now) => ({
       sessions: withSession(s, now, (c) => ({ ...c, changes: [...c.changes, { key, to: status, at: now }] })),
+      ...(status !== 'not-started' ? withDay(s, key, now) : {}),
     }));
   },
 
@@ -217,8 +244,9 @@ export const study = {
     setRecord(key, { bookmarked: !record(state, key).bookmarked });
   },
 
+  /** Writing a note counts toward the streak too. */
   setNote(key: string, note: string) {
-    setRecord(key, { note, noteUpdatedAt: Date.now() });
+    setRecord(key, { note, noteUpdatedAt: Date.now() }, (s, now) => (note.trim() ? withDay(s, key, now) : {}));
   },
 
   saveMock(result: Omit<MockResult, 'id' | 'at'>) {

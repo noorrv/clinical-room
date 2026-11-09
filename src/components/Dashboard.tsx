@@ -1,14 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../auth/AuthProvider';
+import { useStudy } from '../study/store';
+import { computeStreak, type DayState, type StreakInfo } from '../study/streak';
+import { LilyPlant, MiniLily } from './art/Lily';
 import {
   continueStudying,
   progressByRange,
   recentlyAdded,
-  streakDays,
   upcomingExams,
   type ProgressRange,
 } from '../data/homepage';
 import { formatClock, spokenDuration, useStudyTimer } from '../hooks/useStudyTimer';
-import { AnatomicalHeart, LanternBooks, SnowyVillage } from './art/WidgetArt';
+import { AnatomicalHeart, LanternBooks } from './art/WidgetArt';
 import { ArrowRight, Calendar, ChevronDown, Document, Pause, Play, Sparkle, Stop } from './Icons';
 import './Dashboard.css';
 
@@ -141,20 +145,80 @@ export function ProgressCard() {
   );
 }
 
+const DAY_WORD: Record<DayState, string> = {
+  met: 'goal met',
+  forgiven: 'missed, forgiven',
+  missed: 'missed',
+  today: 'today, in progress',
+  future: 'still to come',
+  before: 'before you joined',
+};
+
+/** The streak: days in a row with 5 questions studied, and a lily that grows with today's work. */
 export function StreakCard() {
+  const { session, profile, isAdmin } = useAuth();
+  const st = useStudy();
+  const approved = Boolean(session) && (isAdmin || profile?.status === 'approved');
+  const info = useMemo(() => computeStreak(st.days, profile?.created_at ?? null), [st.days, profile?.created_at]);
+
+  if (!approved) {
+    return (
+      <section className="streak streak--invite" aria-labelledby="streak-title">
+        <div className="streak__plant" aria-hidden>
+          <LilyPlant stage={0} />
+        </div>
+        <div className="streak__text">
+          <h2 id="streak-title" className="streak__title">
+            Study streak
+          </h2>
+          <p className="streak__invite">Study five questions a day and watch a lily grow.</p>
+          <Link className="streak__link" to={session ? '/account' : '/register'}>
+            {session ? 'See your account' : 'Start your streak'}
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  return <StreakView info={info} />;
+}
+
+/** The streak card's face, given the numbers (also used by the dev preview). */
+export function StreakView({ info }: { info: StreakInfo }) {
+  const stage = Math.min(info.today, 5) as 0 | 1 | 2 | 3 | 4 | 5;
+  const wilted = info.today === 0 && info.yesterday === 'missed';
+  const done = info.today >= info.goal;
+
   return (
     <section className="streak" aria-labelledby="streak-title">
-      <div className="streak__art">
-        <SnowyVillage />
+      <div className="streak__plant" aria-hidden>
+        <LilyPlant stage={stage} wilted={wilted} />
       </div>
-      <h2 id="streak-title" className="streak__title">
-        Study Streak
-      </h2>
-      <p className="streak__days">
-        {streakDays} <span>days</span>
-      </p>
-      <Calendar size={28} className="streak__icon" />
-      <Sparkle className="streak__spark" size={18} />
+      <div className="streak__text">
+        <h2 id="streak-title" className="streak__title">
+          Study streak
+        </h2>
+        <p className="streak__days">
+          {info.current} <span>{info.current === 1 ? 'day' : 'days'}</span>
+        </p>
+        <p className="streak__today">
+          <span className="streak__pips" aria-hidden>
+            {Array.from({ length: info.goal }, (_, i) => (
+              <i key={i} className={i < info.today ? 'is-on' : undefined} />
+            ))}
+          </span>
+          {done ? 'Today’s five are done' : `${info.today} of ${info.goal} today`}
+        </p>
+        <p className="streak__best">Best: {info.best} {info.best === 1 ? 'day' : 'days'}</p>
+      </div>
+      <ol className="streak__week" aria-label="This week">
+        {info.week.map((d) => (
+          <li key={d.day} aria-label={`${new Date(d.day + 'T12:00').toLocaleDateString(undefined, { weekday: 'long' })}: ${DAY_WORD[d.state]}`}>
+            <MiniLily state={d.state} />
+            <span aria-hidden>{d.label}</span>
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }

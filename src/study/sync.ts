@@ -34,6 +34,16 @@ let flushing = false;
 /* ── merging two copies of a record: the newer side wins, nothing is lost ── */
 
 function merge(local: StudyState, other: StudyState, markLocalWins: boolean): StudyState {
+  const days: Record<string, string[]> = { ...(other.days ?? {}) };
+  for (const [day, keys] of Object.entries(local.days ?? {})) {
+    const have = new Set(days[day] ?? []);
+    const extra = keys.filter((k) => !have.has(k));
+    if (extra.length) {
+      days[day] = [...(days[day] ?? []), ...extra];
+      if (markLocalWins) dirty.days.add(day);
+    }
+  }
+
   const questions = { ...other.questions };
   for (const [k, q] of Object.entries(local.questions)) {
     const o = other.questions[k];
@@ -71,13 +81,14 @@ function merge(local: StudyState, other: StudyState, markLocalWins: boolean): St
   }
   const mocks = [...mockMap.values()].sort((a, b) => b.at - a.at).slice(0, 50);
 
-  return { version: 1, questions, recent, sessions, mocks };
+  return { version: 1, days, questions, recent, sessions, mocks };
 }
 
 /* ── reading the server copy ── */
 
 async function pull(): Promise<StudyState> {
-  const [qp, rv, ss, mr] = await Promise.all([
+  const [sd, qp, rv, ss, mr] = await Promise.all([
+    supabase.from('study_days').select('day, question_keys').order('day', { ascending: false }).limit(420),
     supabase.from('question_progress').select('question_key, status, bookmarked, note, note_updated_at, updated_at'),
     supabase.from('recent_views').select('question_key, viewed_at').order('viewed_at', { ascending: false }).limit(40),
     supabase.from('study_sessions').select('id, started_at, last_at, viewed, changes').order('started_at', { ascending: false }).limit(60),
@@ -85,6 +96,10 @@ async function pull(): Promise<StudyState> {
   ]);
   const failed = [qp, rv, ss, mr].find((r) => r.error);
   if (failed?.error) throw new Error(failed.error.message);
+
+  // study_days arrives in a later migration: until it exists, streak days stay on this device
+  const days: Record<string, string[]> = {};
+  for (const r of sd.error ? [] : sd.data ?? []) days[r.day] = r.question_keys ?? [];
 
   const questions: Record<string, QuestionRecord> = {};
   for (const r of qp.data ?? []) {
@@ -98,6 +113,7 @@ async function pull(): Promise<StudyState> {
   }
   return {
     version: 1,
+    days,
     questions,
     recent: (rv.data ?? []).map((r) => ({ key: r.question_key, at: ms(r.viewed_at) })),
     sessions: (ss.data ?? []).map(
@@ -122,15 +138,19 @@ async function flush() {
     set.clear();
     return keys as T[];
   };
+  const dKeys = take<string>(dirty.days);
   const qKeys = take<string>(dirty.questions);
   const rKeys = take<string>(dirty.recent);
   const sIds = take<string>(dirty.sessions);
   const mIds = take<string>(dirty.mocks);
-  if (!qKeys.length && !rKeys.length && !sIds.length && !mIds.length) return;
+  if (!dKeys.length && !qKeys.length && !rKeys.length && !sIds.length && !mIds.length) return;
 
   flushing = true;
   const user = attached;
   const jobs: Array<PromiseLike<{ error: unknown }>> = [];
+
+  const dRows = dKeys.filter((d) => s.days[d]).map((d) => ({ day: d, question_keys: s.days[d] }));
+  if (dRows.length) jobs.push(supabase.from('study_days').upsert(dRows, { onConflict: 'user_id,day' }));
 
   const qRows = qKeys.flatMap((k) => {
     const q = s.questions[k];
@@ -162,12 +182,13 @@ async function flush() {
   flushing = false;
   if (results.some((r) => r.error) && attached === user) {
     // keep the changes and try again shortly (offline, or the session was refreshing)
+    dKeys.forEach((k) => dirty.days.add(k));
     qKeys.forEach((k) => dirty.questions.add(k));
     rKeys.forEach((k) => dirty.recent.add(k));
     sIds.forEach((k) => dirty.sessions.add(k));
     mIds.forEach((k) => dirty.mocks.add(k));
     scheduleFlush(10_000);
-  } else if (dirty.questions.size || dirty.recent.size || dirty.sessions.size || dirty.mocks.size) {
+  } else if (dirty.days.size || dirty.questions.size || dirty.recent.size || dirty.sessions.size || dirty.mocks.size) {
     scheduleFlush();
   }
 }
@@ -175,12 +196,13 @@ async function flush() {
 async function clearServerCopy() {
   if (!attached) return;
   const u = attached;
+  dirty.days.clear();
   dirty.questions.clear();
   dirty.recent.clear();
   dirty.sessions.clear();
   dirty.mocks.clear();
   await Promise.all(
-    ['question_progress', 'recent_views', 'study_sessions', 'mock_results'].map((t) => supabase.from(t).delete().eq('user_id', u)),
+    ['study_days', 'question_progress', 'recent_views', 'study_sessions', 'mock_results'].map((t) => supabase.from(t).delete().eq('user_id', u)),
   );
 }
 
@@ -193,7 +215,7 @@ async function attach(userId: string) {
   // this account's copy in this browser, plus anything saved here before accounts existed
   let local = loadFrom(`${LEGACY_KEY}:${userId}`);
   const legacy = loadFrom(LEGACY_KEY);
-  const hadLegacy = Object.keys(legacy.questions).length + legacy.recent.length + legacy.sessions.length + legacy.mocks.length > 0;
+  const hadLegacy = Object.keys(legacy.days ?? {}).length + Object.keys(legacy.questions).length + legacy.recent.length + legacy.sessions.length + legacy.mocks.length > 0;
   if (hadLegacy) local = merge(legacy, local, false);
   switchRecord(userId, local, () => scheduleFlush());
   onReset(() => void clearServerCopy());
@@ -215,6 +237,7 @@ async function attach(userId: string) {
     // offline or a hiccup: keep working locally and send everything next time
     if (attached === userId) {
       const s = currentState();
+      Object.keys(s.days).forEach((d) => dirty.days.add(d));
       Object.keys(s.questions).forEach((k) => dirty.questions.add(k));
       s.recent.forEach((r) => dirty.recent.add(r.key));
       s.sessions.forEach((x) => dirty.sessions.add(x.id));
