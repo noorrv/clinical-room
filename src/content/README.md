@@ -1,56 +1,58 @@
 # Adding content to The Clinical Room
 
-Every specialty dashboard, the search, the tracker and Mock OSCE are generated from the four files
-in this folder: `medicine.ts`, `surgery.ts`, `obgyn.ts`, `paediatrics.ts`. They are empty until
-real content is added. Nothing is invented.
+The study material lives in **Supabase**, not in this folder, so it is only ever sent to approved
+accounts. Edit it in Supabase → Table Editor. The dashboards, search, tracker and Mock OSCE are
+built from these tables automatically. Nothing is invented: empty tables mean "not provided yet".
 
-## What each file holds
+The four `.ts` files here are deliberately empty. Don't put questions or answers back in them:
+anything in the code is downloadable by every visitor.
 
-```ts
-const content: SpecialtyContent = {
-  id: 'surgery',
-  description: 'One or two sentences shown under the title on the dashboard.',
-  doctors: [
-    { id: 'dr-hassan', name: 'Dr. Hassan', role: 'Consultant Surgeon', note: 'Optional: examiner style' },
-  ],
-  topics: [
-    { id: 'acute-abdomen', name: 'Acute abdomen' },
-  ],
-  questions: [
-    {
-      id: 'appendicitis-station',          // unique in this file; used in the page address
-      title: 'Right iliac fossa pain',      // shown in lists and search
-      type: 'station',                      // station | case | viva | procedure | other
-      topicIds: ['acute-abdomen'],          // one or more topic ids from above
-      doctorIds: ['dr-hassan'],             // one or more doctor ids from above
+## The tables
 
-      // Every field below is optional. Only filled ones are shown.
-      scenario: 'The clinical scenario as given to the candidate.',
-      question: 'The task or question.',
-      modelAnswer: 'Model answer.',
-      history: 'History points.',
-      examination: 'Examination points.',
-      investigations: 'Investigations.',
-      management: 'Management.',
-      keyPoints: ['Important clinical point', 'Another point'],
-      examinerExpects: ['What the examiner expects, one item each'], // also the Mock OSCE checklist
-      steps: ['Step one', 'Step two'],      // for procedures
-      minutes: 7,                           // station time for Mock OSCE
-      source: 'Dr. Hassan, 2025',
-    },
-  ],
-};
-```
+| Table | One row per | Key columns |
+|---|---|---|
+| `specialties` | specialty (already filled) | `id`, `description` (shown under the dashboard title) |
+| `doctors` | examiner | `specialty_id`, `id` (letters, numbers, dashes), `name`, optional `role`, `note`, `sort` |
+| `topics` | topic | `specialty_id`, `id`, `name`, optional `description`, `sort` |
+| `questions` | question | see below |
+| `question_doctors` | link | `specialty_id`, `question_id`, `doctor_id` |
+| `question_topics` | link | `specialty_id`, `question_id`, `topic_id` |
 
-Line breaks in long text are kept. A question can belong to several topics and doctors.
+`specialty_id` is one of `medicine`, `surgery`, `obgyn`, `paediatrics`.
+
+### questions
+
+- `id`: unique within its specialty; used in the page address (letters, numbers, dashes).
+- `title`: shown in lists and search.
+- `type`: `station`, `case`, `viva`, `procedure` or `other`.
+- Optional text: `scenario`, `question`, `model_answer`, `history`, `examination`,
+  `investigations`, `management`, `source`.
+- Optional lists (one item per line in the editor's array field): `key_points`,
+  `examiner_expects` (also the Mock OSCE checklist), `steps` (for procedures).
+- `minutes`: station time for Mock OSCE.
+- `sort`: order within the specialty (lower first).
+
+Only filled sections are shown. Link a question to its doctors and topics with rows in
+`question_doctors` and `question_topics`; a question can have several of each.
+
+## Who can see what
+
+Every content table has an `access` column:
+
+- `approved` (default): only approved students and the administrator can read the row.
+- `public`: anyone can read it, signed in or not.
+
+The database enforces this (Row Level Security), whatever the website does. Today every study
+page also asks for an approved account; making a page public needs a small change to its route
+as well, so ask when you're ready to open something up.
 
 ## Preview before content exists
 
 While running `npm run dev`, add `?preview=placeholders` to any dashboard address to fill empty
-specialties with clearly labelled placeholder text. `?preview=off` turns it off. The preview never
-runs on the built site.
+specialties with clearly labelled placeholder text (your real doctors are kept). `?preview=off`
+turns it off. The preview never runs on the built site.
 
 ## Adding a specialty later
 
-Add its card to `src/data/homepage.ts`, a new file here, and one line each in `index.ts`
-(`files` and `identities`). The dashboard, routes, search and tracker pick it up automatically.
+Add its card to `src/data/homepage.ts`, an empty file here, one line each in `index.ts`
+(`files` and `identities`), and allow its id in the `specialties` table's check.

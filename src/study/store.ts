@@ -2,9 +2,10 @@ import { useSyncExternalStore } from 'react';
 import type { SpecialtyId } from '../content/types';
 
 /*
-  The student's study record, kept in this browser (localStorage) and shared by every page.
-  Questions are keyed "specialty/questionId", so one record covers all specialties and each
-  view can filter to one. The shape is plain JSON so it can move to a Supabase table later.
+  The student's study record, shared by every page. It lives in memory and in this browser
+  (localStorage, one copy per account) so pages respond instantly, and every change is also
+  saved to Supabase in the background (see sync.ts), so progress follows the student anywhere.
+  Questions are keyed "specialty/questionId", so one record covers all specialties.
 */
 
 export type Status = 'not-started' | 'in-progress' | 'needs-revision' | 'mastered';
@@ -60,13 +61,17 @@ export interface StudyState {
   mocks: MockResult[];
 }
 
-const KEY = 'clinical-room:study:v1';
+/** The old single-browser record, from before accounts. Moved into the first account that signs in. */
+export const LEGACY_KEY = 'clinical-room:study:v1';
 const SESSION_GAP = 30 * 60 * 1000;
-const EMPTY: StudyState = { version: 1, questions: {}, recent: [], sessions: [], mocks: [] };
+export const EMPTY: StudyState = { version: 1, questions: {}, recent: [], sessions: [], mocks: [] };
 
-function load(): StudyState {
+/** localStorage key of the signed-in account's copy, or null when nobody is attached. */
+let storageKey: string | null = null;
+
+export function loadFrom(key: string): StudyState {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return EMPTY;
     const parsed = JSON.parse(raw) as StudyState;
     return parsed.version === 1 ? { ...EMPTY, ...parsed } : EMPTY;
@@ -75,24 +80,51 @@ function load(): StudyState {
   }
 }
 
-let state: StudyState = typeof window === 'undefined' ? EMPTY : load();
+let state: StudyState = EMPTY;
 const listeners = new Set<() => void>();
+
+/** What changed since the last save to the server. */
+export const dirty = {
+  questions: new Set<string>(),
+  recent: new Set<string>(),
+  sessions: new Set<string>(),
+  mocks: new Set<string>(),
+};
+let onDirty: (() => void) | null = null;
 
 function commit(next: StudyState) {
   state = next;
-  try {
-    localStorage.setItem(KEY, JSON.stringify(next));
-  } catch {
-    /* storage full or blocked: keep working for this visit */
+  if (storageKey) {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(next));
+    } catch {
+      /* storage full or blocked: keep working for this visit */
+    }
   }
   listeners.forEach((l) => l());
+  onDirty?.();
 }
+
+/** Used by sync.ts: switch to an account's record (or to none), replacing what's in memory. */
+export function switchRecord(userId: string | null, initial: StudyState, saveDirty: (() => void) | null) {
+  storageKey = userId ? `${LEGACY_KEY}:${userId}` : null;
+  onDirty = saveDirty;
+  if (!userId) {
+    dirty.questions.clear();
+    dirty.recent.clear();
+    dirty.sessions.clear();
+    dirty.mocks.clear();
+  }
+  commit(initial);
+}
+
+export const currentState = () => state;
 
 if (typeof window !== 'undefined') {
   // keep tabs in step
   window.addEventListener('storage', (e) => {
-    if (e.key === KEY) {
-      state = load();
+    if (storageKey && e.key === storageKey) {
+      state = loadFrom(storageKey);
       listeners.forEach((l) => l());
     }
   });
@@ -133,10 +165,13 @@ function withSession(s: StudyState, now: number, edit: (c: Session) => Session):
 function setRecord(key: string, patch: Partial<QuestionRecord>, extra?: (s: StudyState, now: number) => Partial<StudyState>) {
   const now = Date.now();
   const prev = record(state, key);
+  dirty.questions.add(key);
+  const more = extra ? extra(state, now) : {};
+  if (more.sessions) dirty.sessions.add(more.sessions[more.sessions.length - 1].id);
   commit({
     ...state,
     questions: { ...state.questions, [key]: { ...prev, ...patch, updatedAt: now } },
-    ...(extra ? extra(state, now) : {}),
+    ...more,
   });
 }
 
@@ -154,6 +189,9 @@ export const study = {
       prev.status === 'not-started'
         ? { ...state.questions, [key]: { ...prev, status: 'in-progress' as Status, updatedAt: now } }
         : state.questions;
+    if (prev.status === 'not-started') dirty.questions.add(key);
+    dirty.recent.add(key);
+    dirty.sessions.add(sessions[sessions.length - 1].id);
     commit({ ...state, recent, sessions, questions });
   },
 
@@ -173,12 +211,20 @@ export const study = {
 
   saveMock(result: Omit<MockResult, 'id' | 'at'>) {
     const m: MockResult = { ...result, id: uid(), at: Date.now() };
+    dirty.mocks.add(m.id);
     commit({ ...state, mocks: [m, ...state.mocks].slice(0, 50) });
     return m;
   },
 
-  /** Wipes everything (with the student's confirmation in the UI). */
+  /** Wipes everything (with the student's confirmation in the UI), here and on the server. */
   reset() {
+    resetHandler?.();
     commit(EMPTY);
   },
 };
+
+let resetHandler: (() => void) | null = null;
+/** sync.ts registers how to clear the server copy when the student resets their record. */
+export function onReset(fn: (() => void) | null) {
+  resetHandler = fn;
+}

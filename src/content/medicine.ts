@@ -1,22 +1,13 @@
 import type { SpecialtyContent } from './types';
 
 /*
-  Medicine — content to be added.
-  Fill in the description, doctors, topics and questions. See README.md in this folder for
-  every field and a worked example. Nothing here is invented: empty means "not provided yet".
+  Medicine: the real content lives in Supabase (see README.md in this folder).
+  Keep this file empty: anything in the website code can be downloaded by every visitor.
 */
 const content: SpecialtyContent = {
   id: 'medicine',
   description: '',
-  // moved from the Surgery list, as provided
-  doctors: [
-    { id: 'ali-al-sultani', name: 'د. علي السلطاني' },
-    { id: 'khalid-al-qazwini', name: 'د. خالد القزويني' },
-    { id: 'mustafa', name: 'د. مصطفى' },
-    { id: 'haider-al-saffar', name: 'د. حيدر الصفار' },
-    { id: 'ahmed-turki', name: 'د. أحمد تركي' },
-    { id: 'mushtaq', name: 'د. مشتاق' },
-  ],
+  doctors: [], // in Supabase (table: doctors)
   topics: [],
   questions: [],
 };

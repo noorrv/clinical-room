@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react';
 import { specialties as homeCards } from '../data/homepage';
 import medicine from './medicine';
 import obgyn from './obgyn';
@@ -32,7 +33,37 @@ const identities: Record<SpecialtyId, SpecialtyIdentity> = {
   paediatrics: { accent: '#bcd2e3', accentSoft: '#e1ebf3', onAccent: '#3b2330', ink: '#4a6d88', volume: 'IV' },
 };
 
+/** Content bundled in the code: empty now, as the real content lives in Supabase. */
 const files: Record<SpecialtyId, SpecialtyContent> = { medicine, surgery, obgyn, paediatrics };
+
+/** Content fetched from Supabase after sign-in (see ContentGate), and whose account it was for. */
+let remote: Record<SpecialtyId, SpecialtyContent> | null = null;
+let remoteFor: string | null | undefined;
+let version = 0;
+const versionListeners = new Set<() => void>();
+
+export function setRemoteContent(data: Record<SpecialtyId, SpecialtyContent> | null, userId: string | null = null) {
+  remote = data;
+  remoteFor = data ? userId : undefined;
+  cache = null;
+  version += 1;
+  versionListeners.forEach((l) => l());
+}
+
+/** The account the loaded content belongs to (undefined when nothing is loaded). */
+export const contentLoadedFor = () => remoteFor;
+
+/** Changes whenever the content is (re)loaded, so memoised lists can rebuild. */
+export function useContentVersion(): number {
+  return useSyncExternalStore(
+    (l) => {
+      versionListeners.add(l);
+      return () => versionListeners.delete(l);
+    },
+    () => version,
+    () => version,
+  );
+}
 
 export interface Specialty extends SpecialtyContent, SpecialtyIdentity {
   title: string;
@@ -55,7 +86,7 @@ export function allSpecialties(): Specialty[] {
   if (cache) return cache;
   const preview = previewRequested();
   cache = homeCards.map((card) => {
-    const fileContent = files[card.id];
+    const fileContent = remote?.[card.id] ?? files[card.id];
     const useFixture = preview && fileContent.questions.length === 0;
     let content = useFixture ? placeholderContent(card.id) : fileContent;
     // the preview keeps any real doctors already added, linking its placeholder questions to them

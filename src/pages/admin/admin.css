@@ -1,0 +1,323 @@
+/* ── the administrator's registration ledger ── */
+.auth-card--admin {
+  width: min(100%, 1040px);
+  text-align: left;
+}
+
+.auth-card--admin .auth-kicker,
+.auth-card--admin .auth-title {
+  text-align: center;
+}
+
+.admin-tools {
+  display: flex;
+  gap: 10px;
+  margin: 4px 0 18px;
+}
+
+.admin-tools input {
+  flex: 1;
+  min-height: 44px;
+  padding: 8px 14px;
+  font: inherit;
+  color: var(--ink);
+  background: rgba(255, 252, 244, 0.75);
+  border: 1px solid rgba(138, 44, 52, 0.32);
+  border-radius: 4px;
+}
+
+.admin-tools input:focus {
+  outline: 2px solid var(--burgundy-2);
+  outline-offset: 1px;
+}
+
+.admin-refresh {
+  min-height: 44px;
+  font-size: 1rem;
+}
+
+/* folder tabs, like the specialty dashboards */
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  padding-left: 10px;
+  border-bottom: 2px solid var(--burgundy);
+}
+
+.admin-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 18px 6px;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: rgba(214, 196, 160, 0.55);
+  border: 1px solid rgba(111, 29, 27, 0.25);
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  cursor: pointer;
+  translate: 0 2px;
+}
+
+.admin-tab[aria-selected='true'] {
+  color: var(--burgundy);
+  background: #f6efe1;
+  border-color: var(--burgundy);
+  translate: 0 2px;
+}
+
+.admin-tab:focus-visible {
+  outline: 2px solid var(--burgundy-2);
+  outline-offset: 2px;
+}
+
+.admin-tab__count {
+  min-width: 26px;
+  padding: 0 7px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 22px;
+  text-align: center;
+  color: var(--cream);
+  background: var(--burgundy-2);
+  border-radius: 999px;
+}
+
+.admin-panel {
+  padding: 14px 0 0;
+}
+
+.admin-empty {
+  margin: 18px 0;
+  font-style: italic;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.admin-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) auto auto;
+  grid-template-areas:
+    'who dates actions'
+    'note note note';
+  align-items: center;
+  gap: 4px 20px;
+  padding: 14px 16px;
+  background: rgba(255, 252, 244, 0.7);
+  border: 1px solid rgba(138, 44, 52, 0.22);
+  border-radius: 4px;
+}
+
+.admin-row__who {
+  grid-area: who;
+  display: grid;
+  min-width: 0;
+}
+
+.admin-row__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.admin-row__email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.98rem;
+  color: var(--burgundy-2);
+  text-underline-offset: 3px;
+}
+
+.admin-badge {
+  padding: 0 8px;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 400;
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+  line-height: 20px;
+  color: var(--teal-deep);
+  border: 1px solid rgba(46, 93, 90, 0.5);
+  border-radius: 999px;
+}
+
+.admin-row__dates {
+  grid-area: dates;
+  display: flex;
+  gap: 18px;
+  margin: 0;
+}
+
+.admin-row__dates dt {
+  font-size: 0.78rem;
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+.admin-row__dates dd {
+  margin: 0;
+  font-size: 0.98rem;
+  white-space: nowrap;
+}
+
+.admin-row__note {
+  grid-area: note;
+  margin: 4px 0 0;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.admin-row__actions {
+  grid-area: actions;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.admin-row__self {
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--ink-faint);
+}
+
+.admin-btn {
+  min-height: 44px;
+  padding: 0 18px;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: translate var(--dur-quick) var(--ease-out);
+}
+
+.admin-btn:hover {
+  translate: 0 -1px;
+}
+
+.admin-btn:active {
+  translate: 0 1px;
+}
+
+.admin-btn:focus-visible {
+  outline: 2px solid var(--burgundy-2);
+  outline-offset: 2px;
+}
+
+.admin-btn--yes {
+  color: var(--cream);
+  background: linear-gradient(180deg, #3a6b67, var(--teal));
+  border: 1px solid var(--teal-deep);
+}
+
+.admin-btn--no {
+  color: var(--burgundy);
+  background: transparent;
+  border: 1px solid rgba(111, 29, 27, 0.5);
+}
+
+.admin-btn-danger {
+  background: linear-gradient(180deg, #9a2b2e, #7a1f22);
+}
+
+.admin-unconfirmed {
+  margin-top: 18px;
+  padding: 10px 14px;
+  border: 1px dashed rgba(138, 44, 52, 0.35);
+  border-radius: 4px;
+}
+
+.admin-unconfirmed summary {
+  cursor: pointer;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.admin-mini {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+}
+
+/* confirmation dialog: a small card */
+.admin-dialog {
+  width: min(92vw, 480px);
+  padding: 28px 26px 22px;
+  color: var(--ink);
+  background: radial-gradient(140% 90% at 40% 20%, #f6f0e3, #e9e0cd);
+  border: 1px solid rgba(138, 44, 52, 0.45);
+  border-radius: 6px;
+  outline: 1px solid rgba(138, 44, 52, 0.25);
+  outline-offset: -8px;
+  box-shadow: 0 20px 50px -10px rgba(20, 8, 2, 0.6);
+  text-align: center;
+}
+
+.admin-dialog::backdrop {
+  background: rgba(20, 14, 8, 0.55);
+}
+
+.admin-dialog h2 {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--burgundy);
+}
+
+.admin-dialog__who {
+  display: grid;
+  margin: 0 0 10px;
+}
+
+.admin-dialog__who span {
+  color: var(--ink-soft);
+}
+
+.admin-dialog .auth-field {
+  text-align: left;
+  margin-bottom: 12px;
+}
+
+.admin-dialog textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--ink);
+  background: rgba(255, 252, 244, 0.8);
+  border: 1px solid rgba(138, 44, 52, 0.32);
+  border-radius: 4px;
+  resize: vertical;
+}
+
+@media (max-width: 760px) {
+  .admin-row {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'who' 'dates' 'note' 'actions';
+  }
+
+  .admin-row__actions {
+    justify-content: flex-start;
+  }
+
+  .admin-tab {
+    padding: 8px 12px 6px;
+    font-size: 1.02rem;
+  }
+}

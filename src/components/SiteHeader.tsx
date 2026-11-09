@@ -1,11 +1,12 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { allSpecialties, questionPath, questionsOf, TYPE_LABEL } from '../content';
+import { useAuth } from '../auth/AuthProvider';
+import { allSpecialties, questionPath, questionsOf, TYPE_LABEL, useContentVersion } from '../content';
 import { continueStudying, navLinks, recentlyAdded, specialties } from '../data/homepage';
 import { AntiqueBell, CloseLines, Garland, IvT, MenuLines, SearchGlass } from './HeaderArt';
 import './SiteHeader.css';
 
-type Panel = 'menu' | 'search' | 'alerts' | null;
+type Panel = 'menu' | 'search' | 'alerts' | 'account' | null;
 
 function Avatar() {
   return (
@@ -34,6 +35,7 @@ function AppLink({ href, children, ...rest }: { href: string; children: ReactNod
 
 /** Everything a visitor might look for: specialties, every question, topic and doctor, and pages. */
 function useSearchIndex() {
+  const version = useContentVersion();
   return useMemo(
     () => [
       ...allSpecialties().flatMap((sp) => [
@@ -49,7 +51,9 @@ function useSearchIndex() {
       { title: continueStudying.title, hint: continueStudying.meta.join(' · '), href: `/${continueStudying.href}` },
       ...navLinks.map((l) => ({ title: l.label, hint: 'Page', href: l.href })),
     ],
-    [],
+    // rebuilt once the protected content arrives after sign-in
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [version],
   );
 }
 
@@ -127,7 +131,14 @@ export function SiteHeader() {
             {unread.length > 0 && <span className="icon-btn__dot" aria-hidden />}
           </button>
           <span className="header-actions__rule" aria-hidden />
-          <button type="button" className="avatar-btn" aria-label="Your account">
+          <button
+            type="button"
+            className="avatar-btn"
+            aria-label="Your account"
+            aria-expanded={open === 'account'}
+            aria-controls={`${ids}-account`}
+            onClick={() => toggle('account')}
+          >
             <Avatar />
           </button>
           <button
@@ -203,6 +214,9 @@ export function SiteHeader() {
         )}
       </div>
 
+      {/* account */}
+      <AccountPanel id={`${ids}-account`} open={open === 'account'} onDone={() => setOpen(null)} />
+
       {/* notifications */}
       <div
         className={`header-panel alerts-panel${open === 'alerts' ? ' is-open' : ''}`}
@@ -232,5 +246,64 @@ export function SiteHeader() {
         )}
       </div>
     </header>
+  );
+}
+
+const STATUS_WORD = { pending: 'Awaiting review', approved: 'Approved', rejected: 'Not approved' } as const;
+
+function AccountPanel({ id, open, onDone }: { id: string; open: boolean; onDone: () => void }) {
+  const { configured, session, profile, isAdmin, signOut } = useAuth();
+  return (
+    <div className={`header-panel alerts-panel account-panel${open ? ' is-open' : ''}`} id={id} role="region" aria-label="Your account">
+      <p className="alerts-panel__title">Your account</p>
+      {!configured ? (
+        <p className="alerts-panel__empty">Accounts aren’t switched on yet.</p>
+      ) : session && profile ? (
+        <>
+          <p className="account-panel__who">
+            <strong>{profile.full_name}</strong>
+            <span>{profile.email}</span>
+            <span className={`account-panel__status account-panel__status--${profile.status}`}>{STATUS_WORD[profile.status]}</span>
+          </p>
+          <ul>
+            <li>
+              <Link to="/account" onClick={onDone}>
+                My account
+              </Link>
+            </li>
+            {isAdmin && (
+              <li>
+                <Link to="/admin" onClick={onDone}>
+                  Registrations (admin)
+                </Link>
+              </li>
+            )}
+          </ul>
+          <button
+            type="button"
+            className="alerts-panel__clear"
+            onClick={() => {
+              onDone();
+              signOut();
+            }}
+          >
+            Sign out
+          </button>
+        </>
+      ) : (
+        <ul>
+          <li>
+            <Link to="/login" onClick={onDone}>
+              Sign in
+            </Link>
+          </li>
+          <li>
+            <Link to="/register" onClick={onDone}>
+              Create an account
+            </Link>
+          </li>
+        </ul>
+      )}
+    </div>
   );
 }
