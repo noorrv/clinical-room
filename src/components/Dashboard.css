@@ -6,8 +6,14 @@
 
 .info-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Continue studying takes the room the old Recently Added card left */
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
   gap: var(--s-4);
+}
+
+/* the gazette takes the first slot of the dashboard row */
+.dash-row > .gz {
+  min-width: 0;
 }
 
 /* ── Shared card surfaces ── */
@@ -605,16 +611,13 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .tracker {
+  .tracker,
+  .dash-row > .gz {
     grid-column: 1 / -1;
   }
 
   .info-row {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .info-row > :first-child {
-    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
   }
 }
 

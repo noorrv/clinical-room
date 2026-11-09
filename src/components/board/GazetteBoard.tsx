@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import type { BoardData, RecentKind } from './types';
 import { ago, KIND_LABEL } from './types';
 import './gazette.css';
@@ -62,10 +63,10 @@ function Engraving() {
   );
 }
 
-export function GazetteBoard({ notices, recent, date = new Date() }: BoardData & { date?: Date }) {
+export function GazetteBoard({ notices, recent, date = new Date(), loading = false }: BoardData & { date?: Date; loading?: boolean }) {
   const dateline = date.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   return (
-    <section className="gz" aria-labelledby="gz-title">
+    <section className="gz" id="notices" aria-labelledby="gz-title">
       <header className="gz-head">
         <p className="gz-kicker">The Clinical Room</p>
         <h2 id="gz-title" className="gz-title">
@@ -82,7 +83,9 @@ export function GazetteBoard({ notices, recent, date = new Date() }: BoardData &
       <div className="gz-body">
         <div className="gz-notices">
           <p className="gz-box-title">Notices</p>
-          {notices.length ? (
+          {loading ? (
+            <p className="gz-quiet">Fetching the latest…</p>
+          ) : notices.length ? (
             <ul>
               {notices.map((n) => (
                 <li key={n.id}>
@@ -108,15 +111,23 @@ export function GazetteBoard({ notices, recent, date = new Date() }: BoardData &
           <p className="gz-ribbon">
             <span>Lately added to the library</span>
           </p>
-          {recent.length ? (
+          {loading ? (
+            <p className="gz-quiet">Fetching the latest…</p>
+          ) : recent.length ? (
             <ul>
               {recent.map((r) => (
                 <li key={r.id}>
                   <Medallion kind={r.kind} />
                   <span className="gz-item">
-                    <a href={r.href ?? '#'} className="gz-item-title">
-                      {r.title}
-                    </a>
+                    {r.href ? (
+                      <Link to={r.href} className="gz-item-title">
+                        <bdi>{r.title}</bdi>
+                      </Link>
+                    ) : (
+                      <span className="gz-item-title">
+                        <bdi>{r.title}</bdi>
+                      </span>
+                    )}
                     <span className="gz-item-meta">
                       {KIND_LABEL[r.kind]} · {r.specialty} · {ago(r.date)}
                     </span>

@@ -1,17 +1,17 @@
 import { specialties } from '../data/homepage';
-import {
-  ContinueStudyingCard,
-  ProgressCard,
-  RecentlyAddedCard,
-  StreakCard,
-  StudyTrackerCard,
-  UpcomingExamsCard,
-} from '../components/Dashboard';
+import { GazetteBoard } from '../components/board/GazetteBoard';
+import { useBoardData } from '../components/board/useBoardData';
+import { ContinueStudyingCard, ProgressCard, StreakCard, UpcomingExamsCard } from '../components/Dashboard';
 import { PanelVines } from '../components/art/PanelVines';
 import { Hero } from '../components/Hero';
 import { QuoteBand } from '../components/QuoteBand';
 import { SpecialtyCard } from '../components/SpecialtyCard';
 import '../App.css';
+
+function Noticeboard() {
+  const { data, loading } = useBoardData();
+  return <GazetteBoard {...data} loading={loading} />;
+}
 
 export function HomePage() {
   return (
@@ -36,14 +36,13 @@ export function HomePage() {
           </section>
 
           <div className="dash-row">
-            <StudyTrackerCard />
+            <Noticeboard />
             <ProgressCard />
             <StreakCard />
           </div>
 
           <div className="info-row">
             <ContinueStudyingCard />
-            <RecentlyAddedCard />
             <UpcomingExamsCard />
           </div>
         </div>
