@@ -11,8 +11,6 @@ import './ContinueCard.css';
   word by word; one control pauses both, and both rest under reduced motion.
 */
 
-const QUOTE = ['What,', 'like', 'it’s', 'hard?'];
-
 /** An original damask repeat, drawn once and used as the card's woven ground. */
 const DAMASK = (() => {
   const half = `
@@ -78,11 +76,18 @@ export function ContinueStudyingCard() {
           </span>
         </figure>
         <p className="ct-quote" aria-label="What, like it’s hard?">
-          {QUOTE.map((w, i) => (
-            <span key={w} className="ct-word" style={{ '--i': i } as CSSProperties} aria-hidden>
-              {w}
-            </span>
-          ))}
+          <span className="ct-quote__line" aria-hidden>
+            <span className="ct-word ct-word--1">What,</span>
+          </span>
+          <span className="ct-quote__line" aria-hidden>
+            <span className="ct-word ct-word--2">like</span> <span className="ct-word ct-word--3">it’s</span>
+          </span>
+          <span className="ct-quote__line" aria-hidden>
+            <span className="ct-word ct-word--4">hard?</span>
+          </span>
+          <svg className="ct-quote__swash" viewBox="0 0 120 14" aria-hidden>
+            <path d="M2 9 C26 3 48 12 70 7 C86 3.5 100 5 118 2" />
+          </svg>
         </p>
       </div>
 

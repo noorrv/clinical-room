@@ -137,52 +137,106 @@
 }
 
 .ct-quote {
+  position: relative;
   margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 0.32em;
-  row-gap: 0;
-  font-family: 'Caveat', 'Segoe Script', cursive;
-  font-weight: 700;
-  font-size: clamp(1.9rem, 1.4rem + 1.4vw, 2.5rem);
-  line-height: 0.98;
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
-  color: var(--ct-rose);
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+  display: grid;
+  align-content: center;
+  gap: 0.02em;
+  min-height: 4.4em;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.55rem, 1.2rem + 1vw, 2rem);
+  line-height: 1.02;
+  color: var(--ct-cream);
 }
 
-/* each word is written in, held, then wiped, one after another, on a loop */
+.ct-quote__line {
+  display: block;
+  white-space: nowrap;
+}
+
+/* the third line is the punchline: a touch larger, in rose gold */
+.ct-word--4 {
+  font-size: 1.22em;
+  font-weight: 600;
+  color: var(--ct-rose);
+}
+
+/*
+  One six-second cycle for the whole line: the words rise in one after another, a gold flourish
+  draws beneath, everything holds, then the whole line fades out together and the cycle restarts.
+  Only opacity and transform move, so it stays smooth.
+*/
 .ct-word {
   display: inline-block;
-  clip-path: inset(0 100% 0 0);
-  animation: ct-write 5.6s cubic-bezier(0.45, 0, 0.2, 1) infinite;
-  animation-delay: calc(var(--i) * 0.55s);
+  opacity: 0;
+  transform: translateY(0.35em);
+  animation-duration: 6s;
+  animation-iteration-count: infinite;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
 }
 
-@keyframes ct-write {
-  0% {
-    clip-path: inset(0 100% 0 0);
-    opacity: 1;
-  }
-  9% {
-    clip-path: inset(0 0 0 0);
-  }
-  70% {
-    clip-path: inset(0 0 0 0);
-    opacity: 1;
-  }
-  80%,
-  100% {
-    clip-path: inset(0 0 0 0);
-    opacity: 0;
-  }
+.ct-word--1 { animation-name: ct-in-1; }
+.ct-word--2 { animation-name: ct-in-2; }
+.ct-word--3 { animation-name: ct-in-3; }
+.ct-word--4 { animation-name: ct-in-4; }
+
+@keyframes ct-in-1 {
+  0% { opacity: 0; transform: translateY(0.35em); }
+  10%, 78% { opacity: 1; transform: none; }
+  90%, 100% { opacity: 0; transform: translateY(-0.12em); }
 }
 
-.ct--paused .ct-word {
+@keyframes ct-in-2 {
+  0%, 7% { opacity: 0; transform: translateY(0.35em); }
+  17%, 78% { opacity: 1; transform: none; }
+  90%, 100% { opacity: 0; transform: translateY(-0.12em); }
+}
+
+@keyframes ct-in-3 {
+  0%, 13% { opacity: 0; transform: translateY(0.35em); }
+  23%, 78% { opacity: 1; transform: none; }
+  90%, 100% { opacity: 0; transform: translateY(-0.12em); }
+}
+
+@keyframes ct-in-4 {
+  0%, 21% { opacity: 0; transform: translateY(0.35em) scale(0.96); }
+  33%, 78% { opacity: 1; transform: none; }
+  90%, 100% { opacity: 0; transform: translateY(-0.12em); }
+}
+
+.ct-quote__swash {
+  width: min(7.2em, 100%);
+  height: auto;
+  margin-top: 0.12em;
+  overflow: visible;
+}
+
+.ct-quote__swash path {
+  fill: none;
+  stroke: var(--ct-gold);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-dasharray: 130;
+  stroke-dashoffset: 130;
+  animation: ct-swash 6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes ct-swash {
+  0%, 33% { stroke-dashoffset: 130; opacity: 1; }
+  48%, 78% { stroke-dashoffset: 0; opacity: 1; }
+  90%, 100% { stroke-dashoffset: 0; opacity: 0; }
+}
+
+/* paused or reduced motion: the finished line, standing still */
+.ct--paused .ct-word,
+.ct--paused .ct-quote__swash path {
   animation: none;
-  clip-path: none;
   opacity: 1;
+  transform: none;
+  stroke-dashoffset: 0;
 }
 
 /* ── where the student stopped ── */
@@ -293,9 +347,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ct-word {
+  .ct-word,
+  .ct-quote__swash path {
     animation: none;
-    clip-path: none;
+    opacity: 1;
+    transform: none;
+    stroke-dashoffset: 0;
   }
 
   .ct__resume,
