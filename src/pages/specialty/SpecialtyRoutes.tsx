@@ -2,6 +2,8 @@ import type { CSSProperties } from 'react';
 import { Navigate, NavLink, Route, Routes, useParams } from 'react-router-dom';
 import { allSpecialties, questionsOf, specialtyBySlug, type Specialty } from '../../content';
 import { record, useStudy } from '../../study/store';
+import { DoctorArchive } from '../archive/DoctorArchive';
+import { TopicPage } from '../archive/TopicPage';
 import { DashboardHome } from './DashboardHome';
 import { MockOsce } from './MockOsce';
 import { QuestionPage } from './QuestionPage';
@@ -84,6 +86,17 @@ export function SpecialtyRoutes() {
   const sp = specialtyBySlug(slug);
   if (!sp) return <Navigate to="/" replace />;
 
+  return (
+    <Routes>
+      {/* the examiner archives fill the page in their own illustrated style, without the study index */}
+      <Route path="doctors/:doctorId" element={<main id="main"><DoctorArchive sp={sp} /></main>} />
+      <Route path="doctors/:doctorId/topics/:topicId" element={<main id="main"><TopicPage sp={sp} /></main>} />
+      <Route path="*" element={<StudyLayout sp={sp} />} />
+    </Routes>
+  );
+}
+
+function StudyLayout({ sp }: { sp: Specialty }) {
   return (
     <div className="archive" style={{ '--accent': sp.accent, '--accent-soft': sp.accentSoft, '--on-accent': sp.onAccent, '--accent-ink': sp.ink } as CSSProperties} data-specialty={sp.id}>
       <div className="archive__grid container">

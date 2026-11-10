@@ -556,6 +556,19 @@
   transition: transform 240ms var(--ease-out);
 }
 
+.drawer__chev--go {
+  transform: rotate(-45deg) translate(-2px, -1px);
+}
+
+a.drawer__head {
+  text-decoration: none;
+}
+
+a.drawer__head:hover .drawer__chev--go,
+a.drawer__head:focus-visible .drawer__chev--go {
+  transform: rotate(-45deg) translate(2px, 2px);
+}
+
 .drawer[open] .drawer__chev {
   transform: rotate(225deg) translateY(-3px);
 }

@@ -5,6 +5,7 @@ import { questionsOf, type QuestionRef, type Specialty } from '../../content';
 import { byDoctor, byTopic, matches, pct, tally, topicsMastered, type GroupProgress } from '../../study/derive';
 import { useStudy } from '../../study/store';
 import { useGuestBrowsing } from '../../auth/guest';
+import { archivePath } from '../archive/data';
 import { EmptyState, Ledger, PreviewBanner, QuestionRow, StatusLegend } from './ui';
 
 type Tab = 'doctors' | 'topics';
@@ -31,8 +32,23 @@ export function Masthead({ sp, children }: { sp: Specialty; children?: ReactNode
   );
 }
 
-function Drawer({ g, sp, open, kind, query }: { g: GroupProgress; sp: Specialty; open: boolean; kind: string; query: string }) {
+function Drawer({ g, sp, open, kind, query, to }: { g: GroupProgress; sp: Specialty; open: boolean; kind: string; query: string; to?: string }) {
   const shown = g.questions.filter((q) => matches(q, sp, query));
+  // an examiner's name opens their illustrated archive; while searching, matches still list here
+  if (to && query.trim() === '') {
+    return (
+      <div className="drawer" id={`${kind}-${g.id}`}>
+        <Link className="drawer__head" to={to}>
+          <bdi className="drawer__name">{g.name}</bdi>
+          <span className="drawer__count">
+            {g.tally.total} {g.tally.total === 1 ? 'question' : 'questions'} · {pct(g.tally.mastered)} mastered
+          </span>
+          <Ledger tally={g.tally} label={`${g.name} progress`} />
+          <span className="drawer__chev drawer__chev--go" aria-hidden />
+        </Link>
+      </div>
+    );
+  }
   return (
     <details className="drawer" open={open || (query.trim() !== '' && shown.length > 0)} id={`${kind}-${g.id}`}>
       <summary className="drawer__head">
@@ -206,7 +222,7 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
           ) : (
             <div className={`drawers${groups.length >= 8 ? ' drawers--grid' : ''}`}>
               {groups.map((g) => (
-                <Drawer key={g.id} g={g} sp={sp} open={open === g.id} kind={tab} query={query} />
+                <Drawer key={g.id} g={g} sp={sp} open={open === g.id} kind={tab} query={query} to={tab === 'doctors' ? archivePath(sp, g.id) : undefined} />
               ))}
               {loose.length > 0 && (
                 <Drawer

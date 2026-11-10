@@ -12,6 +12,7 @@ import { QuestionsPage } from './pages/admin/QuestionsPage';
 import { SpecialtiesPage } from './pages/admin/SpecialtiesPage';
 import { RegistrationsPage } from './pages/admin/RegistrationsPage';
 import { AccountPage, CheckEmailPage, ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage } from './pages/auth/AuthPages';
+import { ArchiveSearch } from './pages/archive/ArchiveSearch';
 import { HomePage } from './pages/HomePage';
 import { SpecialtyRoutes } from './pages/specialty/SpecialtyRoutes';
 import { StudySync } from './study/sync';
@@ -53,6 +54,18 @@ export default function App() {
               <RequireApproved>
                 <ContentGate>
                   <SpecialtyRoutes />
+                </ContentGate>
+              </RequireApproved>
+            }
+          />
+          <Route
+            path="/archive/search"
+            element={
+              <RequireApproved>
+                <ContentGate>
+                  <main id="main">
+                    <ArchiveSearch />
+                  </main>
                 </ContentGate>
               </RequireApproved>
             }
