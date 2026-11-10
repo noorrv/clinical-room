@@ -502,6 +502,34 @@
   }
 }
 
+/* tablets: the search glass and bell grow to sit level with the avatar beside them */
+@media (min-width: 641px) and (max-width: 1180px) {
+  .icon-btn {
+    width: 58px;
+    height: 58px;
+  }
+
+  .icon-btn--search svg {
+    width: 38px;
+    height: 38px;
+  }
+
+  .header-actions .icon-btn:not(.icon-btn--search):not(.menu-btn) svg {
+    width: 44px;
+    height: 44px;
+  }
+
+  .menu-btn svg {
+    width: 38px;
+    height: 38px;
+  }
+
+  .avatar-btn {
+    width: 60px;
+    height: 60px;
+  }
+}
+
 @media (max-width: 640px) {
   .site-header__garland {
     display: none;
