@@ -9,12 +9,6 @@ import { TitleCard } from './TitleCard';
 import './card.css';
 import { ArchiveRoom, Highlight, zoomInto } from './shared';
 
-/** The first real letter of a name, skipping a "Dr." or "د." title. */
-export function initialOf(name: string) {
-  const bare = name.replace(/^\s*(dr\.?|د\.?)\s*/i, '').trim();
-  return (bare[0] ?? name[0] ?? '·').toLocaleUpperCase();
-}
-
 export function DoctorArchive({ sp }: { sp: Specialty }) {
   const { doctorId = '' } = useParams();
   const navigate = useNavigate();
@@ -60,7 +54,7 @@ export function DoctorArchive({ sp }: { sp: Specialty }) {
           <Link to={`/archive/search`}>Search every archive</Link>
         </nav>
 
-        <TitleCard sp={sp} doctor={doctor} palette={paletteFor(doctor.id)} initial={initialOf(doctor.name)} />
+        <TitleCard sp={sp} doctor={doctor} palette={paletteFor(doctor.id)} />
 
         {doctor.note && <p className="da-note">{doctor.note}</p>}
 

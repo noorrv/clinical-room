@@ -62,7 +62,7 @@ function ArtFor({ art, c }: { art: Art; c: Colours }) {
   }
 }
 
-export function TitleCard({ sp, doctor, palette, initial }: { sp: Specialty; doctor: Doctor; palette: Palette; initial: string }) {
+export function TitleCard({ sp, doctor, palette }: { sp: Specialty; doctor: Doctor; palette: Palette }) {
   const spec = CARDS[palette.id] ?? CARDS.amalfi;
   const { c } = spec;
   const style = {
@@ -111,7 +111,7 @@ export function TitleCard({ sp, doctor, palette, initial }: { sp: Specialty; doc
         )}
         {spec.seal && (
           <div className="xc-seal-wrap" aria-hidden>
-            <Seal c={c} letter={initial} />
+            <Seal c={c} />
           </div>
         )}
       </div>

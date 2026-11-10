@@ -437,19 +437,13 @@ export function Postmark({ c, top, bottom }: { c: Colours; top: string; bottom: 
   );
 }
 
-/** A red wax seal pressed with the doctor's initial. */
-export function Seal({ c, letter }: { c: Colours; letter: string }) {
+/** A plain red wax seal. */
+export function Seal({ c }: { c: Colours }) {
   return (
     <svg viewBox="0 0 80 80" className="xc-seal" aria-hidden>
       <path d="M40 4 C50 2 54 8 62 10 C72 14 70 22 76 30 C80 40 74 46 76 54 C76 66 66 68 60 74 C52 80 44 76 36 78 C26 78 22 70 14 66 C6 60 8 52 4 44 C2 34 8 28 10 20 C14 10 22 10 30 6 C34 4 36 4 40 4 Z" fill={c.red} />
       <circle cx="40" cy="40" r="24" fill="none" stroke="#000" strokeOpacity="0.22" strokeWidth="3" />
       <circle cx="40" cy="40" r="24" fill="none" stroke="#fff" strokeOpacity="0.22" strokeWidth="1" transform="translate(-1 -1)" />
-      <text x="40" y="49" textAnchor="middle" fontSize="26" fontFamily="'IM Fell English', 'Amiri', serif" fill="#000" fillOpacity="0.28">
-        {letter}
-      </text>
-      <text x="39" y="48" textAnchor="middle" fontSize="26" fontFamily="'IM Fell English', 'Amiri', serif" fill="#fff" fillOpacity="0.28">
-        {letter}
-      </text>
     </svg>
   );
 }
