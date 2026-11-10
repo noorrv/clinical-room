@@ -51,14 +51,6 @@ export type ProgressRange = keyof typeof progressByRange;
 
 export const streakDays = 5;
 
-export const continueStudying = {
-  title: 'Heart Failure',
-  meta: ['Medicine', 'Cardiology'],
-  done: 3,
-  total: 6,
-  href: '#heart-failure',
-};
-
 export const upcomingExams = [
   { title: 'Medicine Midterm', days: 3, tone: 'burgundy' as const },
   { title: 'Paediatrics OSCE', days: 10, tone: 'teal' as const },

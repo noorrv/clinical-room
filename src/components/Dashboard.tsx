@@ -5,14 +5,13 @@ import { useStudy } from '../study/store';
 import { computeStreak, type DayState, type StreakInfo } from '../study/streak';
 import { LilyPlant, MiniLily } from './art/Lily';
 import {
-  continueStudying,
   progressByRange,
   upcomingExams,
   type ProgressRange,
 } from '../data/homepage';
 import { formatClock, spokenDuration, useStudyTimer } from '../hooks/useStudyTimer';
-import { AnatomicalHeart, LanternBooks } from './art/WidgetArt';
-import { ArrowRight, Calendar, ChevronDown, Pause, Play, Sparkle, Stop } from './Icons';
+import { LanternBooks } from './art/WidgetArt';
+import { Calendar, ChevronDown, Pause, Play, Sparkle, Stop } from './Icons';
 import './Dashboard.css';
 
 /* Gilt corner flourish for the burgundy card */
@@ -218,44 +217,6 @@ export function StreakView({ info }: { info: StreakInfo }) {
           </li>
         ))}
       </ol>
-    </section>
-  );
-}
-
-export function ContinueStudyingCard() {
-  const c = continueStudying;
-  return (
-    <section className="info card-light" aria-labelledby="continue-title">
-      <div className="card-head">
-        <h2 id="continue-title" className="card-title">
-          Continue Studying
-        </h2>
-        <a className="head-link" href="#library" aria-label="See everything in progress">
-          <ArrowRight size={22} />
-        </a>
-      </div>
-      <div className="continue">
-        <div className="continue__thumb">
-          <AnatomicalHeart />
-        </div>
-        <div className="continue__body">
-          <div className="continue__top">
-            <div>
-              <h3 className="continue__title">{c.title}</h3>
-              <p className="continue__meta">{c.meta.join(' · ')}</p>
-            </div>
-            <a className="play-btn" href={c.href} aria-label={`Resume ${c.title}`}>
-              <Play size={18} />
-            </a>
-          </div>
-          <div className="bar" role="progressbar" aria-valuemin={0} aria-valuemax={c.total} aria-valuenow={c.done} aria-label={`${c.title} modules completed`}>
-            <span style={{ width: `${(c.done / c.total) * 100}%` }} />
-          </div>
-          <p className="continue__count">
-            {c.done} / {c.total} modules
-          </p>
-        </div>
-      </div>
     </section>
   );
 }
