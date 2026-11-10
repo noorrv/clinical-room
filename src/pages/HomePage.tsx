@@ -59,7 +59,7 @@ export function HomePage() {
             </ul>
           </section>
 
-          <div className="dash-row">
+          <div className="dash-row" id="study-tracker">
             <Noticeboard />
             <ContinueStudyingCard />
             <StreakCard />

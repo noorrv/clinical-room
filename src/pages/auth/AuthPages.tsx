@@ -8,9 +8,23 @@ import { AuthShell, Field, FormMessage, SetupNotice } from './AuthShell';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const MIN_PASSWORD = 8;
 
-/** Only ever send people to a page on this site after signing in. */
-function safeNext(raw: string | null): string {
-  return raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : '/';
+/**
+ * Only ever send people to a page on this site after signing in. A return address from ?next= must be
+ * one leading slash, then a path: "//host", a backslash (browsers read it as a slash), encoded slashes or backslashes and
+ * control characters would let a crafted link send someone to another site, so they fall back to "/".
+ */
+export function safeNext(raw: string | null | undefined): string {
+  if (!raw) return '/';
+  let decoded = raw;
+  try {
+    decoded = decodeURIComponent(raw);
+  } catch {
+    return '/';
+  }
+  for (const v of [raw, decoded]) {
+    if (!v.startsWith('/') || v.startsWith('//') || v.includes('\\') || /[\u0000-\u001f\u007f]/.test(v)) return '/';
+  }
+  return raw;
 }
 
 /** "Enter as a guest": a quiet second way in, under the main form. */
@@ -99,7 +113,7 @@ export function LoginPage() {
         <span aria-hidden> · </span>
         New here? <Link to="/register">Create an account</Link>
       </p>
-      <GuestEntry next={params.get('next') ?? undefined} />
+      <GuestEntry next={safeNext(params.get('next'))} />
     </AuthShell>
   );
 }

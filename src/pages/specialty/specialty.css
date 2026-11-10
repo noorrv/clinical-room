@@ -1067,6 +1067,7 @@ a.drawer__head:focus-visible .drawer__chev--go {
 }
 
 .gtable {
+  position: relative; /* contains screen-reader-only labels, so a wide table scrolls inside its box instead of widening the page */
   margin-top: 22px;
   overflow-x: auto;
 }
@@ -1285,6 +1286,15 @@ table.gtable {
 
 .btn-ghost {
   background: transparent;
+  color: var(--accent-ink);
+}
+
+/* a link styled as a button keeps the button's colours (".archive a" would otherwise grey them out) */
+.archive a.btn-ink {
+  color: var(--on-accent);
+}
+
+.archive a.btn-ghost {
   color: var(--accent-ink);
 }
 

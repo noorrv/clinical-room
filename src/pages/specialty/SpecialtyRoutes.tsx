@@ -3,6 +3,7 @@ import { Navigate, NavLink, Route, Routes, useParams } from 'react-router-dom';
 import { allSpecialties, questionsOf, specialtyBySlug, type Specialty } from '../../content';
 import { record, useStudy } from '../../study/store';
 import { DoctorArchive } from '../archive/DoctorArchive';
+import { NotFoundPage } from '../SystemPages';
 import { TopicPage } from '../archive/TopicPage';
 import { DashboardHome } from './DashboardHome';
 import { MockOsce } from './MockOsce';
@@ -84,7 +85,7 @@ function Sidebar({ sp }: { sp: Specialty }) {
 export function SpecialtyRoutes() {
   const { slug } = useParams();
   const sp = specialtyBySlug(slug);
-  if (!sp) return <Navigate to="/" replace />;
+  if (!sp) return <NotFoundPage />;
 
   return (
     <Routes>

@@ -14,6 +14,7 @@ import { RegistrationsPage } from './pages/admin/RegistrationsPage';
 import { AccountPage, CheckEmailPage, ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage } from './pages/auth/AuthPages';
 import { ArchiveSearch } from './pages/archive/ArchiveSearch';
 import { HomePage } from './pages/HomePage';
+import { NotFoundPage, PageBoundary } from './pages/SystemPages';
 import { SpecialtyRoutes } from './pages/specialty/SpecialtyRoutes';
 import { StudySync } from './study/sync';
 
@@ -47,6 +48,7 @@ export default function App() {
           Skip to content
         </a>
         <SiteHeader />
+        <PageBoundary>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route
@@ -129,8 +131,9 @@ export default function App() {
               }
             />
           )}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        </PageBoundary>
       </div>
       </AuthProvider>
     </BrowserRouter>

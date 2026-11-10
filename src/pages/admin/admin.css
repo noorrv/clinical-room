@@ -954,3 +954,32 @@
   height: 18px;
   accent-color: var(--accent);
 }
+
+/* phones and small tablets: the admin sections wrap onto lines instead of scrolling sideways */
+@media (max-width: 980px) {
+  .admin-archive .index__list:not(.index__list--vols) {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .admin-archive .index__list:not(.index__list--vols) li {
+    flex: 1 1 auto;
+  }
+
+  .admin-archive .index__list:not(.index__list--vols) a {
+    justify-content: center;
+  }
+}
+
+/* small phones: the Pending / Approved / Rejected tabs tighten so all three fit */
+@media (max-width: 480px) {
+  .admin-tabs {
+    padding-left: 4px;
+  }
+
+  .admin-tab {
+    gap: 6px;
+    padding-inline: 11px;
+    font-size: 1.05rem;
+  }
+}

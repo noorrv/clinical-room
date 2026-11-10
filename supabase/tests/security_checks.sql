@@ -312,6 +312,82 @@ end $$;
 reset role;
 select set_config('request.jwt.claims', '', false);
 
+-- ── notifications (content_updates, notification_reads) ──
+-- signed out: no feed, no read state
+select set_config('request.jwt.claims', '', false);
+set role anon;
+do $$
+declare n int;
+begin
+  begin
+    select count(*) into n from public.content_updates;
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: read the notification feed', 'refused', n || ' rows', coalesce((false)::text, 'skipped')) || E'\n', false);
+  exception when insufficient_privilege then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: read the notification feed', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+  end;
+  begin
+    select count(*) into n from public.notification_reads;
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: read notification read state', 'refused', n || ' rows', coalesce((false)::text, 'skipped')) || E'\n', false);
+  exception when insufficient_privilege then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: read notification read state', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+  end;
+end $$;
+reset role;
+
+-- pending: sees no feed and cannot post to it
+select set_config('request.jwt.claims', json_build_object('sub', current_setting('test.pending'), 'role', 'authenticated')::text, false);
+set role authenticated;
+do $$
+declare n int;
+begin
+  select count(*) into n from public.content_updates;
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: read the notification feed', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
+  begin
+    insert into public.content_updates (kind, title) values ('updated', 'security test');
+    raise exception using errcode = 'U0002';  -- undo
+  exception
+    when sqlstate 'U0002' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: post a notification', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: post a notification', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+  end;
+end $$;
+reset role;
+
+-- approved student (optional): reads the feed, but cannot post to it or touch anyone else's read state
+select set_config('request.jwt.claims', json_build_object('sub', nullif(current_setting('test.approved'), ''), 'role', 'authenticated')::text, false);
+set role authenticated;
+do $$
+declare n int;
+begin
+  if current_setting('test.approved') = '' then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: notification checks', 'run', 'skipped (no approved email)', 'skipped') || E'\n', false);
+    return;
+  end if;
+  begin
+    insert into public.content_updates (kind, title) values ('updated', 'security test');
+    raise exception using errcode = 'U0002';  -- undo
+  exception
+    when sqlstate 'U0002' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: post a notification', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: post a notification', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+  end;
+  begin
+    insert into public.notification_reads (user_id, seen_at) values (current_setting('test.admin')::uuid, now());
+    raise exception using errcode = 'U0002';  -- undo
+  exception
+    when sqlstate 'U0002' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: write another account''s read state', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: write another account''s read state', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+  end;
+  select count(*) into n from public.notification_reads where user_id <> current_setting('test.approved')::uuid;
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: read another account''s read state', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
+end $$;
+reset role;
+select set_config('request.jwt.claims', '', false);
+
 -- ── results ──
 select split_part(line, '|', 1) as check_name,
        split_part(line, '|', 2) as expected,

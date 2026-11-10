@@ -33,7 +33,7 @@ export function QuoteBand() {
       <PaperPlane />
       <span className="tg-label__text">
         <span className="tg-label__kicker">Find us on Telegram</span>
-        <span className="tg-label__handle">@{handle || 'username'}</span>
+        <span className="tg-label__handle">@{handle}</span>
       </span>
     </>
   );
@@ -47,12 +47,11 @@ export function QuoteBand() {
           <span key={i} style={{ left: `${p.x}%`, top: `${p.y}%`, width: p.s, height: p.s, animationDelay: `${p.d}s` }} />
         ))}
       </div>
-      {handle ? (
+      {/* the Telegram label appears only once there is an official handle */}
+      {handle && (
         <a className="tg-label" href={`https://t.me/${handle}`} target="_blank" rel="noopener noreferrer">
           {inner}
         </a>
-      ) : (
-        <p className="tg-label">{inner}</p>
       )}
     </div>
   );

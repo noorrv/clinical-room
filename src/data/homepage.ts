@@ -47,13 +47,13 @@ export const streakDays = 5;
 export const navLinks = [
   { label: 'Home', href: '/', current: true },
   { label: 'Specialties', href: '/#specialties', hasMenu: true },
-  { label: 'Doctors', href: '#doctors' },
-  { label: 'Study Tracker', href: '#study-tracker' },
-  { label: 'Library', href: '#library' },
+  { label: 'Doctors', href: '/archive/search' },
+  { label: 'Study Tracker', href: '/#study-tracker' },
+  { label: 'Library', href: '/#notices' },
 ];
 
 /**
  * Telegram handle shown on the label in the bottom band, without the "@" (e.g. 'clinicalroom').
- * Leave it empty until it's ready: the label then shows "@username" and isn't a link.
+ * Leave it empty until it's ready: the Telegram label is then hidden entirely.
  */
 export const telegramHandle = '';
