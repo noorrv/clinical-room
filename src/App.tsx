@@ -19,6 +19,7 @@ import { StudySync } from './study/sync';
 
 // development-only comparison page; dropped from the built site
 const StreakPreview = import.meta.env.DEV ? lazy(() => import('./pages/StreakPreview').then((m) => ({ default: m.StreakPreview }))) : null;
+const SheetPreview = import.meta.env.DEV ? lazy(() => import('./dev/SheetPreview').then((m) => ({ default: m.SheetPreview }))) : null;
 const BoardPreview = import.meta.env.DEV ? lazy(() => import('./pages/BoardPreview').then((m) => ({ default: m.BoardPreview }))) : null;
 
 /** New page: start at the top. A #hash: scroll to that section once it has rendered. */
@@ -70,6 +71,20 @@ export default function App() {
               </RequireApproved>
             }
           />
+          {SheetPreview && (
+            <Route
+              path="/_preview/sheet/doctors/:doctorId/topics/:topicId"
+              element={
+                <RequireApproved>
+                  <ContentGate>
+                    <Suspense fallback={null}>
+                      <SheetPreview />
+                    </Suspense>
+                  </ContentGate>
+                </RequireApproved>
+              }
+            />
+          )}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/check-email" element={<CheckEmailPage />} />

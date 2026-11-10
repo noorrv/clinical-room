@@ -9,6 +9,7 @@ import { Bow, CheckSeal, Star } from './art';
 import { archivePath, doctorArchive, isReviewed, pad, sectionProgress, topicPath } from './data';
 import { paletteFor } from './palettes';
 import { ArchiveRoom, Highlight } from './shared';
+import { StudySheet } from './StudySheet';
 
 /*
   One topic of one examiner's archive: every question that doctor asked on it, with the recorded
@@ -210,9 +211,17 @@ export function TopicPage({ sp }: { sp: Specialty }) {
                     <div className="da-q__titles">
                       <p className="da-q__type">{TYPE_LABEL[q.type]}</p>
                       <h2 className="da-q__title">
-                        <bdi>
-                          <Highlight text={q.title} term={term} />
-                        </bdi>
+                        {answer.length > 0 ? (
+                          <button type="button" className="da-q__toggle" aria-expanded={open} aria-controls={`a-${q.id}`} onClick={() => toggleAnswer(q)}>
+                            <bdi>
+                              <Highlight text={q.title} term={term} />
+                            </bdi>
+                          </button>
+                        ) : (
+                          <bdi>
+                            <Highlight text={q.title} term={term} />
+                          </bdi>
+                        )}
                       </h2>
                     </div>
                     <div className="da-q__actions">
@@ -246,12 +255,16 @@ export function TopicPage({ sp }: { sp: Specialty }) {
                       <button type="button" className="da-reveal" aria-expanded={open} aria-controls={`a-${q.id}`} onClick={() => toggleAnswer(q)}>
                         {open ? 'Hide the answer' : 'Show the answer'}
                       </button>
-                      <div id={`a-${q.id}`} className="da-q__answer" hidden={!open}>
+                      <div id={`a-${q.id}`} className={`da-q__answer${answer.some((x) => x.key === 'modelAnswer') ? ' da-q__answer--sheet' : ''}`} hidden={!open}>
                         <p className="da-q__answer-label">Recorded answer</p>
                         {answer.map((s) => (
                           <section key={s.key} className="da-q__section">
-                            <h3 className="da-q__h">{s.label}</h3>
-                            <Body value={q[s.key]} term={term} ordered={s.key === 'steps'} />
+                            {!(s.key === 'modelAnswer' && answer.length === 1) && <h3 className="da-q__h">{s.label}</h3>}
+                            {s.key === 'modelAnswer' ? (
+                              <StudySheet text={String(q.modelAnswer)} term={term} />
+                            ) : (
+                              <Body value={q[s.key]} term={term} ordered={s.key === 'steps'} />
+                            )}
                           </section>
                         ))}
                       </div>

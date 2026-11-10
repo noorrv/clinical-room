@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { StudySheet } from '../archive/StudySheet';
 import { doctorName, questionKey, questionPath, questionsOf, topicName, TYPE_LABEL, type Question, type Specialty } from '../../content';
 import { record, study, useStudy } from '../../study/store';
 import { useGuestBrowsing } from '../../auth/guest';
@@ -56,7 +57,9 @@ export const ANSWER_ORDER: Record<Question['type'], Section[]> = {
   ],
 };
 
-export function SectionBody({ value, ordered }: { value: unknown; ordered?: boolean }) {
+export function SectionBody({ value, ordered, sheet }: { value: unknown; ordered?: boolean; sheet?: boolean }) {
+  // a model answer can carry study-sheet markup (titles, steps, tables, figures); plain text still reads as before
+  if (sheet && typeof value === 'string') return <StudySheet text={value} />;
   if (Array.isArray(value)) {
     const List = ordered ? 'ol' : 'ul';
     return (
@@ -224,7 +227,7 @@ export function QuestionPage({ sp }: { sp: Specialty }) {
             answer.map((s) => (
               <div key={s.key} className="book__section">
                 <h2 className="book__h">{s.label}</h2>
-                <SectionBody value={q[s.key]} ordered={s.key === 'steps'} />
+                <SectionBody value={q[s.key]} ordered={s.key === 'steps'} sheet={s.key === 'modelAnswer'} />
               </div>
             ))
           ) : (

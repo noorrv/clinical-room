@@ -1,6 +1,7 @@
 import { allSpecialties, questionsOf, type QuestionRef, type Specialty } from '../../content';
 import type { Doctor } from '../../content/types';
 import { record, type StudyState } from '../../study/store';
+import { sheetText } from './StudySheet';
 
 /*
   The doctor archives are worked out from the content already loaded for the visitor (Row Level
@@ -67,7 +68,7 @@ export function questionTexts(q: QuestionRef): Array<{ label: string; text: stri
   add('Title', q.title);
   add('Scenario', q.scenario);
   add('Question', q.question);
-  add('Model answer', q.modelAnswer);
+  add('Model answer', q.modelAnswer && sheetText(q.modelAnswer));
   add('History', q.history);
   add('Examination', q.examination);
   add('Investigations', q.investigations);

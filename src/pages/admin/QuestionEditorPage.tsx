@@ -469,7 +469,7 @@ function QuestionPreview({ form }: { form: QuestionForm }) {
             answer.map((s) => (
               <div key={s.key} className="book__section">
                 <h3 className="book__h">{s.label}</h3>
-                <SectionBody value={value(s.key)} ordered={s.key === 'steps'} />
+                <SectionBody value={value(s.key)} ordered={s.key === 'steps'} sheet={s.key === 'modelAnswer'} />
               </div>
             ))
           ) : (
