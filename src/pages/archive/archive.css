@@ -563,13 +563,75 @@
 }
 
 /* ── zoom into a topic ── */
+
+/* fallback card: fixed to the viewport and scaled from the panel's box */
 .da-zoom-ghost {
   position: fixed;
+  inset: 0;
   z-index: 200;
   pointer-events: none;
-  background: var(--da-cream, #fdf3d9);
-  border: 14px solid #f6d77a;
-  box-shadow: 0 20px 50px -20px rgba(64, 74, 40, 0.6);
+  transform-origin: 0 0;
+  will-change: transform, opacity;
+}
+
+/* View Transitions: the clicked panel (named on click) morphs into the topic header */
+.da-topic-head {
+  view-transition-name: da-zoom;
+}
+
+::view-transition-group(da-zoom) {
+  animation-duration: 560ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-old(da-zoom),
+::view-transition-new(da-zoom) {
+  height: 100%;
+  object-fit: cover;
+  animation-duration: 560ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-old(root) {
+  animation: da-vt-out 360ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+::view-transition-new(root) {
+  animation: da-vt-in 520ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+}
+
+@keyframes da-vt-out {
+  to {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes da-vt-in {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+}
+
+/* the site's top bar stays perfectly still while the page beneath it changes */
+.da-vt .site-header {
+  view-transition-name: da-site-header;
+}
+
+::view-transition-group(da-site-header),
+::view-transition-old(da-site-header),
+::view-transition-new(da-site-header) {
+  animation: none;
+}
+
+/* the page's own entrance would double the motion during the morph */
+.da-vt .da-enter .da-wrap {
+  animation: none;
+}
+
+.da-topic:active {
+  transform: translateY(0) scale(0.99);
 }
 
 .da-enter .da-wrap {

@@ -1,4 +1,5 @@
 import { Fragment, useEffect, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
 import './archive.css';
 import { withOrnaments } from './ornaments';
 import { PALETTES, paletteStyle, type Palette } from './palettes';
@@ -49,39 +50,70 @@ export function Highlight({ text, term }: { text: string; term?: string | null }
   return <>{parts}</>;
 }
 
+type ViewTransitionDoc = Document & { startViewTransition?: (cb: () => void) => { finished: Promise<void> } };
+
 /**
- * Zooms from a contents panel into its topic: the panel lifts, a framed card grows from it to fill
- * the screen, the topic page opens beneath, and the card fades away. Skipped under reduced motion.
+ * Zooms from a contents panel into its topic.
+ *
+ * Where the browser supports View Transitions, the clicked panel itself grows into the topic page's
+ * header (a shared-element morph, drawn on the GPU) while the rest of the page crossfades. Elsewhere a
+ * paper card scales up from the panel with transforms only, the page opens beneath it and the card
+ * fades away. Skipped entirely under reduced motion.
  */
 export function zoomInto(el: HTMLElement, go: () => void) {
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduce || typeof el.animate !== 'function') {
+  if (reduce) {
     go();
     return;
   }
+
+  const doc = document as ViewTransitionDoc;
+  if (typeof doc.startViewTransition === 'function') {
+    const root = document.documentElement;
+    el.style.setProperty('view-transition-name', 'da-zoom');
+    root.classList.add('da-vt');
+    try {
+      const vt = doc.startViewTransition(() => {
+        flushSync(go);
+        window.scrollTo(0, 0);
+      });
+      vt.finished.finally(() => {
+        root.classList.remove('da-vt');
+        el.style.removeProperty('view-transition-name');
+      });
+      return;
+    } catch {
+      root.classList.remove('da-vt');
+      el.style.removeProperty('view-transition-name');
+    }
+  }
+
+  if (typeof el.animate !== 'function') {
+    go();
+    return;
+  }
+  // fallback: a full-screen paper card that starts as the panel's box and scales up (transform only)
   const r = el.getBoundingClientRect();
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
   const ghost = document.createElement('div');
   ghost.className = 'da-zoom-ghost';
   ghost.setAttribute('aria-hidden', 'true');
-  const room = getComputedStyle(el);
-  ghost.style.borderColor = room.getPropertyValue('--da-butter').trim() || '#f6d77a';
-  Object.assign(ghost.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px` });
+  ghost.style.background = getComputedStyle(el).getPropertyValue('--da-cream').trim() || '#fdf3d9';
   document.body.appendChild(ghost);
-
-  el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.035)' }], { duration: 160, easing: 'ease-out', fill: 'forwards' });
+  const from = `translate(${r.left}px, ${r.top}px) scale(${r.width / vw}, ${r.height / vh})`;
   const grow = ghost.animate(
     [
-      { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, borderRadius: '10px', opacity: 0.4 },
-      { opacity: 1, offset: 0.25 },
-      { left: '0px', top: '0px', width: `${window.innerWidth}px`, height: `${window.innerHeight}px`, borderRadius: '0px', opacity: 1 },
+      { transform: from, opacity: 0.6 },
+      { transform: 'none', opacity: 1 },
     ],
-    { duration: 460, delay: 90, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', fill: 'forwards' },
+    { duration: 440, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' },
   );
   grow.onfinish = () => {
     go();
     window.scrollTo(0, 0);
     requestAnimationFrame(() => {
-      const fade = ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, easing: 'ease-out', fill: 'forwards' });
+      const fade = ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 240, easing: 'ease-out', fill: 'forwards' });
       fade.onfinish = () => ghost.remove();
     });
   };
