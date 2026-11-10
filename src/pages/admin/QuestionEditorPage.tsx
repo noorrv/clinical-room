@@ -63,6 +63,16 @@ export function QuestionEditorPage() {
   const [errors, setErrors] = useState<Partial<Record<Col, string>>>({});
   const [saveError, setSaveError] = useState('');
   const [busy, setBusy] = useState(false);
+  // "Notify students about this change": only offered for a question that is already published
+  const [notifyChange, setNotifyChange] = useState(false);
+  const [changeNote, setChangeNote] = useState('');
+  const savedStatus = useMemo(() => {
+    try {
+      return (JSON.parse(initial) as { status?: QStatus }).status ?? null;
+    } catch {
+      return null;
+    }
+  }, [initial]);
   const [preview, setPreview] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [idTouched, setIdTouched] = useState(false);
@@ -173,11 +183,35 @@ export function QuestionEditorPage() {
       setSaveError(err);
       return;
     }
+    const wasPublished = !isNew && savedStatus === 'published';
+    let notifyFailed = false;
+    if (status === 'published' && wasPublished && notifyChange) {
+      const { error } = await supabase.from('content_updates').insert({
+        kind: 'updated',
+        specialty_id: f.specialty_id,
+        question_id: f.id,
+        title: f.title.trim().slice(0, 300),
+        note: changeNote.trim().slice(0, 280) || null,
+      });
+      notifyFailed = Boolean(error);
+      if (!error) {
+        setNotifyChange(false);
+        setChangeNote('');
+      }
+    }
     setForm(f);
     setInitial(JSON.stringify(f));
     setLinks({ doctorIds: f.doctorIds, topicIds: f.topicIds });
     refreshCounts();
-    notify(status === 'published' ? `Published “${f.title.trim()}”.` : `Saved “${f.title.trim()}” as a draft.`);
+    notify(
+      notifyFailed
+        ? `Saved “${f.title.trim()}”, but students couldn’t be notified. Try again.`
+        : status === 'published'
+          ? wasPublished && notifyChange
+            ? `Saved “${f.title.trim()}” and notified students.`
+            : `Published “${f.title.trim()}”.`
+          : `Saved “${f.title.trim()}” as a draft.`,
+    );
     if (isNew) navigate(`/admin/questions/edit/${f.specialty_id}/${f.id}`, { replace: true });
   };
 
@@ -343,6 +377,25 @@ export function QuestionEditorPage() {
             <TextField label="Source" value={form.source} onChange={(v) => set('source', v)} hint="Optional, e.g. the exam and year it came from." dir="auto" />
             <SelectField label="Who can see it once published" value={form.access} onChange={(v) => set('access', v)} options={ACCESS_OPTIONS} />
           </fieldset>
+
+          {!isNew && savedStatus === 'published' && (
+            <fieldset className="admin-fieldset admin-notify">
+              <legend>Tell students</legend>
+              <label className="admin-notify__tick">
+                <input type="checkbox" checked={notifyChange} onChange={(e) => setNotifyChange(e.target.checked)} /> Notify students about this change
+              </label>
+              <p className="admin-fieldset__note">Leave it unticked for small corrections. When ticked, saving adds an “Updated” item to every student’s notifications.</p>
+              {notifyChange && (
+                <TextField
+                  label="What changed (optional)"
+                  value={changeNote}
+                  onChange={(v) => setChangeNote(v.slice(0, 280))}
+                  hint={`Shown with the notification, e.g. “Management section revised”. ${280 - changeNote.length} characters left.`}
+                  dir="auto"
+                />
+              )}
+            </fieldset>
+          )}
 
           {saveError && (
             <p className="auth-message auth-message--error" role="alert">

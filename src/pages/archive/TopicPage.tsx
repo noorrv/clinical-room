@@ -114,16 +114,17 @@ export function TopicPage({ sp }: { sp: Specialty }) {
   const prevTopic = sections[sectionIndex - 1];
   const nextTopic = sections[sectionIndex + 1];
 
-  const toggleAnswer = (q: QuestionRef) =>
+  const toggleAnswer = (q: QuestionRef) => {
+    const opening = !revealed.has(q.key);
     setRevealed((r) => {
       const n = new Set(r);
       if (n.has(q.key)) n.delete(q.key);
-      else {
-        n.add(q.key);
-        study.viewed(q.key); // remembered for "continue where you stopped"
-      }
+      else n.add(q.key);
       return n;
     });
+    // remembered for "continue where you stopped" (outside the updater: updaters run during render)
+    if (opening) study.viewed(q.key);
+  };
 
   const goPage = (p: number) => {
     setPage(p);

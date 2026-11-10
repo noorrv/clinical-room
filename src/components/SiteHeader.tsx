@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { enterGuest, leaveGuest, useGuestFlag } from '../auth/guest';
 import { allSpecialties, questionPath, questionsOf, TYPE_LABEL, useContentVersion } from '../content';
 import { continueStudying, navLinks, recentlyAdded, specialties } from '../data/homepage';
+import { useNotifications } from '../notifications/useNotifications';
 import { AntiqueBell, CloseLines, Garland, IvT, MenuLines, SearchGlass } from './HeaderArt';
 import './SiteHeader.css';
 
@@ -61,7 +62,6 @@ function useSearchIndex() {
 export function SiteHeader() {
   const [open, setOpen] = useState<Panel>(null);
   const [query, setQuery] = useState('');
-  const [unread, setUnread] = useState(recentlyAdded.filter((r) => r.isNew));
   const index = useSearchIndex();
   const { pathname } = useLocation();
 
@@ -78,6 +78,7 @@ export function SiteHeader() {
   }, [query, index]);
 
   const toggle = (p: Exclude<Panel, null>) => setOpen((cur) => (cur === p ? null : p));
+  const feed = useNotifications(open === 'alerts');
 
   // Esc and clicks outside close whichever panel is open
   useEffect(() => {
@@ -123,13 +124,13 @@ export function SiteHeader() {
           <button
             type="button"
             className="icon-btn"
-            aria-label={unread.length ? `Notifications, ${unread.length} unread` : 'Notifications'}
+            aria-label={feed.unreadCount ? `Notifications, ${feed.unreadCount} unread` : 'Notifications'}
             aria-expanded={open === 'alerts'}
             aria-controls={`${ids}-alerts`}
             onClick={() => toggle('alerts')}
           >
             <AntiqueBell />
-            {unread.length > 0 && <span className="icon-btn__dot" aria-hidden />}
+            {feed.unreadCount > 0 && <span className="icon-btn__dot" aria-hidden />}
           </button>
           <span className="header-actions__rule" aria-hidden />
           <button
@@ -226,21 +227,35 @@ export function SiteHeader() {
         aria-label="Notifications"
       >
         <p className="alerts-panel__title">Notifications</p>
-        {unread.length ? (
+        {!feed.allowed ? (
+          <p className="alerts-panel__empty">Sign in to hear when new questions and topics are added.</p>
+        ) : !feed.loaded ? (
+          <p className="alerts-panel__empty">Checking for news…</p>
+        ) : feed.items.length ? (
           <>
-            <ul>
-              {unread.map((n) => (
-                <li key={n.title}>
-                  <AppLink href={`/${n.href}`} onClick={() => setOpen(null)}>
-                    <span className="alerts-panel__badge">New</span>
-                    {n.title}
+            <ul className="alerts-list">
+              {feed.items.map((n) => (
+                <li key={n.key} className={n.unread ? 'is-unread' : undefined}>
+                  <AppLink href={n.href} onClick={() => setOpen(null)}>
+                    <span className={`alerts-panel__badge alerts-panel__badge--${n.kind}`}>{KIND_WORD[n.kind]}</span>
+                    <span className="alerts-list__text">
+                      <bdi className="alerts-list__title">{n.title}</bdi>
+                      <span className="alerts-list__detail">
+                        <bdi>{n.detail}</bdi> · <time dateTime={n.at.toISOString()}>{whenText(n.at)}</time>
+                      </span>
+                    </span>
+                    {n.unread && <span className="visually-hidden">(unread)</span>}
                   </AppLink>
                 </li>
               ))}
             </ul>
-            <button type="button" className="alerts-panel__clear" onClick={() => setUnread([])}>
-              Mark all as read
-            </button>
+            {feed.unreadCount > 0 ? (
+              <button type="button" className="alerts-panel__clear" onClick={feed.markAllRead}>
+                Mark all as read
+              </button>
+            ) : (
+              <p className="alerts-panel__empty alerts-panel__caught">You’re all caught up.</p>
+            )}
           </>
         ) : (
           <p className="alerts-panel__empty">You’re all caught up.</p>
@@ -248,6 +263,17 @@ export function SiteHeader() {
       </div>
     </header>
   );
+}
+
+const KIND_WORD = { 'new-topic': 'New topic', 'new-questions': 'New', updated: 'Updated', announcement: 'Notice' } as const;
+
+/** "Today", "Yesterday", "3 days ago", then the date. */
+function whenText(d: Date) {
+  const days = Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(d).setHours(0, 0, 0, 0)) / 864e5);
+  if (days <= 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days} days ago`;
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
 const STATUS_WORD = { pending: 'Awaiting review', approved: 'Approved', rejected: 'Not approved' } as const;

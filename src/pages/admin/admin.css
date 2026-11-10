@@ -938,3 +938,19 @@
     max-height: none;
   }
 }
+
+/* "Notify students about this change" */
+.admin-notify__tick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-notify__tick input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
