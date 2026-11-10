@@ -6,50 +6,37 @@ import { memo } from 'react';
 */
 
 const INK = '#4c4a38';
-const LEAF = '#4f5d3c';
-const LEAF_LIGHT = '#6f7d4f';
-const LEMON = '#f2bb4c';
-const LEMON_DEEP = '#d99528';
-const LEMON_LIGHT = '#fbe08a';
-const PETAL = '#fff8ea';
+const LINE = '#2e3c6b'; // the navy ink of the hand-drawn lemon art
+const LEAF = '#7f8c55';
+const LEMON_LIGHT = '#fbe49c';
+const PETAL = '#fffbf1';
 const RIBBON = '#7486bd';
 const RIBBON_DEEP = '#55669e';
 const GOLD = '#c9923e';
 const GOLD_DEEP = '#8f5d24';
 const GOLD_LIGHT = '#f1cf86';
 
-function Lemon({ x, y, a, s = 1 }: { x: number; y: number; a: number; s?: number }) {
-  return (
-    <g transform={`translate(${x} ${y}) rotate(${a}) scale(${s})`}>
-      <path d="M-30 0 C-28 -19 -9 -24 4 -22 C21 -20 30 -9 32 0 C30 9 21 20 4 22 C-9 24 -28 19 -30 0 Z" fill={LEMON} stroke={LEMON_DEEP} strokeWidth="1.4" />
-      <path d="M32 0 l6 -2 l-2 5 z" fill={LEMON_DEEP} />
-      <ellipse cx="-6" cy="-9" rx="12" ry="5" fill={LEMON_LIGHT} opacity="0.75" />
-      {[-14, -4, 6, 14].map((d) => (
-        <circle key={d} cx={d} cy={6 + (d % 3)} r="0.9" fill={LEMON_DEEP} opacity="0.5" />
-      ))}
-    </g>
-  );
-}
-
+/** A hand-drawn olive leaf: colour printed a touch off the navy line, with a midrib. */
 function Leaf({ x, y, a, l = 44 }: { x: number; y: number; a: number; l?: number }) {
+  const shape = `M0 0 C${l * 0.3} ${-l * 0.26} ${l * 0.72} ${-l * 0.24} ${l} 0 C${l * 0.72} ${l * 0.24} ${l * 0.3} ${l * 0.26} 0 0 Z`;
   return (
     <g transform={`translate(${x} ${y}) rotate(${a})`}>
-      <path d={`M0 0 C${l * 0.3} ${-l * 0.32} ${l * 0.75} ${-l * 0.3} ${l} 0 C${l * 0.75} ${l * 0.3} ${l * 0.3} ${l * 0.32} 0 0 Z`} fill={LEAF} />
-      <path d={`M2 0 L${l - 3} 0`} stroke={LEAF_LIGHT} strokeWidth="1.2" />
+      <path d={shape} fill={LEAF} transform={`translate(${l * 0.03} ${l * 0.03})`} />
+      <path d={shape} fill="none" stroke={LINE} strokeWidth="1.1" strokeLinejoin="round" />
+      <path d={`M1 0 L${l - 3} 0`} stroke={LINE} strokeWidth="0.8" />
     </g>
   );
 }
 
+/** A five-petal citrus blossom in white with navy linework. */
 function Blossom({ x, y, r = 16, a = 0 }: { x: number; y: number; r?: number; a?: number }) {
+  const petal = `M0 0 C${-r * 0.5} ${-r * 0.22} ${-r * 0.42} ${-r * 0.86} ${r * 0.04} ${-r} C${r * 0.4} ${-r * 0.84} ${r * 0.48} ${-r * 0.22} 0 0 Z`;
   return (
     <g transform={`translate(${x} ${y}) rotate(${a})`}>
       {[0, 72, 144, 216, 288].map((p) => (
-        <path key={p} transform={`rotate(${p})`} d={`M0 0 C${-r * 0.55} ${-r * 0.35} ${-r * 0.5} ${-r * 1.05} 0 ${-r * 1.1} C${r * 0.5} ${-r * 1.05} ${r * 0.55} ${-r * 0.35} 0 0 Z`} fill={PETAL} stroke="#d8cdaa" strokeWidth="1" />
+        <path key={p} transform={`rotate(${p})`} d={petal} fill={PETAL} stroke={LINE} strokeWidth="1.1" strokeLinejoin="round" />
       ))}
-      <circle r={r * 0.22} fill={LEMON_DEEP} />
-      {[0, 60, 120, 180, 240, 300].map((p) => (
-        <circle key={p} cx={Math.cos((p * Math.PI) / 180) * r * 0.32} cy={Math.sin((p * Math.PI) / 180) * r * 0.32} r="1.2" fill="#a86f2b" />
-      ))}
+      <circle r={r * 0.2} fill={LEMON_LIGHT} stroke={LINE} strokeWidth="0.9" />
     </g>
   );
 }
@@ -62,36 +49,9 @@ export function Star({ size = 14, color = '#c27a3e', className }: { size?: numbe
   );
 }
 
-/** The large sprig beside the table of contents. */
+/** The large hand-drawn lemon sprig beside the table of contents (public/textures/archive-sprig.svg). */
 export const LemonSprig = memo(function LemonSprig() {
-  return (
-    <svg viewBox="0 0 320 340" className="da-art" aria-hidden>
-      <circle cx="170" cy="150" r="104" fill={LEMON_LIGHT} opacity="0.75" />
-      <circle cx="62" cy="64" r="22" fill={LEMON_LIGHT} opacity="0.75" />
-      <path d="M162 20 C168 70 160 110 150 160" stroke={LEAF} strokeWidth="5" fill="none" strokeLinecap="round" />
-      <Leaf x={152} y={150} a={150} l={66} />
-      <Leaf x={156} y={128} a={20} l={70} />
-      <Leaf x={150} y={176} a={-160} l={58} />
-      <Leaf x={160} y={96} a={-30} l={52} />
-      <Blossom x={118} y={62} r={26} a={8} />
-      <Blossom x={176} y={44} r={22} a={-20} />
-      <Blossom x={210} y={92} r={20} a={30} />
-      <Blossom x={96} y={112} r={18} a={-10} />
-      <Lemon x={130} y={214} a={60} s={1.45} />
-      <Lemon x={196} y={210} a={110} s={1.35} />
-      <Lemon x={164} y={262} a={80} s={1.5} />
-      <Blossom x={226} y={248} r={14} a={12} />
-      <g transform="translate(46 196)">
-        <path d="M0 -14 L4 -4 L14 -3 L6 3 L9 14 L0 8 L-9 14 L-6 3 L-14 -3 L-4 -4 Z" fill="#e8a94f" />
-      </g>
-      <g transform="translate(262 40) scale(0.7)">
-        <path d="M0 -14 L4 -4 L14 -3 L6 3 L9 14 L0 8 L-9 14 L-6 3 L-14 -3 L-4 -4 Z" fill="#c27a3e" />
-      </g>
-      <g transform="translate(250 300) scale(0.6)">
-        <path d="M0 -14 L4 -4 L14 -3 L6 3 L9 14 L0 8 L-9 14 L-6 3 L-14 -3 L-4 -4 Z" fill="#7e8aa8" />
-      </g>
-    </svg>
-  );
+  return <img src="/textures/archive-sprig.svg" className="da-art" alt="" width={300} height={340} decoding="async" />;
 });
 
 /** A periwinkle ribbon bow with trailing tails, for frame corners. */

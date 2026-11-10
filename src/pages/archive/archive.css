@@ -71,7 +71,7 @@
 /* ── framed panels: the lemon border tile ── */
 .da-frame {
   position: relative;
-  border: 30px solid transparent;
+  border: 40px solid transparent;
   border-image: url('/textures/archive-border.svg') 60 round;
   background: var(--da-cream) padding-box;
   box-shadow: 0 18px 40px -26px rgba(64, 74, 40, 0.55);
@@ -1015,7 +1015,7 @@
 
   .da-toc__art {
     position: static;
-    width: 150px;
+    width: min(220px, 70%);
     justify-self: center;
   }
 }
@@ -1027,7 +1027,15 @@
   }
 
   .da-frame {
-    border-width: 18px;
+    border-width: 24px;
+  }
+
+  .da-toc {
+    padding: 0;
+  }
+
+  .da-toc__list {
+    padding: 8px 0 4px;
   }
 
   .da-bow {
