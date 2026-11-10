@@ -19,6 +19,8 @@ export interface RecentItem {
   /** ISO date */
   date: string;
   href?: string;
+  /** replaces the kind label, e.g. "New topic · 13 questions" */
+  label?: string;
 }
 
 export interface BoardData {

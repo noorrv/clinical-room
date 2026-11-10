@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { enterGuest, leaveGuest, useGuestFlag } from '../auth/guest';
 import { allSpecialties, questionPath, questionsOf, TYPE_LABEL, useContentVersion } from '../content';
-import { continueStudying, navLinks, recentlyAdded, specialties } from '../data/homepage';
+import { continueStudying, navLinks, specialties } from '../data/homepage';
 import { useNotifications } from '../notifications/useNotifications';
 import { AntiqueBell, CloseLines, Garland, IvT, MenuLines, SearchGlass } from './HeaderArt';
 import './SiteHeader.css';
@@ -49,7 +49,6 @@ function useSearchIndex() {
         { title: s.title, hint: 'Specialty', href: s.href },
         ...s.points.map((p) => ({ title: p, hint: s.title, href: s.href })),
       ]),
-      ...recentlyAdded.map((r) => ({ title: r.title, hint: 'Recently added', href: `/${r.href}` })),
       { title: continueStudying.title, hint: continueStudying.meta.join(' · '), href: `/${continueStudying.href}` },
       ...navLinks.map((l) => ({ title: l.label, hint: 'Page', href: l.href })),
     ],

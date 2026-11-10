@@ -7,13 +7,12 @@ import { LilyPlant, MiniLily } from './art/Lily';
 import {
   continueStudying,
   progressByRange,
-  recentlyAdded,
   upcomingExams,
   type ProgressRange,
 } from '../data/homepage';
 import { formatClock, spokenDuration, useStudyTimer } from '../hooks/useStudyTimer';
 import { AnatomicalHeart, LanternBooks } from './art/WidgetArt';
-import { ArrowRight, Calendar, ChevronDown, Document, Pause, Play, Sparkle, Stop } from './Icons';
+import { ArrowRight, Calendar, ChevronDown, Pause, Play, Sparkle, Stop } from './Icons';
 import './Dashboard.css';
 
 /* Gilt corner flourish for the burgundy card */
@@ -257,32 +256,6 @@ export function ContinueStudyingCard() {
           </p>
         </div>
       </div>
-    </section>
-  );
-}
-
-export function RecentlyAddedCard() {
-  return (
-    <section className="info card-light" aria-labelledby="recent-title">
-      <div className="card-head">
-        <h2 id="recent-title" className="card-title">
-          Recently Added
-        </h2>
-        <a className="head-link" href="#library" aria-label="See all recently added">
-          <ArrowRight size={22} />
-        </a>
-      </div>
-      <ul className="doc-list">
-        {recentlyAdded.map((d) => (
-          <li key={d.title}>
-            <a href={d.href}>
-              <Document size={22} className="doc-list__icon" />
-              <span className="doc-list__title">{d.title}</span>
-              {d.isNew ? <span className="badge">New</span> : <ArrowRight size={18} className="doc-list__arrow" />}
-            </a>
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }

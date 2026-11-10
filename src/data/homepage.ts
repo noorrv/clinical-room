@@ -59,12 +59,6 @@ export const continueStudying = {
   href: '#heart-failure',
 };
 
-export const recentlyAdded = [
-  { title: 'Dr. Hassan — Common OSCE Questions', href: '#dr-hassan', isNew: true },
-  { title: 'Shoulder Dystocia — Stepwise Approach', href: '#shoulder-dystocia', isNew: false },
-  { title: 'Neonatal Sepsis — OSCE Station', href: '#neonatal-sepsis', isNew: false },
-];
-
 export const upcomingExams = [
   { title: 'Medicine Midterm', days: 3, tone: 'burgundy' as const },
   { title: 'Paediatrics OSCE', days: 10, tone: 'teal' as const },

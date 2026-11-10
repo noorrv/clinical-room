@@ -129,7 +129,7 @@ export function GazetteBoard({ notices, recent, date = new Date(), loading = fal
                       </span>
                     )}
                     <span className="gz-item-meta">
-                      {KIND_LABEL[r.kind]} · {r.specialty} · {ago(r.date)}
+                      {r.label ?? KIND_LABEL[r.kind]} · <bdi>{r.specialty}</bdi> · {ago(r.date)}
                     </span>
                   </span>
                 </li>
