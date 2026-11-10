@@ -24,12 +24,24 @@ type Block =
   | { t: 'h2' | 'h3' | 'p'; text: string }
   | { t: 'ul' | 'ol'; items: string[]; start: number }
   | { t: 'table'; head: string[]; rows: string[][] }
-  | { t: 'img'; src: string; caption: string }
+  | { t: 'img'; src: string; caption: string; attrs: Record<string, string> }
   | { t: 'box'; kind: string; title: string; body: Block[]; num?: string };
 
 const LIST_UL = /^\s*[-•]\s+(.*)$/;
 const LIST_OL = /^\s*(\d+)\.\s+(.*)$/;
-const IMG = /^!\[([^\]]*)\]\(([^)\s]+)\)\s*$/;
+// ![caption](image){page=…; credit=…; license=…; licenseUrl=…; added=yes}: the braces are optional
+const IMG = /^!\[([^\]]*)\]\(([^)\s]+)\)(?:\{(.*)\})?\s*$/;
+
+function parseAttrs(s: string | undefined): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const part of (s ?? '').split(/;\s+/)) {
+    const i = part.indexOf('=');
+    if (i > 0) out[part.slice(0, i).trim()] = part.slice(i + 1).trim();
+  }
+  return out;
+}
+
+const safeUrl = (u: string | undefined) => (u && /^(https:\/\/|\/)/.test(u) ? u : undefined);
 
 function splitRow(line: string): string[] {
   const inner = line.trim().replace(/^\|/, '').replace(/\|$/, '');
@@ -102,7 +114,7 @@ export function parseSheet(src: string): Block[] {
     const img = trimmed.match(IMG);
     if (img) {
       flush();
-      out.push({ t: 'img', caption: img[1], src: img[2] });
+      out.push({ t: 'img', caption: img[1], src: img[2], attrs: parseAttrs(img[3]) });
       i++;
       continue;
     }
@@ -148,7 +160,7 @@ export function sheetText(src: string): string {
   return src
     .replace(/^:::\w*\s*/gm, '')
     .replace(/^#{2,3}\s+/gm, '')
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/!\[([^\]]*)\]\([^)]*\)(\{[^}]*\})?/g, '$1')
     .replace(/\*\*/g, '')
     .replace(/<br>/g, ' ')
     .replace(/^\|?\s*:?-{2,}.*$/gm, '')
@@ -270,19 +282,56 @@ function Blocks({ blocks, term }: { blocks: Block[]; term: string | null }) {
                 </table>
               </div>
             );
-          case 'img':
+          case 'img': {
+            const page = safeUrl(b.attrs.page);
+            const src = safeUrl(b.src);
+            if (!src) return null;
+            const picture = <img src={src} alt={b.caption} loading="lazy" decoding="async" referrerPolicy="no-referrer" />;
+            const licence = safeUrl(b.attrs.licenseUrl);
             return (
-              <figure key={i} className="ss-fig">
+              <figure key={i} className={`ss-fig${b.attrs.added === 'yes' ? ' ss-fig--added' : ''}`}>
                 <div className="ss-fig__plate">
-                  <img src={b.src} alt={b.caption} loading="lazy" decoding="async" />
+                  {page ? (
+                    <a href={page} target="_blank" rel="noopener noreferrer" aria-label={`${b.caption} (opens the original source)`}>
+                      {picture}
+                    </a>
+                  ) : (
+                    picture
+                  )}
                 </div>
                 {b.caption && (
                   <figcaption>
                     <span className="ss-fig__label">Fig.</span> <Inline text={b.caption} term={term} />
+                    {(b.attrs.credit || b.attrs.added === 'yes') && (
+                      <span className="ss-fig__credit">
+                        {b.attrs.added === 'yes' && <span className="ss-fig__added">Added illustration</span>}
+                        {b.attrs.credit && (
+                          <>
+                            {' '}
+                            {page ? (
+                              <a href={page} target="_blank" rel="noopener noreferrer">
+                                {b.attrs.credit}
+                              </a>
+                            ) : (
+                              b.attrs.credit
+                            )}
+                          </>
+                        )}
+                        {licence && b.attrs.license && (
+                          <>
+                            {' · '}
+                            <a href={licence} target="_blank" rel="noopener noreferrer license">
+                              licence
+                            </a>
+                          </>
+                        )}
+                      </span>
+                    )}
                   </figcaption>
                 )}
               </figure>
             );
+          }
           case 'box':
             if (b.kind === 'group')
               return (

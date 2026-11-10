@@ -337,7 +337,12 @@
 
 .ss-table tbody th {
   font-weight: 600;
-  min-width: 9em;
+}
+
+@media (min-width: 561px) {
+  .ss-table tbody th {
+    min-width: 9em;
+  }
 }
 
 .ss-table tbody tr:nth-child(even) {
@@ -365,9 +370,11 @@
 
 .ss-fig img {
   display: block;
-  width: 100%;
+  width: auto;
   height: auto;
-  max-width: 540px;
+  max-width: min(100%, 540px);
+  max-height: 520px;
+  margin: 0 auto;
 }
 
 .ss-fig figcaption {
@@ -428,4 +435,91 @@
   .ss-h2__rule {
     display: none;
   }
+}
+
+/* ── researched illustrations: linked to their source, credited ── */
+.ss-fig__plate a {
+  display: block;
+  overflow: hidden;
+}
+
+.ss-fig__plate a img {
+  transition: transform 300ms ease;
+}
+
+.ss-fig__plate a:hover img {
+  transform: scale(1.025);
+}
+
+.ss-fig__plate a:focus-visible {
+  outline: 2px solid var(--ss-sage-deep);
+  outline-offset: 3px;
+}
+
+.ss-fig__credit {
+  display: block;
+  margin-top: 4px;
+  font-style: normal;
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--ss-ink) 70%, transparent);
+}
+
+.ss-fig__credit a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--ss-rule);
+  text-underline-offset: 2px;
+}
+
+.ss-fig__added {
+  font-family: var(--ss-display);
+  font-weight: 600;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ss-sage-deep);
+  margin-right: 4px;
+}
+
+.ss-fig--added .ss-fig__plate {
+  border-style: dashed;
+}
+
+/* ── ornaments that stand in for emojis ── */
+.orn-rating,
+.orn-star,
+.orn-mark,
+.orn-emphasis,
+.orn-flourish {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  vertical-align: -0.08em;
+  color: var(--ss-sage-deep, #687653);
+}
+
+.orn-star__svg {
+  width: 0.78em;
+  height: 0.78em;
+  fill: currentColor;
+}
+
+.orn-rating .orn-star__svg {
+  width: 0.7em;
+  height: 0.7em;
+}
+
+.orn-rating {
+  padding: 0 4px;
+}
+
+.orn-icon {
+  width: 1em;
+  height: 1em;
+}
+
+.orn-flourish,
+.orn-emphasis {
+  font-family: var(--ss-display, Georgia, serif);
 }

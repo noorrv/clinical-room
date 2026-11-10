@@ -1,5 +1,6 @@
 import { Fragment, useEffect, type ReactNode } from 'react';
 import './archive.css';
+import { withOrnaments } from './ornaments';
 import { PALETTES, paletteStyle, type Palette } from './palettes';
 
 /*
@@ -32,19 +33,19 @@ export function ArchiveRoom({ children, className = '', palette = PALETTES[0] }:
 /** Wraps every occurrence of the search term in <mark>. */
 export function Highlight({ text, term }: { text: string; term?: string | null }) {
   const t = term?.trim();
-  if (!t || t.length < 2) return <>{text}</>;
+  if (!t || t.length < 2) return <>{withOrnaments(text)}</>;
   const lower = text.toLocaleLowerCase();
   const needle = t.toLocaleLowerCase();
   const parts: ReactNode[] = [];
   let i = 0;
   let at = lower.indexOf(needle);
   while (at >= 0) {
-    if (at > i) parts.push(<Fragment key={`t${i}`}>{text.slice(i, at)}</Fragment>);
-    parts.push(<mark key={`m${at}`}>{text.slice(at, at + t.length)}</mark>);
+    if (at > i) parts.push(<Fragment key={`t${i}`}>{withOrnaments(text.slice(i, at))}</Fragment>);
+    parts.push(<mark key={`m${at}`}>{withOrnaments(text.slice(at, at + t.length))}</mark>);
     i = at + t.length;
     at = lower.indexOf(needle, i);
   }
-  if (i < text.length) parts.push(<Fragment key={`t${i}`}>{text.slice(i)}</Fragment>);
+  if (i < text.length) parts.push(<Fragment key={`t${i}`}>{withOrnaments(text.slice(i))}</Fragment>);
   return <>{parts}</>;
 }
 

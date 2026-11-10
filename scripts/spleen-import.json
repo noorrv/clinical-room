@@ -1,0 +1,35 @@
+{
+ "workbooks": [
+  {"file": "/private/tmp/claude-501/-Users-ali-Desktop-project-w/162cec57-f2de-435a-8d1a-172d25a41c87/scratchpad/wb2/Spleen_Examination_OSCE.xlsx", "prefix": "spx", "specialty": "surgery", "topic": "spleen-examination", "topicName": "Spleen Examination", "doctor": "salah", "source": "Spleen Examination OSCE workbook", "overview_title": "Overview — Spleen examination",
+   "sheets": {
+    "Palpation": {"type": "station"},
+    "Spleen vs Kidney": {"mode": "table"},
+    "Causes of Splenomegaly": {"images": [{"after": "2. Hematological malignancies", "image": "cll-splenomegaly"}, {"after": "Increased pressure in the splenic venous circulation", "image": "cirrhosis-splenomegaly"}]},
+    "Splenic Cysts": {"images": [{"after": "B. False cysts", "image": "splenic-pseudocyst"}]},
+    "Ligaments": {"split": "^Q\\d+\\. ", "images": [{"after": "Q6.", "image": "gray-spleen-location"}, {"after": "Peritoneal ligaments holding the spleen", "image": "gray-peritoneum"}]},
+    "Viva Q&A": {"mode": "table"},
+    "References": {"mode": "table", "type": "other"},
+    "Revision Sheet": {"mode": "table"}
+   }},
+  {"file": "/private/tmp/claude-501/-Users-ali-Desktop-project-w/162cec57-f2de-435a-8d1a-172d25a41c87/scratchpad/wb2/Splenic_Injury_OSCE.xlsx", "prefix": "spi", "specialty": "surgery", "topic": "splenic-injury", "topicName": "Splenic Injury", "doctor": "salah", "source": "Splenic Injury OSCE workbook", "overview_title": "Overview — Splenic injury",
+   "sheets": {
+    "Mechanism": {"images": [{"after": "D. Spontaneous or pathological splenic rupture", "image": "ebv-subcapsular"}]},
+    "Kehr & Ballance": {"split": "^[45]\\. ", "images": [{"after": "Why shoulder pain?", "image": "referred-pain"}]},
+    "AAST Grading": {"mode": "table"},
+    "Conversion & Operative": {"split": "^[89]\\. "},
+    "Rapid-fire Q&A": {"mode": "table"},
+    "References": {"mode": "table", "type": "other"}
+   }},
+  {"file": "/private/tmp/claude-501/-Users-ali-Desktop-project-w/162cec57-f2de-435a-8d1a-172d25a41c87/scratchpad/wb2/Hydatid_Cyst_Spleen_OSCE.xlsx", "prefix": "hyd", "specialty": "surgery", "topic": "hydatid-cyst-spleen", "topicName": "Hydatid Cyst of the Spleen", "doctor": "salah", "source": "Dr. Salah — Hydatid Cyst of the Spleen OSCE workbook", "overview_title": "Overview — Hydatid cyst of the spleen",
+   "sheets": {
+    "Definition & Organism": {"split": "^Q\\d+\\. ", "images": [{"after": "The cyst contains", "image": "hydatid-sand"}]},
+    "Life Cycle": {"images": [{"after": "Remember the cycle", "image": "eg-lifecycle"}]},
+    "Hosts": {"split": "^Q\\d+\\. "},
+    "Cyst Layers": {"images": [{"after": "2. Ectocyst", "image": "laminated-layer"}, {"after": "What are brood capsules?", "image": "protoscolex"}]},
+    "Sites": {"split": "^Q\\d+\\.? ", "columns": "field", "pairHeader": ["Site", "Clinical importance"], "rename": {"Q7 Overview": "Q7. Common sites of hydatid cysts"}, "images": [{"after": "2. Lungs", "image": "liver-lung-cyst"}]},
+    "Viva Q&A": {"mode": "table"},
+    "WHO Stages": {"mode": "table", "images": [{"after": "*end*", "image": "hydatid-us"}]},
+    "References": {"mode": "table", "type": "other"}
+   }}
+ ]
+}
