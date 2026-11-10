@@ -10,7 +10,6 @@ const LINE = '#2e3c6b'; // the navy ink of the hand-drawn lemon art
 const LEAF = '#7f8c55';
 const LEMON_LIGHT = '#fbe49c';
 const PETAL = '#fffbf1';
-const RIBBON = '#7486bd';
 const RIBBON_DEEP = '#55669e';
 const GOLD = '#c9923e';
 const GOLD_DEEP = '#8f5d24';
@@ -59,12 +58,12 @@ export function Bow({ className, flip }: { className?: string; flip?: boolean })
   return (
     <svg viewBox="0 0 140 140" className={className} aria-hidden style={flip ? { transform: 'scaleX(-1)' } : undefined}>
       <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M70 52 C40 18 12 30 20 54 C26 72 52 66 70 52 Z" fill={RIBBON} stroke={RIBBON_DEEP} strokeWidth="2" />
-        <path d="M70 52 C96 22 126 30 120 54 C114 72 88 66 70 52 Z" fill={RIBBON} stroke={RIBBON_DEEP} strokeWidth="2" />
-        <path d="M66 56 C56 82 40 100 22 128 M76 56 C88 84 104 100 124 126" stroke={RIBBON} strokeWidth="11" />
-        <path d="M66 56 C56 82 40 100 22 128 M76 56 C88 84 104 100 124 126" stroke={RIBBON_DEEP} strokeWidth="1.5" opacity="0.6" />
-        <ellipse cx="71" cy="54" rx="9" ry="8" fill={RIBBON_DEEP} />
-        <path d="M30 46 C38 52 48 54 60 52 M110 46 C102 52 92 54 80 52" stroke="#9eacd6" strokeWidth="2" />
+        <path d="M70 52 C40 18 12 30 20 54 C26 72 52 66 70 52 Z" className="da-bow__fill da-bow__edge" strokeWidth="2" />
+        <path d="M70 52 C96 22 126 30 120 54 C114 72 88 66 70 52 Z" className="da-bow__fill da-bow__edge" strokeWidth="2" />
+        <path d="M66 56 C56 82 40 100 22 128 M76 56 C88 84 104 100 124 126" className="da-bow__tail" strokeWidth="11" />
+        <path d="M66 56 C56 82 40 100 22 128 M76 56 C88 84 104 100 124 126" className="da-bow__edge" strokeWidth="1.5" opacity="0.6" />
+        <ellipse cx="71" cy="54" rx="9" ry="8" className="da-bow__knot" />
+        <path d="M30 46 C38 52 48 54 60 52 M110 46 C102 52 92 54 80 52" stroke="#fff" strokeOpacity="0.35" strokeWidth="2" />
       </g>
     </svg>
   );

@@ -1,5 +1,6 @@
 import { Fragment, useEffect, type ReactNode } from 'react';
 import './archive.css';
+import { PALETTES, paletteStyle, type Palette } from './palettes';
 
 /*
   Pieces shared by the doctor archive pages: their own typefaces (loaded only here), the
@@ -18,10 +19,14 @@ export function useArchiveFonts() {
   }, []);
 }
 
-/** The archive's outer world: sage gingham with a soft vignette. */
-export function ArchiveRoom({ children, className = '' }: { children: ReactNode; className?: string }) {
+/** The archive's outer world: the doctor's painted pattern and palette (Amalfi wash by default). */
+export function ArchiveRoom({ children, className = '', palette = PALETTES[0] }: { children: ReactNode; className?: string; palette?: Palette }) {
   useArchiveFonts();
-  return <div className={`da ${className}`}>{children}</div>;
+  return (
+    <div className={`da ${className}`} style={paletteStyle(palette)} data-palette={palette.id}>
+      {children}
+    </div>
+  );
 }
 
 /** Wraps every occurrence of the search term in <mark>. */
@@ -57,6 +62,8 @@ export function zoomInto(el: HTMLElement, go: () => void) {
   const ghost = document.createElement('div');
   ghost.className = 'da-zoom-ghost';
   ghost.setAttribute('aria-hidden', 'true');
+  const room = getComputedStyle(el);
+  ghost.style.borderColor = room.getPropertyValue('--da-butter').trim() || '#f6d77a';
   Object.assign(ghost.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px` });
   document.body.appendChild(ghost);
 

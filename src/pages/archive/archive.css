@@ -1,5 +1,5 @@
 /* ───────────────────────────────────────────────────────────────
-   The examiner archives: sage gingham room, butter-yellow lemon frames,
+   The examiner archives: each doctor's painted pattern and palette (palettes.ts), lemon frames,
    cream cards, olive ink. Everything is scoped under .da.
    ─────────────────────────────────────────────────────────────── */
 
@@ -25,12 +25,9 @@
   padding: 28px 0 72px;
   color: var(--da-ink);
   font-family: var(--da-body);
-  background-color: #e6ecd2;
-  background-image:
-    radial-gradient(ellipse at 50% 30%, rgba(255, 252, 236, 0.55), rgba(255, 252, 236, 0) 70%),
-    linear-gradient(90deg, rgba(150, 171, 112, 0.38) 50%, transparent 50%),
-    linear-gradient(rgba(150, 171, 112, 0.38) 50%, transparent 50%);
-  background-size: 100% 100%, 28px 28px, 28px 28px;
+  background-color: var(--da-ground, #faf2e2);
+  background-image: var(--da-pattern, none);
+  background-size: 240px 240px;
 }
 
 .da *,
@@ -60,6 +57,24 @@
 
 .da-crumbs {
   font-size: 0.95rem;
+}
+
+/* text that sits straight on the painted pattern gets a small paper label so it stays readable */
+.da-crumbs,
+.da-foot,
+.da-search__all,
+.da-found__count {
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--da-cream);
+  box-shadow: 0 0 0 1.5px rgba(76, 74, 56, 0.18);
+}
+
+.da-foot {
+  justify-self: center;
 }
 
 .da-crumbs a {
@@ -142,6 +157,22 @@
   right: -50px;
 }
 
+.da-bow__fill {
+  fill: var(--da-bow, #7486bd);
+}
+
+.da-bow__tail {
+  stroke: var(--da-bow, #7486bd);
+}
+
+.da-bow__edge {
+  stroke: var(--da-bow-deep, #55669e);
+}
+
+.da-bow__knot {
+  fill: var(--da-bow-deep, #55669e);
+}
+
 .da-star {
   position: absolute;
   pointer-events: none;
@@ -180,7 +211,7 @@
   border: 2px solid var(--da-gold);
   box-shadow:
     0 0 0 6px var(--da-cream),
-    0 0 0 8px rgba(116, 134, 189, 0.6);
+    0 0 0 8px var(--da-bow, #7486bd);
 }
 
 .da-name {

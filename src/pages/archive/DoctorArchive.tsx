@@ -4,6 +4,7 @@ import type { Specialty } from '../../content';
 import { useStudy } from '../../study/store';
 import { Bow, CHARMS, CheckSeal, LemonSprig, Locket, SafetyPin, Star } from './art';
 import { doctorArchive, isReviewed, pad, searchArchives, sectionProgress, topicPath } from './data';
+import { paletteFor } from './palettes';
 import { ArchiveRoom, Highlight, zoomInto } from './shared';
 
 const Medallion3D = lazy(() => import('./Medallion3D'));
@@ -25,7 +26,7 @@ export function DoctorArchive({ sp }: { sp: Specialty }) {
 
   if (!archive) {
     return (
-      <ArchiveRoom>
+      <ArchiveRoom palette={paletteFor(doctorId)}>
         <div className="da-wrap">
           <div className="da-card da-missing">
             <h1 className="da-h1">This examiner isn’t in the library</h1>
@@ -51,7 +52,7 @@ export function DoctorArchive({ sp }: { sp: Specialty }) {
   const open = (el: HTMLElement, to: string) => zoomInto(el, () => navigate(to));
 
   return (
-    <ArchiveRoom>
+    <ArchiveRoom palette={paletteFor(doctorId)}>
       <div className="da-wrap">
         <nav className="da-crumbs" aria-label="Breadcrumb">
           <Link to={`/specialties/${sp.slug}`}>← {sp.title}</Link>
