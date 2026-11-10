@@ -69,6 +69,7 @@ export function ContinueStudyingCard() {
         </button>
       </div>
 
+      <div className="ct__inner">
       <div className="ct__stage">
         <figure className="ct-sticker" aria-hidden>
           <span className="ct-sticker__cut">
@@ -158,6 +159,7 @@ export function ContinueStudyingCard() {
           </div>
         </div>
       )}
+      </div>
     </section>
   );
 }

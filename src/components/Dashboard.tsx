@@ -6,12 +6,11 @@ import { computeStreak, type DayState, type StreakInfo } from '../study/streak';
 import { LilyPlant, MiniLily } from './art/Lily';
 import {
   progressByRange,
-  upcomingExams,
   type ProgressRange,
 } from '../data/homepage';
 import { formatClock, spokenDuration, useStudyTimer } from '../hooks/useStudyTimer';
 import { LanternBooks } from './art/WidgetArt';
-import { Calendar, ChevronDown, Pause, Play, Sparkle, Stop } from './Icons';
+import { ChevronDown, Pause, Play, Sparkle, Stop } from './Icons';
 import './Dashboard.css';
 
 /* Gilt corner flourish for the burgundy card */
@@ -221,24 +220,3 @@ export function StreakView({ info }: { info: StreakInfo }) {
   );
 }
 
-export function UpcomingExamsCard() {
-  return (
-    <section className="info card-light" aria-labelledby="exams-title">
-      <div className="card-head">
-        <h2 id="exams-title" className="card-title">
-          Upcoming Exams
-        </h2>
-        <Calendar size={24} className="head-icon" />
-      </div>
-      <ul className="exam-list">
-        {upcomingExams.map((e) => (
-          <li key={e.title}>
-            <span className={`exam-list__dot exam-list__dot--${e.tone}`} aria-hidden />
-            <span className="exam-list__title">{e.title}</span>
-            <span className="exam-list__days">{e.days} days</span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}

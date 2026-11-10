@@ -6,8 +6,8 @@
 
 .info-row {
   display: grid;
-  /* Continue studying takes the room the old Recently Added card left */
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  /* Continue studying has the row to itself */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s-4);
 }
 
@@ -596,11 +596,6 @@
 
 /* ── Lists ── */
 .doc-list,
-.exam-list {
-  list-style: none;
-  margin: var(--s-3) 0 0;
-  padding: 0;
-}
 
 .doc-list a {
   display: grid;
@@ -649,41 +644,12 @@
   line-height: 1.5;
 }
 
-.exam-list li {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: var(--s-3);
-  min-height: 44px;
-  border-bottom: 1px solid rgba(160, 120, 70, 0.22);
-}
 
-.exam-list li:last-child {
-  border-bottom: 0;
-}
 
-.exam-list__dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-}
 
-.exam-list__dot--burgundy {
-  background: var(--burgundy-2);
-}
 
-.exam-list__dot--teal {
-  background: var(--sage);
-}
 
-.exam-list__title {
-  font-size: 1.05rem;
-}
 
-.exam-list__days {
-  font-variant-numeric: tabular-nums lining-nums;
-  color: var(--ink-soft);
-}
 
 /* ── Responsive ── */
 @media (max-width: 1100px) {
@@ -696,10 +662,6 @@
     grid-column: 1 / -1;
   }
 
-  /* tablets: Continue studying takes the whole row so its quote can run along it */
-  .info-row {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 @media (max-width: 680px) {

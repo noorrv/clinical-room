@@ -51,12 +51,6 @@ export type ProgressRange = keyof typeof progressByRange;
 
 export const streakDays = 5;
 
-export const upcomingExams = [
-  { title: 'Medicine Midterm', days: 3, tone: 'burgundy' as const },
-  { title: 'Paediatrics OSCE', days: 10, tone: 'teal' as const },
-  { title: 'Surgery Final', days: 24, tone: 'burgundy' as const },
-];
-
 export const navLinks = [
   { label: 'Home', href: '/', current: true },
   { label: 'Specialties', href: '/#specialties', hasMenu: true },

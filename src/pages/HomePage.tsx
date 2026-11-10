@@ -3,7 +3,7 @@ import { GazetteBoard } from '../components/board/GazetteBoard';
 import { useBoardData } from '../components/board/useBoardData';
 import type { RecentItem } from '../components/board/types';
 import { useNotifications } from '../notifications/useNotifications';
-import { ProgressCard, StreakCard, UpcomingExamsCard } from '../components/Dashboard';
+import { ProgressCard, StreakCard } from '../components/Dashboard';
 import { ContinueStudyingCard } from '../components/ContinueCard';
 import { PanelVines } from '../components/art/PanelVines';
 import { Hero } from '../components/Hero';
@@ -67,7 +67,6 @@ export function HomePage() {
 
           <div className="info-row">
             <ContinueStudyingCard />
-            <UpcomingExamsCard />
           </div>
         </div>
       </main>
