@@ -4,12 +4,6 @@
   gap: var(--s-4);
 }
 
-.info-row {
-  display: grid;
-  /* Continue studying has the row to itself */
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--s-4);
-}
 
 /* the gazette takes the first slot of the dashboard row */
 .dash-row > .gz {
@@ -304,79 +298,17 @@
 }
 
 /* ── Progress ── */
-.progress {
-  overflow: hidden;
-}
 
-.select {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
 
-.select select {
-  appearance: none;
-  min-height: 40px;
-  padding: 0 34px 0 14px;
-  border-radius: var(--r-sm);
-  border: 1px solid rgba(111, 29, 27, 0.25);
-  background: rgba(255, 250, 238, 0.85);
-  font-size: 0.95rem;
-  color: var(--ink);
-  cursor: pointer;
-}
 
-.select svg {
-  position: absolute;
-  right: 10px;
-  pointer-events: none;
-  color: var(--ink-soft);
-}
 
-.progress__row {
-  display: flex;
-  align-items: center;
-  gap: var(--s-4);
-  margin-top: var(--s-4);
-}
 
-.progress__row .bar {
-  flex: 1;
-}
 
-.progress__pct {
-  font-family: var(--font-display);
-  font-size: 2.6rem;
-  font-weight: 500;
-  line-height: 1;
-  font-variant-numeric: lining-nums;
-  color: var(--ink);
-}
 
-.progress__pct span {
-  font-size: 0.7em;
-}
 
-.progress__hours {
-  margin-top: var(--s-2);
-  color: var(--ink-soft);
-}
 
-.progress__spark {
-  position: absolute;
-  color: var(--gold);
-}
 
-.progress__spark--a {
-  top: 18px;
-  left: 50%;
-}
 
-.progress__spark--b {
-  right: 26px;
-  bottom: 18px;
-  opacity: 0.7;
-}
 
 /* ── Streak ── */
 .streak {
@@ -595,8 +527,6 @@
 }
 
 /* ── Lists ── */
-.doc-list,
-
 .doc-list a {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -665,8 +595,7 @@
 }
 
 @media (max-width: 680px) {
-  .dash-row,
-  .info-row {
+  .dash-row {
     grid-template-columns: 1fr;
   }
 

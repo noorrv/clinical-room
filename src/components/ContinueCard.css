@@ -96,7 +96,7 @@
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 132px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, clamp(80px, 36cqi, 132px)) minmax(0, 1fr);
   align-items: center;
   gap: 14px;
 }
@@ -157,7 +157,8 @@
   font-family: var(--font-display);
   font-style: italic;
   font-weight: 500;
-  font-size: clamp(1.55rem, 1.2rem + 1vw, 2rem);
+  /* sized by the card itself, so the capitals never reach the edge of a narrow card */
+  font-size: clamp(1rem, 7.2cqi, 1.9rem);
   line-height: 1.02;
   color: var(--ct-cream);
 }

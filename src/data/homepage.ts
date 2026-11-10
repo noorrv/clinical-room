@@ -42,13 +42,6 @@ export const specialties: Specialty[] = [
   },
 ];
 
-export const progressByRange = {
-  week: { label: 'This Week', done: 2.7, goal: 10 },
-  month: { label: 'This Month', done: 24.5, goal: 40 },
-} as const;
-
-export type ProgressRange = keyof typeof progressByRange;
-
 export const streakDays = 5;
 
 export const navLinks = [

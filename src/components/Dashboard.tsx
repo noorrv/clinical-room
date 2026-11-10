@@ -5,12 +5,10 @@ import { useStudy } from '../study/store';
 import { computeStreak, type DayState, type StreakInfo } from '../study/streak';
 import { LilyPlant, MiniLily } from './art/Lily';
 import {
-  progressByRange,
-  type ProgressRange,
 } from '../data/homepage';
 import { formatClock, spokenDuration, useStudyTimer } from '../hooks/useStudyTimer';
 import { LanternBooks } from './art/WidgetArt';
-import { ChevronDown, Pause, Play, Sparkle, Stop } from './Icons';
+import { Pause, Play, Sparkle, Stop } from './Icons';
 import './Dashboard.css';
 
 /* Gilt corner flourish for the burgundy card */
@@ -95,52 +93,6 @@ export function StudyTrackerCard() {
   );
 }
 
-export function ProgressCard() {
-  const [range, setRange] = useState<ProgressRange>('week');
-  const data = progressByRange[range];
-  const pct = Math.round((data.done / data.goal) * 100);
-  return (
-    <section className="progress card-light" aria-labelledby="progress-title">
-      <div className="card-head">
-        <h2 id="progress-title" className="card-title">
-          Your Progress
-        </h2>
-        <label className="select">
-          <span className="visually-hidden">Time range</span>
-          <select value={range} onChange={(e) => setRange(e.target.value as ProgressRange)}>
-            {Object.entries(progressByRange).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v.label}
-              </option>
-            ))}
-          </select>
-          <ChevronDown size={16} />
-        </label>
-      </div>
-      <div className="progress__row">
-        <p className="progress__pct">
-          {pct}
-          <span>%</span>
-        </p>
-        <div
-          className="bar bar--lg"
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={pct}
-          aria-label={`${data.label} study goal`}
-        >
-          <span style={{ width: `${pct}%` }} />
-        </div>
-      </div>
-      <p className="progress__hours">
-        {data.done} / {data.goal} hours
-      </p>
-      <Sparkle className="progress__spark progress__spark--a" size={22} />
-      <Sparkle className="progress__spark progress__spark--b" size={12} />
-    </section>
-  );
-}
 
 const DAY_WORD: Record<DayState, string> = {
   met: 'goal met',
