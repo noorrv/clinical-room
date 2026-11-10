@@ -83,10 +83,10 @@ export function ContinueStudyingCard() {
             <span className="ct-word ct-word--2">like</span> <span className="ct-word ct-word--3">it’s</span>
           </span>
           <span className="ct-quote__line" aria-hidden>
-            <span className="ct-word ct-word--4">hard?</span>
+            <span className="ct-word ct-word--4">HARD?</span>
           </span>
-          <svg className="ct-quote__swash" viewBox="0 0 120 14" aria-hidden>
-            <path d="M2 9 C26 3 48 12 70 7 C86 3.5 100 5 118 2" />
+          <svg className="ct-quote__swash" viewBox="0 0 120 14" preserveAspectRatio="none" aria-hidden>
+            <path d="M2 9 C26 3 48 12 70 7 C86 3.5 100 5 118 2" vectorEffect="non-scaling-stroke" pathLength={1} />
           </svg>
         </p>
       </div>

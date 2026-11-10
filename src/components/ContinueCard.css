@@ -14,6 +14,8 @@
   position: relative;
   overflow: hidden;
   isolation: isolate;
+  /* the quote lays itself out by the card's width, not the screen's */
+  container-type: inline-size;
   color: var(--ct-cream);
   border-radius: 18px;
   border: 1px solid rgba(201, 162, 74, 0.55);
@@ -156,10 +158,11 @@
   white-space: nowrap;
 }
 
-/* the third line is the punchline: a touch larger, in rose gold */
+/* the punchline: spaced italic capitals in rose gold */
 .ct-word--4 {
-  font-size: 1.22em;
+  font-size: 1.08em;
   font-weight: 600;
+  letter-spacing: 0.06em;
   color: var(--ct-rose);
 }
 
@@ -209,7 +212,7 @@
 
 .ct-quote__swash {
   width: min(7.2em, 100%);
-  height: auto;
+  height: 0.5em;
   margin-top: 0.12em;
   overflow: visible;
 }
@@ -219,15 +222,50 @@
   stroke: var(--ct-gold);
   stroke-width: 1.6;
   stroke-linecap: round;
-  stroke-dasharray: 130;
-  stroke-dashoffset: 130;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
   animation: ct-swash 6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
 
 @keyframes ct-swash {
-  0%, 33% { stroke-dashoffset: 130; opacity: 1; }
+  0%, 33% { stroke-dashoffset: 1; opacity: 1; }
   48%, 78% { stroke-dashoffset: 0; opacity: 1; }
   90%, 100% { stroke-dashoffset: 0; opacity: 0; }
+}
+
+/* a wide card (desktop, tablet): the line runs along the card beside the sticker */
+@container (min-width: 440px) {
+  .ct__stage {
+    grid-template-columns: 124px minmax(0, 1fr);
+    gap: 22px;
+  }
+
+  .ct-quote {
+    display: inline-block;
+    justify-self: start;
+    min-height: 0;
+    padding-bottom: 0.5em;
+    font-size: clamp(1.6rem, 6.2cqi, 2.4rem);
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .ct-quote__line {
+    display: inline;
+  }
+
+  .ct-quote__line + .ct-quote__line {
+    margin-left: 0.24em;
+  }
+
+  .ct-quote__swash {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 0.42em;
+    margin: 0;
+  }
 }
 
 /* paused or reduced motion: the finished line, standing still */
