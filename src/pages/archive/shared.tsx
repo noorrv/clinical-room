@@ -7,7 +7,7 @@ import { PALETTES, paletteStyle, type Palette } from './palettes';
   framed panel, search-term highlighting and the zoom into a topic.
 */
 
-const ARCHIVE_FONTS = 'https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Arimo:wght@400;600;700&display=swap';
+const ARCHIVE_FONTS = 'https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Arimo:wght@400;600;700&family=Special+Elite&display=swap';
 
 export function useArchiveFonts() {
   useEffect(() => {

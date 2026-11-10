@@ -1,13 +1,13 @@
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { Specialty } from '../../content';
 import { useStudy } from '../../study/store';
-import { Bow, CHARMS, CheckSeal, LemonSprig, Locket, SafetyPin, Star } from './art';
+import { CHARMS, CheckSeal, LemonSprig } from './art';
 import { doctorArchive, isReviewed, pad, searchArchives, sectionProgress, topicPath } from './data';
 import { paletteFor } from './palettes';
+import { TitleCard } from './TitleCard';
+import './card.css';
 import { ArchiveRoom, Highlight, zoomInto } from './shared';
-
-const Medallion3D = lazy(() => import('./Medallion3D'));
 
 /** The first real letter of a name, skipping a "Dr." or "د." title. */
 export function initialOf(name: string) {
@@ -60,28 +60,7 @@ export function DoctorArchive({ sp }: { sp: Specialty }) {
           <Link to={`/archive/search`}>Search every archive</Link>
         </nav>
 
-        <header className="da-frame da-title">
-          <Bow className="da-bow da-bow--tl" />
-          <Bow className="da-bow da-bow--tr" flip />
-          <div className="da-title__inner">
-            <div className="da-oval">
-              <p className="da-kicker">{sp.title} · Examiner’s archive</p>
-              <h1 className="da-name">
-                <bdi>{doctor.name}</bdi>
-              </h1>
-              {doctor.role && <p className="da-role">{doctor.role}</p>}
-              <SafetyPin className="da-pin" />
-            </div>
-            <div className="da-title__medal">
-              <Suspense fallback={<Locket className="da-medallion__flat" />}>
-                <Medallion3D letter={initialOf(doctor.name)} label={`Medallion for ${doctor.name}`} />
-              </Suspense>
-            </div>
-          </div>
-          <Star className="da-star da-star--a" size={18} />
-          <Star className="da-star da-star--b" size={12} color="#7e8aa8" />
-          <Star className="da-star da-star--c" size={14} color="#e3a24c" />
-        </header>
+        <TitleCard sp={sp} doctor={doctor} palette={paletteFor(doctor.id)} initial={initialOf(doctor.name)} />
 
         {doctor.note && <p className="da-note">{doctor.note}</p>}
 
