@@ -29,6 +29,20 @@ export interface Archive {
  * A specialty's questions by topic, whoever asked them. Questions in no known topic are
  * gathered as "Other questions". Topics with no questions are kept, so the boards can show them.
  */
+/** Where a question sits in its topic: the overview first, then easy → hard, reference lists last. */
+function place(q: QuestionRef): number {
+  if (/^overview\b/i.test(q.title)) return 0;
+  if (/^references\b/i.test(q.title)) return 9;
+  return q.difficulty ?? 4;
+}
+
+/** A topic's questions from easy to hard; questions of the same level keep their written order. */
+export const byDifficulty = (list: QuestionRef[]) =>
+  list
+    .map((q, i) => ({ q, i }))
+    .sort((a, b) => place(a.q) - place(b.q) || a.i - b.i)
+    .map(({ q }) => q);
+
 export function specialtyArchive(sp: Specialty): Archive {
   const qs = questionsOf(sp);
   const order = new Map((sp.subjects ?? []).map((x, i) => [x.id, i]));
@@ -36,11 +50,11 @@ export function specialtyArchive(sp: Specialty): Archive {
   const sections: Section[] = sp.topics
     .map((t, i) => ({ t, i }))
     .sort((a, b) => rank(a.t.subjectId) - rank(b.t.subjectId) || a.i - b.i)
-    .map(({ t }) => ({ id: t.id, name: t.name, number: 0, subjectId: t.subjectId, questions: qs.filter((q) => q.topicIds.includes(t.id)) }));
+    .map(({ t }) => ({ id: t.id, name: t.name, number: 0, subjectId: t.subjectId, questions: byDifficulty(qs.filter((q) => q.topicIds.includes(t.id))) }));
   // a topic id the content doesn't know (e.g. a private topic) also falls under "Other"
   const known = new Set(sp.topics.map((t) => t.id));
   const loose = qs.filter((q) => !q.topicIds.some((id) => known.has(id)));
-  if (loose.length) sections.push({ id: OTHER, name: 'Other questions', number: 0, questions: loose });
+  if (loose.length) sections.push({ id: OTHER, name: 'Other questions', number: 0, questions: byDifficulty(loose) });
   sections.forEach((s, i) => (s.number = i + 1));
   return { sp, sections, questions: qs };
 }

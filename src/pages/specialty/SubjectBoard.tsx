@@ -2,7 +2,7 @@ import { useMemo, type CSSProperties } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { Specialty } from '../../content';
 import { specialtyArchive, topicPath, type Section } from '../archive/data';
-import { themeFor, themeVars } from '../approach/palettes';
+import { specialtyTheme, themeVars } from '../approach/palettes';
 import { pct, tally } from '../../study/derive';
 import { useStudy } from '../../study/store';
 import './subject-board.css';
@@ -31,7 +31,7 @@ export function SubjectBoard({ sp }: { sp: Specialty }) {
   const open = params.get('subject');
   const find = params.get('find') ?? '';
   const archive = useMemo(() => specialtyArchive(sp), [sp]);
-  const theme = themeFor(sp.id);
+  const theme = specialtyTheme(sp.id);
 
   const nodes: Node[] = useMemo(() => {
     const subjects = sp.subjects ?? [];

@@ -133,16 +133,182 @@ export const APPROACH_THEMES: ApproachTheme[] = [
   },
 ];
 
-/** Approaches given a combination on purpose; any other takes one by its id, spread across the list. */
+/* ─────────────── page combinations: every page its own mix ───────────────
+
+  The pages (topics, subject boards, approaches, questions, study views) each take one
+  combination mixed from the four palettes: a light paper ground, the mid colour it is tinted
+  from, and a deep pair for headings and accents. Eight grounds × ten deep pairs, interleaved so
+  that page n and page n + 1 never share a ground or a pair, give forty distinct looks.
+  Grounds are the palettes' light colours, lifted towards paper where they would be too strong
+  to read on; the deep pairs are the palettes' own darks.
+*/
+
+interface Ground {
+  name: string;
+  ground: string;
+  pattern: string;
+}
+
+interface Deep {
+  name: string;
+  heading: string;
+  ink: string;
+  accent: string;
+  muted: string;
+}
+
+const GROUNDS: Ground[] = [
+  { name: 'Beige', ground: P.lotus.beige, pattern: P.lotus.moss },
+  { name: 'Sand', ground: '#ead6b8', pattern: P.meadow.sand }, // sand, lifted a little
+  { name: 'Almond', ground: '#e6d2c0', pattern: P.cherry.almond }, // almond, lifted a little
+  { name: 'Sea foam', ground: '#cfe0e5', pattern: P.cherry.seaFoam }, // sea foam, lifted a little
+  { name: 'Light gold', ground: '#f4e2a8', pattern: P.knit.lightGold }, // light gold, lifted a little
+  { name: 'Cherry blossom', ground: '#f6d2cb', pattern: P.meadow.cherryBlossom }, // blossom, lifted a little
+  { name: 'Moss mist', ground: '#d9e0c3', pattern: P.lotus.moss }, // lotus moss, lifted
+  { name: 'Sky', ground: '#c6e4e5', pattern: P.meadow.skyBlue }, // sky blue, lifted
+];
+
+const ROSY_DEEP = '#9a4a40'; // rosy brown, deepened to read on paper
+const SUN_DEEP = '#9a5806'; // sunshine, darkened to read on paper
+
+const DEEPS: Deep[] = [
+  { name: 'deep sea and terracotta', heading: P.meadow.deepSea, ink: P.meadow.deepSea, accent: P.meadow.terracotta, muted: P.meadow.moss },
+  { name: 'dark green and cherry', heading: P.lotus.darkGreen, ink: P.lotus.darkGreen, accent: P.cherry.cherry, muted: P.meadow.moss },
+  { name: 'midnight green and rosy brown', heading: P.lotus.midnightGreen, ink: P.meadow.deepSea, accent: ROSY_DEEP, muted: P.knit.smokeyRose },
+  { name: 'red wine and moss', heading: P.meadow.redWine, ink: '#2e2422', accent: P.meadow.moss, muted: P.knit.smokeyRose },
+  { name: 'smokey rose and sunshine', heading: '#5e423f', ink: '#3e2c2a', accent: SUN_DEEP, muted: P.knit.smokeyRose },
+  { name: 'cherry and midnight green', heading: P.cherry.cherry, ink: '#2e2422', accent: P.lotus.midnightGreen, muted: P.knit.smokeyRose },
+  { name: 'moss and terracotta', heading: P.meadow.moss, ink: '#2b3320', accent: P.meadow.terracotta, muted: '#5f6a4c' },
+  { name: 'deep sea and sunshine', heading: P.meadow.deepSea, ink: P.meadow.deepSea, accent: SUN_DEEP, muted: P.meadow.moss },
+  { name: 'dark green and midnight green', heading: P.lotus.darkGreen, ink: P.lotus.darkGreen, accent: P.lotus.midnightGreen, muted: P.meadow.moss },
+  { name: 'midnight green and cherry', heading: P.lotus.midnightGreen, ink: P.meadow.deepSea, accent: P.cherry.cherry, muted: P.meadow.moss },
+];
+
+/** Halfway from a colour towards warm white: the reading page laid on the ground. */
+function lift(hex: string, by = 0.62): string {
+  const n = parseInt(hex.slice(1), 16);
+  const ch = (shift: number, to: number) => Math.round(((n >> shift) & 255) + (to - ((n >> shift) & 255)) * by);
+  return `#${[ch(16, 255), ch(8, 253), ch(0, 246)].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
+function mix(g: Ground, d: Deep, i: number): ApproachTheme {
+  return {
+    id: `page-${i}`,
+    name: `${g.name} with ${d.name}`,
+    ground: g.ground,
+    pattern: g.pattern,
+    paper: lift(g.ground),
+    ink: d.ink,
+    heading: d.heading,
+    muted: d.muted,
+    accent: d.accent,
+    danger: d.accent === P.meadow.redWine || d.heading === P.meadow.redWine ? P.cherry.cherry : P.meadow.redWine,
+    info: d.accent === P.lotus.midnightGreen ? P.meadow.deepSea : P.lotus.midnightGreen,
+    mech: P.knit.smokeyRose,
+    caution: SUN_DEEP,
+    calm: P.meadow.moss,
+  };
+}
+
+/** Forty combinations; neighbours in the list never share a ground or a deep pair. */
+export const PAGE_THEMES: ApproachTheme[] = Array.from({ length: 40 }, (_, i) => mix(GROUNDS[i % GROUNDS.length], DEEPS[i % DEEPS.length], i));
+
+function hashOf(key: string): number {
+  let h = 2166136261;
+  for (const ch of key) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  return h >>> 0;
+}
+
+/** The combination at a position in an ordered list (topics in board order), so neighbours differ. */
+export function pageThemeAt(index: number, offset = 0): ApproachTheme {
+  const n = PAGE_THEMES.length;
+  return PAGE_THEMES[(((index + offset) % n) + n) % n];
+}
+
+/** A page's own combination, fixed by its key, for pages with no natural order. */
+export function pageTheme(key: string): ApproachTheme {
+  return PAGE_THEMES[hashOf(key) % PAGE_THEMES.length];
+}
+
+/* ─────────────── each specialty's own colour, for its overview page ───────────────
+   Obstetrics & Gynaecology in light pink, Paediatrics in light blue, Surgery in maroon red and
+   Internal Medicine in sea foam with deep sea. The banner is the specialty's colour itself, with
+   text chosen to read on it; accent stays dark enough to read as text on the paper. */
+
+export interface SpecialtyTheme extends ApproachTheme {
+  banner: string; // the overview banner, the active index entry, buttons
+  onBanner: string; // text on the banner
+}
+
+const SPECIALTY_THEMES: Record<string, SpecialtyTheme> = {
+  medicine: {
+    ...mix(GROUNDS[3], DEEPS[0], 0),
+    id: 'specialty-medicine',
+    name: 'Sea foam and deep sea',
+    ground: '#dde9ec', // sea foam, lifted
+    paper: '#f1f6f7',
+    heading: P.meadow.deepSea,
+    accent: P.lotus.midnightGreen,
+    banner: P.meadow.deepSea,
+    onBanner: '#eef5f6',
+  },
+  surgery: {
+    ...mix(GROUNDS[2], DEEPS[1], 0),
+    id: 'specialty-surgery',
+    name: 'Maroon red',
+    ground: '#f1e2d6', // almond, lifted
+    paper: '#faf3ec',
+    ink: '#2e2422',
+    heading: '#7d1e22', // red wine, deepened to maroon
+    muted: P.knit.smokeyRose,
+    accent: P.cherry.cherry,
+    banner: '#7d1e22',
+    onBanner: '#fbf2ea',
+  },
+  obgyn: {
+    ...mix(GROUNDS[5], DEEPS[2], 0),
+    id: 'specialty-obgyn',
+    name: 'Light pink',
+    ground: '#fbe1dc', // cherry blossom, lifted
+    paper: '#fdf1ee',
+    ink: '#3e2c2a',
+    heading: '#8a3a3a', // rosy brown, deepened to read on pink
+    muted: P.knit.smokeyRose,
+    accent: ROSY_DEEP,
+    banner: '#f6bdb6', // cherry blossom, softened
+    onBanner: '#5e2b2b',
+  },
+  paediatrics: {
+    ...mix(GROUNDS[7], DEEPS[9], 0),
+    id: 'specialty-paediatrics',
+    name: 'Light blue',
+    ground: '#e3eff3', // sea foam and sky, lifted
+    paper: '#f3f8f9',
+    ink: P.meadow.deepSea,
+    heading: P.lotus.midnightGreen,
+    muted: '#3f6670',
+    accent: P.lotus.midnightGreen,
+    banner: '#b3d8e3', // sky blue and sea foam, light
+    onBanner: '#0e3a48',
+  },
+};
+
+/** A specialty's own colour, for its overview page and subject board. */
+export function specialtyTheme(specialtyId: string): SpecialtyTheme {
+  return SPECIALTY_THEMES[specialtyId] ?? { ...pageTheme(`board:${specialtyId}`), banner: pageTheme(`board:${specialtyId}`).accent, onBanner: '#fbf7ea' };
+}
+
+/** Approaches given a combination on purpose; any other takes its own by its id. */
 const CHOSEN: Record<string, string> = { jaundice: 'meadow' };
 
 export function themeFor(approachId: string): ApproachTheme {
   const id = CHOSEN[approachId];
   if (id) return APPROACH_THEMES.find((t) => t.id === id)!;
-  let h = 2166136261;
-  for (const ch of approachId) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
-  return APPROACH_THEMES[Math.abs(h) % APPROACH_THEMES.length];
+  return pageTheme(`approach:${approachId}`);
 }
+
+/** Where each specialty's topics start in the list, so two specialties don't open on the same look. */
+export const SPECIALTY_OFFSET: Record<string, number> = { medicine: 0, surgery: 13, obgyn: 26, paediatrics: 7 };
 
 /** The theme as the archive page frame's palette (background wash, headings, buttons). */
 export function themePalette(t: ApproachTheme): Palette {
@@ -156,12 +322,15 @@ export function themePalette(t: ApproachTheme): Palette {
     ink: t.heading,
     muted: t.muted,
     kicker: t.accent,
-    accent: t.accent,
-    accentDeep: t.heading,
+    // fills (number discs, the reveal button, done chips) are a pale wash of the accent with dark
+    // text on them; the accent itself draws their rims
+    accent: `color-mix(in srgb, ${t.accent} 32%, ${t.paper})`,
+    accentDeep: t.accent,
     bar: t.accent,
     track: t.pattern,
     bow: t.accent,
     bowDeep: t.heading,
+    paper: t.paper,
   };
 }
 
@@ -178,5 +347,6 @@ export function themeVars(t: ApproachTheme): CSSProperties {
     '--t-mech': t.mech,
     '--t-caution': t.caution,
     '--t-calm': t.calm,
+    '--page-ground': t.ground,
   } as CSSProperties;
 }

@@ -25,6 +25,8 @@ export interface Palette {
   track: string; // progress track
   bow: string; // ribbon bows
   bowDeep: string;
+  /** The cards and title panel, when the page tints them (page combinations); otherwise cream. */
+  paper?: string;
 }
 
 export const PALETTES: Palette[] = [
@@ -327,5 +329,6 @@ export function paletteStyle(p: Palette): CSSProperties {
     '--da-ribbon': p.bowDeep,
     '--da-bow': p.bow,
     '--da-bow-deep': p.bowDeep,
+    ...(p.paper ? { '--da-cream': p.paper, '--da-cream-2': `color-mix(in srgb, ${p.paper} 70%, ${p.ground})` } : {}),
   } as CSSProperties;
 }

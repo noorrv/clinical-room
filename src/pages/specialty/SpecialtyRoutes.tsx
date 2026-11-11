@@ -3,6 +3,7 @@ import { Navigate, NavLink, Route, Routes, useLocation, useParams } from 'react-
 import { allSpecialties, questionsOf, specialtyBySlug, type Specialty } from '../../content';
 import { record, useStudy } from '../../study/store';
 import { ApproachPage } from '../approach/ApproachPage';
+import { pageTheme, specialtyTheme } from '../approach/palettes';
 import { NotFoundPage } from '../SystemPages';
 import { TopicPage } from '../archive/TopicPage';
 import { DashboardHome } from './DashboardHome';
@@ -107,9 +108,29 @@ function OldTopicLink({ sp }: { sp: Specialty }) {
   return <Navigate to={`/specialties/${sp.slug}/topics/${topicId}${search}${hash}`} replace />;
 }
 
+/** The overview wears the specialty's own colour; each question and study view has its own combination. */
+function studyTheme(sp: Specialty, pathname: string) {
+  const rest = pathname.split(`/specialties/${sp.slug}`)[1]?.replace(/^\/+|\/+$/g, '') ?? '';
+  if (!rest) return specialtyTheme(sp.id);
+  const t = pageTheme(`${sp.id}:${rest}`);
+  return { ...t, banner: t.accent, onBanner: '#fbf7ea' };
+}
+
 function StudyLayout({ sp }: { sp: Specialty }) {
+  const { pathname } = useLocation();
+  const t = studyTheme(sp, pathname);
+  const vars = {
+    '--accent': t.banner,
+    '--accent-soft': `color-mix(in srgb, ${t.banner} 18%, ${t.paper})`,
+    '--on-accent': t.onBanner,
+    '--accent-ink': t.heading,
+    '--plum': t.ink,
+    '--plum-soft': t.muted,
+    '--ivory': t.paper,
+    '--page-ground': t.ground,
+  } as CSSProperties;
   return (
-    <div className="archive" style={{ '--accent': sp.accent, '--accent-soft': sp.accentSoft, '--on-accent': sp.onAccent, '--accent-ink': sp.ink } as CSSProperties} data-specialty={sp.id}>
+    <div className="archive" style={vars} data-specialty={sp.id}>
       <div className="archive__grid container">
         <Sidebar sp={sp} />
         <main id="main" className="archive__main">

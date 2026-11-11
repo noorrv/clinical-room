@@ -164,7 +164,8 @@
 
 /* approach pages: a plain paper ground in the approach's colour, no painted stripes */
 .da.ap {
-  background-image: var(--grain);
-  background-size: 220px;
+  background-image: var(--paper-tooth-fine), var(--paper-specks);
+  background-size: 260px 260px, 360px 360px;
   background-repeat: repeat;
+  background-blend-mode: multiply;
 }

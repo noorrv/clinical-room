@@ -7,7 +7,8 @@ import { ANSWER_ORDER, GIVEN } from '../specialty/QuestionPage';
 import { Ribbon } from '../specialty/ui';
 import { Bow, CheckSeal, Star } from './art';
 import { archivePath, isReviewed, pad, sectionProgress, specialtyArchive, topicPath } from './data';
-import { themeFor, themePalette } from '../approach/palettes';
+import { pageThemeAt, SPECIALTY_OFFSET, themePalette } from '../approach/palettes';
+import { cardFor } from './cards';
 import { ArchiveRoom, Highlight } from './shared';
 import { StudySheet } from './StudySheet';
 
@@ -39,6 +40,25 @@ function Body({ value, term, ordered }: { value: unknown; term: string | null; o
   );
 }
 
+/** A title without its old written number ("Q4. ", "10. "): the page numbers questions in difficulty order. */
+const unnumbered = (title: string) => title.replace(/^\s*(?:Q\s*)?\d+\s*[.)]\s+/i, '');
+
+const LEVEL = { 1: 'Easy', 2: 'Medium', 3: 'Hard' } as const;
+
+/** The question's difficulty: its word and one to three filled marks. */
+function Level({ n }: { n: 1 | 2 | 3 }) {
+  return (
+    <span className={`da-level da-level--${n}`}>
+      <span className="da-level__pips" aria-hidden>
+        {[1, 2, 3].map((i) => (
+          <i key={i} className={i <= n ? 'is-on' : undefined} />
+        ))}
+      </span>
+      {LEVEL[n]}
+    </span>
+  );
+}
+
 const filled = (q: Question, k: keyof Question) => {
   const v = q[k];
   return Array.isArray(v) ? v.length > 0 : typeof v === 'string' ? v.trim() !== '' : false;
@@ -55,8 +75,9 @@ export function TopicPage({ sp }: { sp: Specialty }) {
   const sectionIndex = archive.sections.findIndex((s) => s.id === topicId);
   const section = sectionIndex >= 0 ? archive.sections[sectionIndex] : null;
   const subject = sp.subjects?.find((x) => x.id === section?.subjectId);
-  // the topic wears its subject's colour combination (the approach palettes), on plain paper
-  const palette = themePalette(themeFor(subject ? `${sp.id}-${subject.id}` : sp.id));
+  const card = section ? cardFor(sp.id, section.id) : null;
+  // every topic its own combination of the palettes, in board order so neighbours never match
+  const palette = themePalette(pageThemeAt(Math.max(0, sectionIndex), SPECIALTY_OFFSET[sp.id] ?? 0));
 
   const [page, setPage] = useState(1);
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
@@ -169,6 +190,8 @@ export function TopicPage({ sp }: { sp: Specialty }) {
                 {prog.complete && <CheckSeal className="da-inline-seal" />}
               </p>
             </div>
+            {/* the topic's organ, painted straight onto its title card */}
+            {card && <img className="da-topic-organ" src={card.src} alt={card.alt} decoding="async" />}
           </div>
           <Star className="da-star da-star--a" size={16} />
           <Star className="da-star da-star--c" size={12} color="#e3a24c" />
@@ -214,17 +237,20 @@ export function TopicPage({ sp }: { sp: Specialty }) {
                   <header className="da-q__head">
                     <span className="da-disc">{pad(n)}</span>
                     <div className="da-q__titles">
-                      <p className="da-q__type">{TYPE_LABEL[q.type]}</p>
+                      <p className="da-q__type">
+                        {TYPE_LABEL[q.type]}
+                        {q.difficulty && <Level n={q.difficulty} />}
+                      </p>
                       <h2 className="da-q__title">
                         {answer.length > 0 ? (
                           <button type="button" className="da-q__toggle" aria-expanded={open} aria-controls={`a-${q.id}`} onClick={() => toggleAnswer(q)}>
                             <bdi>
-                              <Highlight text={q.title} term={term} />
+                              <Highlight text={unnumbered(q.title)} term={term} />
                             </bdi>
                           </button>
                         ) : (
                           <bdi>
-                            <Highlight text={q.title} term={term} />
+                            <Highlight text={unnumbered(q.title)} term={term} />
                           </bdi>
                         )}
                       </h2>

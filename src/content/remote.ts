@@ -25,7 +25,18 @@ interface QuestionRow {
   steps: string[] | null;
   minutes: number | null;
   source: string | null;
+  difficulty?: number | null;
 }
+
+/* Development only: draft ratings (src/dev/difficulty-preview.json, kept off git) until the difficulty column exists. */
+const draftLevels: Record<string, number> = import.meta.env.DEV
+  ? (Object.values(import.meta.glob('../dev/difficulty-preview.json', { eager: true, import: 'default' }))[0] as Record<string, number> | undefined) ?? {}
+  : {};
+
+const levelOf = (q: QuestionRow): 1 | 2 | 3 | undefined => {
+  const v = q.difficulty ?? draftLevels[q.id];
+  return v === 1 || v === 2 || v === 3 ? v : undefined;
+};
 
 /**
  * Students never see a doctor's name: a title that names one ("Additional questions Dr. Salah
@@ -108,6 +119,7 @@ export async function fetchContent(): Promise<Record<SpecialtyId, SpecialtyConte
       steps: optList(q.steps),
       minutes: opt(q.minutes),
       source: opt(q.source),
+      difficulty: levelOf(q),
     });
   }
   return out;

@@ -63,6 +63,8 @@ export interface Question {
   minutes?: number;
   /** Where this came from (e.g. "Dr. Hassan, 2025 exam"). */
   source?: string;
+  /** 1 easy, 2 medium, 3 hard. Empty for overviews, reference lists and questions not yet rated. */
+  difficulty?: 1 | 2 | 3;
 }
 
 export interface SpecialtyContent {

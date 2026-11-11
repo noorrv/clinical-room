@@ -794,6 +794,10 @@
 }
 
 .da-q__type {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
   margin: 0 0 2px;
   font-size: 0.74rem;
   letter-spacing: 0.12em;
@@ -1273,6 +1277,80 @@
 
 /* a topic page on plain paper in its subject's colour (no painted pattern) */
 .da.da--plain {
-  background-image: var(--grain);
-  background-size: 220px;
+  background-image: var(--paper-tooth-fine), var(--paper-specks);
+  background-size: 260px 260px, 360px 360px;
+  background-repeat: repeat;
+  background-blend-mode: multiply;
+}
+
+/* a topic's organ, cut out of its atlas plate, set beside the title on the card itself */
+.da-topic-head__inner > div {
+  flex: 1 1 0;
+}
+
+.da-topic-organ {
+  flex: none;
+  align-self: center;
+  width: auto;
+  height: auto;
+  max-width: clamp(150px, 24vw, 280px);
+  max-height: 200px;
+  margin: -10px 4px -14px 0;
+  /* a soft shadow on the paper, as if painted onto the card */
+  filter: drop-shadow(0 6px 8px rgba(70, 40, 20, 0.18));
+}
+
+@media (max-width: 640px) {
+  .da-topic-head__inner {
+    flex-wrap: wrap;
+  }
+
+  /* the organ takes a row of its own above the number and title */
+  .da-topic-organ {
+    order: -1;
+    width: 230px;
+    height: 170px;
+    max-width: none;
+    max-height: none;
+    object-fit: contain;
+    margin: 4px calc((100% - 230px) / 2) 6px;
+  }
+}
+
+/* a question's difficulty, beside its type: easy in moss, medium in sunshine, hard in red wine */
+.da-level {
+  --lv: #4b5b34;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px 2px 7px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--lv) 12%, transparent);
+  color: var(--lv);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+}
+
+.da-level--2 {
+  --lv: #9a5806;
+}
+
+.da-level--3 {
+  --lv: #980204;
+}
+
+.da-level__pips {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.da-level__pips i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1px solid var(--lv);
+}
+
+.da-level__pips i.is-on {
+  background: var(--lv);
 }
