@@ -15,3 +15,6 @@ dist
 # (it reaches students only through Supabase, behind the access rules)
 supabase/seed/content/
 supabase/seed/*.sql
+
+# dev preview data: Dr. Salah's recorded answers, local only
+src/dev/*-preview.json
