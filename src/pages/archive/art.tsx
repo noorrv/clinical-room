@@ -53,18 +53,51 @@ export const LemonSprig = memo(function LemonSprig() {
   return <img src="/textures/archive-sprig.svg" className="da-art" alt="" width={300} height={340} decoding="async" />;
 });
 
-/** A periwinkle ribbon bow with trailing tails, for frame corners. */
+/**
+ * A hand-drawn ribbon bow in ink line: two loops drawn as fine double lines over a light wash of the
+ * ribbon colour, a small knot and long tails that twist once and end in notched cuts. Drawn in a
+ * 140 × 140 box with the knot near (71, 47); `ink`, `wash` and `paper` take any CSS colour.
+ */
+export function InkBowArt({ ink, wash, paper }: { ink: string; wash: string; paper: string }) {
+  const ribbon = ['M66 44 C58 34 44 20 28 16 C16 13 8 22 12 32 C16 42 34 48 52 49 C58 49 63 48 66 47 Z', 'M75 44 C84 30 100 18 116 17 C129 16 134 27 128 35 C122 43 104 47 88 48 C82 48 78 47 75 46 Z', 'M66 50 C60 62 48 70 44 84 C40 98 54 104 48 118 C44 128 36 132 30 138 L38 139 C44 134 52 128 55 120 C60 106 48 99 52 86 C56 74 66 66 70 52 Z', 'M75 50 C84 62 98 70 100 84 C102 98 88 106 94 120 C98 128 106 132 113 137 L120 133 C112 130 104 126 101 118 C96 104 110 96 108 82 C106 68 90 60 79 49 Z'];
+  return (
+    <g fill="none" stroke={ink} strokeLinecap="round" strokeLinejoin="round">
+      {/* paper under the ribbon so the line reads over a patterned frame, then a light wash of colour */}
+      <g fill={paper} stroke="none">
+        {ribbon.map((d) => <path key={d} d={d} />)}
+      </g>
+      <g fill={wash} stroke="none" opacity="0.2">
+        {ribbon.map((d) => <path key={d} d={d} />)}
+      </g>
+      {/* left loop: outer edge, a broken inner edge, the crease where it turns, and a smaller loop tucked under */}
+      <path d="M66 44 C58 34 44 20 28 16 C16 13 8 22 12 32 C16 42 34 48 52 49 C58 49 63 48 66 47" strokeWidth="2" />
+      <path d="M64 42 C56 34 42 25 30 23 C22 22 19 28 22 33" strokeWidth="1.1" />
+      <path d="M14 24 C19 27 21 31 20 36" strokeWidth="1" />
+      <path d="M66 46 C56 41 41 39 33 44 C28 48 33 54 45 53 C54 52 61 50 66 48" strokeWidth="1.4" />
+      {/* right loop, drawn a little differently, as a hand would */}
+      <path d="M75 44 C84 30 100 18 116 17 C129 16 134 27 128 35 C122 43 104 47 88 48 C82 48 78 47 75 46" strokeWidth="2" />
+      <path d="M77 42 C86 33 100 25 112 24 C120 24 123 30 119 35" strokeWidth="1.1" />
+      <path d="M128 22 C124 26 122 30 124 35" strokeWidth="1" />
+      <path d="M75 46 C86 41 100 41 106 47 C110 52 103 57 92 55 C84 53 79 50 75 48" strokeWidth="1.4" />
+      {/* long S-curved tails with notched ends */}
+      <path d="M66 50 C60 62 48 70 44 84 C40 98 54 104 48 118 C44 128 36 132 30 138" strokeWidth="1.9" />
+      <path d="M70 52 C66 66 56 74 52 86 C48 99 60 106 55 120 C52 128 44 134 38 139" strokeWidth="1.1" />
+      <path d="M30 138 L35 134 L38 139" strokeWidth="1.2" />
+      <path d="M75 50 C84 62 98 70 100 84 C102 98 88 106 94 120 C98 128 106 132 113 137" strokeWidth="1.9" />
+      <path d="M79 49 C90 60 106 68 108 82 C110 96 96 104 101 118 C104 126 112 130 120 133" strokeWidth="1.1" />
+      <path d="M113 137 L115 131 L120 133" strokeWidth="1.2" />
+      {/* a small knot */}
+      <path d="M65 42 C68 40 73 40 75 43 C77 47 75 51 71 52 C67 53 64 50 64 47 C64 45 64 43 65 42 Z" fill={paper} strokeWidth="1.8" />
+      <path d="M67 45 C69 46 72 46 74 45" strokeWidth="0.9" />
+    </g>
+  );
+}
+
+/** The ink-line bow for frame corners, in the doctor's ribbon colours. */
 export function Bow({ className, flip }: { className?: string; flip?: boolean }) {
   return (
     <svg viewBox="0 0 140 140" className={className} aria-hidden style={flip ? { transform: 'scaleX(-1)' } : undefined}>
-      <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M70 52 C40 18 12 30 20 54 C26 72 52 66 70 52 Z" className="da-bow__fill da-bow__edge" strokeWidth="2" />
-        <path d="M70 52 C96 22 126 30 120 54 C114 72 88 66 70 52 Z" className="da-bow__fill da-bow__edge" strokeWidth="2" />
-        <path d="M66 56 C56 82 40 100 22 128 M76 56 C88 84 104 100 124 126" className="da-bow__tail" strokeWidth="11" />
-        <path d="M66 56 C56 82 40 100 22 128 M76 56 C88 84 104 100 124 126" className="da-bow__edge" strokeWidth="1.5" opacity="0.6" />
-        <ellipse cx="71" cy="54" rx="9" ry="8" className="da-bow__knot" />
-        <path d="M30 46 C38 52 48 54 60 52 M110 46 C102 52 92 54 80 52" stroke="#fff" strokeOpacity="0.35" strokeWidth="2" />
-      </g>
+      <InkBowArt ink="var(--da-bow-deep, #55669e)" wash="var(--da-bow, #7486bd)" paper="var(--da-cream, #fdf3d9)" />
     </svg>
   );
 }

@@ -3,6 +3,7 @@
   a snowy cottage, ornaments in line, a pomegranate branch, a wreath, a letterpress fir, plus the
   postcard furniture (stamp, postmark, wax seal). Colours come from the card's colourway.
 */
+import { InkBowArt } from './art';
 
 export interface Colours {
   paper: string;
@@ -53,21 +54,11 @@ function Berries({ x, y, r = 5, c }: { x: number; y: number; r?: number; c: Colo
   );
 }
 
-function Bow({ x, y, s = 1, c, tails = true }: { x: number; y: number; s?: number; c: Colours; tails?: boolean }) {
+/** The same ink-line bow as the frame corners, centred on its knot at (x, y). */
+function Bow({ x, y, s = 1, c }: { x: number; y: number; s?: number; c: Colours }) {
   return (
-    <g transform={`translate(${x} ${y}) scale(${s})`} fill={c.red}>
-      <path d="M0 0 C-14 -22 -44 -26 -46 -10 C-48 6 -20 8 0 0 Z" />
-      <path d="M0 0 C14 -22 44 -26 46 -10 C48 6 20 8 0 0 Z" />
-      <path d="M-38 -12 C-28 -10 -14 -6 -4 -2" fill="none" stroke="#000" strokeOpacity="0.18" strokeWidth="2" />
-      <path d="M38 -12 C28 -10 14 -6 4 -2" fill="none" stroke="#000" strokeOpacity="0.18" strokeWidth="2" />
-      {tails && (
-        <>
-          <path d="M-3 2 C-10 18 -22 34 -34 46 L-26 50 C-14 38 -4 22 2 4 Z" />
-          <path d="M3 2 C8 20 16 36 30 48 L36 42 C24 32 14 18 6 2 Z" />
-        </>
-      )}
-      <ellipse cx="0" cy="0" rx="7" ry="6" />
-      <ellipse cx="0" cy="0" rx="7" ry="6" fill="#000" fillOpacity="0.15" />
+    <g transform={`translate(${x - 71 * s * 0.62} ${y - 47 * s * 0.62}) scale(${s * 0.62})`}>
+      <InkBowArt ink={c.red} wash={c.red} paper={c.cream} />
     </g>
   );
 }
@@ -76,10 +67,15 @@ function Bow({ x, y, s = 1, c, tails = true }: { x: number; y: number; s?: numbe
 export function HollyRibbon({ c, flowing = false }: { c: Colours; flowing?: boolean }) {
   return (
     <svg viewBox="0 0 300 210" className="xc-art__svg" aria-hidden>
-      {flowing && (
-        <path d="M128 66 C170 40 210 96 250 74 C272 62 286 52 300 48" fill="none" stroke={c.red} strokeWidth="10" strokeLinecap="butt" />
-      )}
-      {flowing && <path d="M0 120 C30 104 60 88 96 78" fill="none" stroke={c.red} strokeWidth="10" />}
+      {/* the drifting ribbon, outlined in ink like the bow: an ink band, paper inside it, then a light wash */}
+      {flowing &&
+        ['M128 66 C170 40 210 96 250 74 C272 62 286 52 300 48', 'M0 120 C30 104 60 88 96 78'].map((d) => (
+          <g key={d} fill="none" strokeLinecap="butt">
+            <path d={d} stroke={c.red} strokeWidth="9" />
+            <path d={d} stroke={c.cream} strokeWidth="6" />
+            <path d={d} stroke={c.red} strokeWidth="6" strokeOpacity="0.2" />
+          </g>
+        ))}
       <Holly x={112} y={96} a={150} l={66} c={c} />
       <Holly x={118} y={98} a={200} l={58} c={c} />
       <Holly x={126} y={96} a={110} l={70} c={c} />

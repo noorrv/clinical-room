@@ -157,22 +157,6 @@
   right: -50px;
 }
 
-.da-bow__fill {
-  fill: var(--da-bow, #7486bd);
-}
-
-.da-bow__tail {
-  stroke: var(--da-bow, #7486bd);
-}
-
-.da-bow__edge {
-  stroke: var(--da-bow-deep, #55669e);
-}
-
-.da-bow__knot {
-  fill: var(--da-bow-deep, #55669e);
-}
-
 .da-star {
   position: absolute;
   pointer-events: none;
