@@ -15,6 +15,10 @@ import './studysheet.css';
       kinds: definition, pearl, remember, important, tip, say, note, reference, group
     :::step 3 Hand positioning   a numbered examination step
     **bold**  *italic*
+    [[art:appendicular artery]]  a medical term coloured by what it is (the words stay as written):
+      art = arteries, blood, ischaemia, necrosis · vein = veins, venous drainage, oxygenation
+      anat = normal anatomy and physiology · nerve = nerves and innervation
+      warn = warnings, complications, risks · pearl = exam pearls and key facts
 
   Plain text with none of this renders as paragraphs, so older answers look as they did.
   Nothing here injects HTML.
@@ -161,6 +165,7 @@ export function sheetText(src: string): string {
     .replace(/^:::\w*\s*/gm, '')
     .replace(/^#{2,3}\s+/gm, '')
     .replace(/!\[([^\]]*)\]\([^)]*\)(\{[^}]*\})?/g, '$1')
+    .replace(TERM, '$2')
     .replace(/\*\*/g, '')
     .replace(/<br>/g, ' ')
     .replace(/^\|?\s*:?-{2,}.*$/gm, '')
@@ -172,6 +177,27 @@ export function sheetText(src: string): string {
 
 /* ───────────── inline text ───────────── */
 
+/** [[kind:words]]: a term coloured by its medical meaning. */
+const TERM = /\[\[(art|vein|anat|nerve|warn|pearl):([^\]]+)\]\]/g;
+
+/** Text with its coloured medical terms; search matches are still marked inside them. */
+function Terms({ text, term }: { text: string; term: string | null }) {
+  const parts = text.split(TERM);
+  if (parts.length === 1) return <Highlight text={text} term={term} />;
+  // split() with two groups yields: text, kind, words, text, kind, words, …, text
+  const out: ReactNode[] = [];
+  for (let i = 0; i < parts.length; i += 3) {
+    if (parts[i]) out.push(<Highlight key={i} text={parts[i]} term={term} />);
+    if (i + 2 < parts.length)
+      out.push(
+        <span key={`t${i}`} className={`ss-term ss-term--${parts[i + 1]}`}>
+          <Highlight text={parts[i + 2]} term={term} />
+        </span>,
+      );
+  }
+  return <>{out}</>;
+}
+
 function Inline({ text, term }: { text: string; term: string | null }) {
   // line breaks inside a paragraph or cell, then **bold** and *italic*
   const lines = text.split(/\n|<br>/);
@@ -181,9 +207,9 @@ function Inline({ text, term }: { text: string; term: string | null }) {
         <Fragment key={li}>
           {li > 0 && <br />}
           {ln.split(/(\*\*[^*]+\*\*|\*[^*\s][^*]*\*)/g).map((part, pi) => {
-            if (/^\*\*[^*]+\*\*$/.test(part)) return <strong key={pi}><Highlight text={part.slice(2, -2)} term={term} /></strong>;
-            if (/^\*[^*\s][^*]*\*$/.test(part)) return <em key={pi}><Highlight text={part.slice(1, -1)} term={term} /></em>;
-            return <Highlight key={pi} text={part} term={term} />;
+            if (/^\*\*[^*]+\*\*$/.test(part)) return <strong key={pi}><Terms text={part.slice(2, -2)} term={term} /></strong>;
+            if (/^\*[^*\s][^*]*\*$/.test(part)) return <em key={pi}><Terms text={part.slice(1, -1)} term={term} /></em>;
+            return <Terms key={pi} text={part} term={term} />;
           })}
         </Fragment>
       ))}

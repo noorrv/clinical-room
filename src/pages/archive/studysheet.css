@@ -16,9 +16,19 @@
   color: var(--ss-ink);
   font-family: var(--ss-body);
   font-size: 1.09rem;
-  line-height: 1.62;
+  /* roomy leading and clear gaps between ideas, so a long answer reads like a page, not a block */
+  line-height: 1.8;
   display: grid;
-  gap: 14px;
+  gap: 22px;
+}
+
+/* a new section starts with a little more air above it */
+.ss > .ss-h2:not(:first-child) {
+  margin-top: 14px;
+}
+
+.ss > .ss-h3:not(:first-child) {
+  margin-top: 6px;
 }
 
 .ss > :first-child {
@@ -94,7 +104,7 @@
   margin: 0;
   padding-inline-start: 1.5em;
   display: grid;
-  gap: 4px;
+  gap: 10px;
 }
 
 .ss-ul {
@@ -187,12 +197,12 @@
 .ss-box {
   position: relative;
   margin: 2px 0;
-  padding: 14px 18px 14px 20px;
+  padding: 18px 22px 18px 24px;
   background: var(--ss-paper-2);
   border: 1px solid var(--ss-rule);
   border-left: 3px solid var(--ss-sage);
   display: grid;
-  gap: 6px;
+  gap: 10px;
 }
 
 .ss-box__label {
@@ -522,4 +532,72 @@
 .orn-flourish,
 .orn-emphasis {
   font-family: var(--ss-display, Georgia, serif);
+}
+
+/* ── medical terms, coloured by what they are ([[kind:words]] in the answer) ──
+   Old-ink colours that sit on the ivory page beside every doctor's palette; each passes WCAG AA
+   on its own wash. Only the term is coloured, never the sentence around it. */
+.ss-term {
+  --term: inherit;
+  --wash: transparent;
+  color: var(--term);
+  background: var(--wash);
+  font-weight: 500;
+  /* the wash reaches a hair past the word without pushing punctuation away */
+  padding-inline: 0.12em;
+  margin-inline: -0.12em;
+  border-radius: 3px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* arteries, blood, haemorrhage, ischaemia, necrosis, gangrene */
+.ss-term--art {
+  --term: #8b2232;
+}
+
+/* veins, venous drainage, oxygenation */
+.ss-term--vein {
+  --term: #2b4f86;
+}
+
+/* normal anatomy, physiology, healthy structures */
+.ss-term--anat {
+  --term: #3d6a35;
+}
+
+/* nerves, neurological structures, innervation */
+.ss-term--nerve {
+  --term: #62386f;
+}
+
+/* clinical warnings, complications, risks */
+.ss-term--warn {
+  --term: #a14a1f;
+  --wash: rgba(161, 74, 31, 0.09);
+}
+
+/* exam pearls and key facts: an antique-gold wash, like a highlighter on old paper */
+.ss-term--pearl {
+  --term: #6e5112;
+  --wash: rgba(201, 162, 74, 0.3);
+}
+
+/* inside a heading or bold label the term keeps the heading's weight */
+.ss-h2 .ss-term,
+.ss-h3 .ss-term,
+.ss strong .ss-term {
+  font-weight: inherit;
+}
+
+/* a search match inside a term still shows */
+.ss-term mark {
+  color: inherit;
+}
+
+@media (forced-colors: active) {
+  .ss-term {
+    background: none;
+    text-decoration: underline;
+  }
 }
