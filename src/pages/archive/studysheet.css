@@ -157,33 +157,78 @@
 .ss-ol {
   list-style: none;
   padding-inline-start: 0;
-  gap: 12px;
+  gap: 16px;
 }
 
+/* each step: a small numbered seal coloured by what the step describes (the same colours as the
+   terms and the pathway), joined to the next by a thin antique-gold thread */
 .ss-ol > li {
+  --k: #5b4c36;
+  position: relative;
   display: grid;
-  grid-template-columns: 2.1em minmax(0, 1fr);
-  column-gap: 0.8em;
-  align-items: baseline;
+  grid-template-columns: 30px minmax(0, 1fr);
+  column-gap: 14px;
+  align-items: start;
+  line-height: 1.62;
   unicode-bidi: plaintext;
 }
 
+.ss-ol > li:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 14.25px;
+  top: 34px;
+  bottom: -14px;
+  width: 1.5px;
+  background: rgba(168, 134, 74, 0.38);
+}
+
 .ss-ol__n {
-  align-self: stretch;
-  padding-inline-end: 0.55em;
-  border-inline-end: 1px solid var(--ss-rule);
-  text-align: end;
-  font-family: var(--ss-display);
-  font-weight: 600;
-  font-size: 1.12em;
-  line-height: 1.6;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-top: -1px;
+  border-radius: 50%;
+  border: 1.5px solid var(--k);
+  background: var(--ss-paper);
+  color: var(--k);
+  font: 600 0.92rem/1 var(--ss-display);
   font-variant-numeric: lining-nums tabular-nums;
-  color: var(--ss-sage-deep);
+  position: relative;
 }
 
 .ss-ol__body {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.ss-ol > li.ss-ol--art { --k: #8b2a30; }
+.ss-ol > li.ss-ol--vein { --k: #2f4f80; }
+.ss-ol > li.ss-ol--anat { --k: #2c6763; }
+.ss-ol > li.ss-ol--nerve { --k: #5d3d6b; }
+.ss-ol > li.ss-ol--pearl { --k: #8a5a14; }
+.ss-ol > li.ss-ol--warn { --k: #9a2418; }
+
+.ss-ol > li.ss-ol--warn .ss-ol__n {
+  border-width: 2px;
+}
+
+@media (max-width: 560px) {
+  .ss-ol > li {
+    grid-template-columns: 28px minmax(0, 1fr);
+    column-gap: 11px;
+  }
+
+  .ss-ol > li:not(:last-child)::before {
+    inset-inline-start: 13.25px;
+    top: 32px;
+  }
+
+  .ss-ol__n {
+    width: 28px;
+    height: 28px;
+  }
 }
 
 /* a note that carried a pathway: the pathway keeps the note's place, without a second frame */

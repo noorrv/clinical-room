@@ -1,6 +1,6 @@
 import { createContext, Fragment, useContext, useMemo, type ReactNode } from 'react';
 import { ClinicalPathway, type PathwayExplanation } from './ClinicalPathway';
-import { findChain, matchStages, stems, type Chain, type SheetLink } from './pathway';
+import { findChain, matchStages, stageKind, stems, type Chain, type SheetLink } from './pathway';
 import { Highlight } from './shared';
 import './studysheet.css';
 
@@ -385,7 +385,7 @@ function Blocks({ blocks, term, title }: { blocks: Block[]; term: string | null;
             return (
               <ol key={i} className="ss-ol" start={b.start}>
                 {b.items.map((it, k) => (
-                  <li key={k}>
+                  <li key={k} className={`ss-ol--${stageKind(it)}`}>
                     <span className="ss-ol__n" aria-hidden>
                       {b.start + k}
                     </span>
