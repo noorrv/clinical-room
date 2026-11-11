@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { questionPath, specialtyById } from '../content';
 import type { SpecialtyId } from '../content/types';
+import { maskNames } from '../content/remote';
 import { supabase } from '../lib/supabase';
 
 /*
@@ -135,14 +136,13 @@ export function useNotifications(openSignal: unknown) {
       if (r.kind === 'updated' && sp && r.question_id) {
         const qk = `${r.specialty_id}/${r.question_id}`;
         const t = links.topic.get(qk);
-        const d = links.doctor.get(qk);
         out.push({
           key: `u${r.id}`,
           kind: 'updated',
           at: new Date(r.at),
-          title: r.title,
+          title: maskNames(r.title),
           detail: r.note || 'Answer revised',
-          href: t && d ? `/specialties/${sp.slug}/doctors/${d}/topics/${t}#q-${encodeURIComponent(r.question_id)}` : questionPath(sp, r.question_id),
+          href: t ? `/specialties/${sp.slug}/topics/${t}#q-${encodeURIComponent(r.question_id)}` : questionPath(sp, r.question_id),
           unread: unread(new Date(r.at)),
         });
       } else if (r.kind === 'announcement') {
@@ -155,15 +155,11 @@ export function useNotifications(openSignal: unknown) {
       const sp = specialtyById(spId);
       const latest = g.reduce((a, r) => (r.at > a ? r.at : a), g[0].at);
       const at = new Date(latest);
-      const firstQ = `${spId}/${g[0].question_id}`;
-      const doctorId = links.doctor.get(firstQ);
-      const doctors = [...new Set(g.map((r) => links.doctor.get(`${spId}/${r.question_id}`)).filter(Boolean))] as string[];
       const earliest = Math.min(...g.map((r) => +new Date(r.at)));
       const isNewTopic = Boolean(topicId) && firstForTopic.get(`${spId}/${topicId}`) === earliest;
       const topicName = topicId ? links.topicName.get(`${spId}/${topicId}`) : undefined;
       const detail = [
         plural(g.length, 'question'),
-        doctors.length === 1 ? links.doctorName.get(`${spId}/${doctors[0]}`) : doctors.length > 1 ? plural(doctors.length, 'examiner') : null,
         sp.shortName,
       ]
         .filter(Boolean)
@@ -173,11 +169,11 @@ export function useNotifications(openSignal: unknown) {
         key: `g${k}`,
         kind: isNewTopic ? 'new-topic' : 'new-questions',
         at,
-        title: single ? g[0].title : topicName ?? `New ${sp.shortName} questions`,
+        title: single ? maskNames(g[0].title) : topicName ?? `New ${sp.shortName} questions`,
         detail,
         href:
-          topicId && doctorId
-            ? `/specialties/${sp.slug}/doctors/${doctorId}/topics/${topicId}${single ? `#q-${encodeURIComponent(g[0].question_id!)}` : ''}`
+          topicId
+            ? `/specialties/${sp.slug}/topics/${topicId}${single ? `#q-${encodeURIComponent(g[0].question_id!)}` : ''}`
             : questionPath(sp, g[0].question_id!),
         unread: unread(at),
       });

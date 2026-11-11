@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { questionPath, TYPE_LABEL, type QuestionRef, type Specialty, doctorName, topicName } from '../../content';
+import { questionPath, TYPE_LABEL, type QuestionRef, type Specialty, topicName } from '../../content';
 import type { Tally } from '../../study/derive';
 import { record, STATUS_LABEL, STATUSES, study, type Status, useStudy } from '../../study/store';
 
@@ -53,7 +53,6 @@ export function QuestionRow({ q, sp, showSpecialty = false, extra }: { q: Questi
             {showSpecialty && <>{sp.shortName} · </>}
             {TYPE_LABEL[q.type]}
             {q.topicIds.length > 0 && <> · {q.topicIds.map((id) => topicName(sp, id)).join(', ')}</>}
-            {q.doctorIds.length > 0 && <> · {q.doctorIds.map((id, i) => <span key={id}>{i > 0 && ', '}<bdi>{doctorName(sp, id)}</bdi></span>)}</>}
           </span>
           {extra}
         </span>

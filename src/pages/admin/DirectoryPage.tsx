@@ -37,9 +37,17 @@ interface Row {
   role?: string | null;
   note?: string | null;
   description?: string | null;
+  subject_id?: string | null;
   sort: number;
   access: 'approved' | 'public';
   created_at: string;
+}
+
+/** A subject a topic can be filed under (topics only; absent until the subjects migration has run). */
+interface SubjectOption {
+  specialty_id: SpecialtyId;
+  id: string;
+  name: string;
 }
 
 const CONFIG = {
@@ -57,7 +65,7 @@ const CONFIG = {
   topics: {
     title: 'Topics',
     noun: 'topic',
-    intro: 'Subjects within a specialty, used to group questions on the dashboards and in search.',
+    intro: 'Topics within a specialty, each filed under a subject on the specialty’s board, used to group questions on the boards and in search.',
     link: { table: 'question_topics', column: 'topic_id' },
     extra: [{ key: 'description', label: 'Description', hint: 'Optional: a line explaining what the topic covers.', multiline: true }],
     fallbackId: 'topic',
@@ -73,6 +81,7 @@ interface FormState {
   role: string;
   note: string;
   description: string;
+  subject_id: string;
   sort: string;
   access: 'approved' | 'public';
 }
@@ -93,13 +102,17 @@ export function DirectoryPage({ kind }: { kind: Kind }) {
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<Row | 'new' | null>(null);
   const [deleting, setDeleting] = useState<Row | null>(null);
+  // null: no subjects table yet (before its migration), so topics can't be filed
+  const [subjects, setSubjects] = useState<SubjectOption[] | null>(null);
 
   const load = useCallback(async () => {
     setError('');
-    const [r, l] = await Promise.all([
+    const [r, l, sb] = await Promise.all([
       supabase.from(kind).select('*').order('name'),
       supabase.from(cfg.link.table).select(`specialty_id, ${cfg.link.column}`),
+      kind === 'topics' ? supabase.from('subjects').select('specialty_id, id, name').order('sort').order('name') : null,
     ]);
+    setSubjects(sb && !sb.error ? (sb.data as SubjectOption[]) : null);
     if (r.error || l.error) {
       setError(friendlyError(r.error ?? l.error));
       return;
@@ -280,6 +293,7 @@ export function DirectoryPage({ kind }: { kind: Kind }) {
           linked={editing === 'new' ? 0 : linkedOf(editing)}
           existing={rows ?? []}
           defaultSpecialty={spFilter === 'all' ? 'medicine' : spFilter}
+          subjects={subjects}
           onClose={() => setEditing(null)}
           onSaved={(msg) => {
             setEditing(null);
@@ -328,6 +342,7 @@ function EntityForm({
   linked,
   existing,
   defaultSpecialty,
+  subjects,
   onClose,
   onSaved,
 }: {
@@ -336,6 +351,7 @@ function EntityForm({
   linked: number;
   existing: Row[];
   defaultSpecialty: SpecialtyId;
+  subjects: SubjectOption[] | null;
   onClose: () => void;
   onSaved: (message: string) => void;
 }) {
@@ -348,6 +364,7 @@ function EntityForm({
     role: row?.role ?? '',
     note: row?.note ?? '',
     description: row?.description ?? '',
+    subject_id: row?.subject_id ?? '',
     sort: String(row?.sort ?? 0),
     access: row?.access ?? 'approved',
   }));
@@ -401,6 +418,8 @@ function EntityForm({
       payload.note = next.note.trim() || null;
     } else {
       payload.description = next.description.trim() || null;
+      // only once subjects exist; a subject from another specialty is never kept
+      if (subjects) payload.subject_id = subjects.some((x) => x.specialty_id === next.specialty_id && x.id === next.subject_id) ? next.subject_id : null;
     }
 
     setBusy(true);
@@ -434,6 +453,18 @@ function EntityForm({
           />
           <SelectField label="Who can see it" value={f.access} onChange={(v) => set('access', v)} options={ACCESS_OPTIONS} />
         </div>
+        {kind === 'topics' && subjects && (
+          <SelectField
+            label="Subject"
+            value={f.subject_id}
+            onChange={(v) => set('subject_id', v)}
+            options={[
+              { value: '', label: 'Not filed yet' },
+              ...subjects.filter((x) => x.specialty_id === f.specialty_id).map((x) => ({ value: x.id, label: x.name })),
+            ]}
+            hint="Where this topic sits on the specialty’s subject board."
+          />
+        )}
         {cfg.extra.map((x) => (
           <TextField
             key={x.key}

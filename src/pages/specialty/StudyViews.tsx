@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { allQuestions, allSpecialties, findQuestion, questionPath, questionsOf, specialtyById, type QuestionRef, type Specialty } from '../../content';
-import { byDoctor, byTopic, pct, tally, timeAgo, weakest, type GroupProgress } from '../../study/derive';
+import { bySubject, byTopic, pct, tally, timeAgo, weakest, type GroupProgress } from '../../study/derive';
 import { record, STATUS_LABEL, useStudy, type StudyState } from '../../study/store';
 import { EmptyState, Ledger, PreviewBanner, QuestionRow, StatusLegend, StatusStamp } from './ui';
 
@@ -219,7 +219,7 @@ export function StudyView({ sp, mode }: { sp: Specialty; mode: ViewMode }) {
         ) : (
           <>
             <GroupTable title="By topic" groups={byTopic(sp, st)} />
-            <GroupTable title="By examiner" groups={byDoctor(sp, st)} />
+            <GroupTable title="By subject" groups={bySubject(sp, st)} />
           </>
         )}
         <h2 className="view__h2">Previous sessions</h2>
@@ -278,7 +278,7 @@ export function StudyView({ sp, mode }: { sp: Specialty; mode: ViewMode }) {
     // weak areas
     const groups = all
       ? allSpecialties().flatMap((s) => byTopic(s, st).map((g) => ({ ...g, name: `${g.name} (${s.shortName})`, id: `${s.id}-${g.id}` })))
-      : [...byTopic(sp, st), ...byDoctor(sp, st).map((g) => ({ ...g, name: `${g.name} (examiner)`, id: `d-${g.id}` }))];
+      : [...byTopic(sp, st), ...bySubject(sp, st).map((g) => ({ ...g, name: `${g.name} (subject)`, id: `s-${g.id}` }))];
     const weak = weakest(groups);
     const needs = questions.filter((q) => record(st, q.key).status === 'needs-revision');
     body = weak.length ? (

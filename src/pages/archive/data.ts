@@ -1,12 +1,12 @@
 import { allSpecialties, questionsOf, type QuestionRef, type Specialty } from '../../content';
-import type { Doctor } from '../../content/types';
+import type { Subject } from '../../content/types';
 import { record, type StudyState } from '../../study/store';
 import { sheetText } from './StudySheet';
 
 /*
-  The doctor archives are worked out from the content already loaded for the visitor (Row Level
-  Security decides what that is): no extra tables. A doctor's sections are the topics of the
-  questions linked to them; questions with no topic are gathered as "Other questions".
+  The archive is worked out from the content already loaded for the visitor (Row Level Security
+  decides what that is). It is organised by subject and topic; doctors stay in the data (for
+  admins) but are never part of what students browse or see.
 */
 
 export const OTHER = 'other';
@@ -15,31 +15,34 @@ export interface Section {
   id: string; // topic id, or OTHER
   name: string;
   number: number;
+  subjectId?: string;
   questions: QuestionRef[];
 }
 
 export interface Archive {
   sp: Specialty;
-  doctor: Doctor;
   sections: Section[];
   questions: QuestionRef[]; // each question once
 }
 
-export function doctorArchive(sp: Specialty, doctorId: string): Archive | null {
-  const doctor = sp.doctors.find((d) => d.id === doctorId);
-  if (!doctor) return null;
-  const qs = questionsOf(sp).filter((q) => q.doctorIds.includes(doctorId));
-  const sections: Section[] = [];
-  for (const t of sp.topics) {
-    const items = qs.filter((q) => q.topicIds.includes(t.id));
-    if (items.length) sections.push({ id: t.id, name: t.name, number: 0, questions: items });
-  }
+/**
+ * A specialty's questions by topic, whoever asked them. Questions in no known topic are
+ * gathered as "Other questions". Topics with no questions are kept, so the boards can show them.
+ */
+export function specialtyArchive(sp: Specialty): Archive {
+  const qs = questionsOf(sp);
+  const order = new Map((sp.subjects ?? []).map((x, i) => [x.id, i]));
+  const rank = (subjectId?: string) => (subjectId !== undefined && order.has(subjectId) ? order.get(subjectId)! : order.size);
+  const sections: Section[] = sp.topics
+    .map((t, i) => ({ t, i }))
+    .sort((a, b) => rank(a.t.subjectId) - rank(b.t.subjectId) || a.i - b.i)
+    .map(({ t }) => ({ id: t.id, name: t.name, number: 0, subjectId: t.subjectId, questions: qs.filter((q) => q.topicIds.includes(t.id)) }));
   // a topic id the content doesn't know (e.g. a private topic) also falls under "Other"
   const known = new Set(sp.topics.map((t) => t.id));
   const loose = qs.filter((q) => !q.topicIds.some((id) => known.has(id)));
   if (loose.length) sections.push({ id: OTHER, name: 'Other questions', number: 0, questions: loose });
   sections.forEach((s, i) => (s.number = i + 1));
-  return { sp, doctor, sections, questions: qs };
+  return { sp, sections, questions: qs };
 }
 
 /** "Reviewed" in the archive is the site-wide Mastered status, so it counts everywhere. */
@@ -52,8 +55,9 @@ export function sectionProgress(st: StudyState, s: { questions: QuestionRef[] })
 
 export const pad = (n: number) => String(n).padStart(2, '0');
 
-export const archivePath = (sp: Specialty, doctorId: string) => `/specialties/${sp.slug}/doctors/${doctorId}`;
-export const topicPath = (sp: Specialty, doctorId: string, sectionId: string) => `${archivePath(sp, doctorId)}/topics/${sectionId}`;
+/** The specialty's subject board. */
+export const archivePath = (sp: Specialty) => `/specialties/${sp.slug}?tab=subjects`;
+export const topicPath = (sp: Specialty, sectionId: string) => `/specialties/${sp.slug}/topics/${sectionId}`;
 
 /* ───────────────────────── search ───────────────────────── */
 
@@ -95,48 +99,36 @@ export interface QuestionHit {
   q: QuestionRef;
   where: string; // the label of the field that matched
   snippet: string;
-  doctors: Doctor[];
-  sectionFor: (doctorId: string) => string;
+  /** The topic it sits in, for the link. */
+  section: Section;
 }
 
 export interface SearchResults {
-  doctors: Array<{ sp: Specialty; doctor: Doctor; count: number }>;
-  topics: Array<{ sp: Specialty; doctor: Doctor; section: Section }>;
+  subjects: Array<{ sp: Specialty; subject: Subject; count: number }>;
+  topics: Array<{ sp: Specialty; section: Section }>;
   questions: QuestionHit[];
 }
 
-/** Searches doctor names, topic names and every word of every question and answer. */
-export function searchArchives(term: string, onlyDoctor?: { sp: Specialty; doctorId: string }): SearchResults {
+/** Searches subject and topic names and every word of every question and answer. */
+export function searchArchives(term: string, only?: Specialty): SearchResults {
   const t = term.trim();
-  const empty: SearchResults = { doctors: [], topics: [], questions: [] };
+  const empty: SearchResults = { subjects: [], topics: [], questions: [] };
   if (t.length < 2) return empty;
   const needle = norm(t);
-  const res: SearchResults = { doctors: [], topics: [], questions: [] };
+  const res: SearchResults = { subjects: [], topics: [], questions: [] };
 
-  for (const sp of onlyDoctor ? [onlyDoctor.sp] : allSpecialties()) {
-    const doctors = onlyDoctor ? sp.doctors.filter((d) => d.id === onlyDoctor.doctorId) : sp.doctors;
-    const archives = new Map(doctors.map((d) => [d.id, doctorArchive(sp, d.id)!]));
-
-    for (const d of doctors) {
-      const a = archives.get(d.id)!;
-      if (!onlyDoctor && norm(d.name).includes(needle)) res.doctors.push({ sp, doctor: d, count: a.questions.length });
-      for (const s of a.sections) if (norm(s.name).includes(needle)) res.topics.push({ sp, doctor: d, section: s });
-    }
-
-    for (const q of questionsOf(sp)) {
-      const askedBy = doctors.filter((d) => q.doctorIds.includes(d.id));
-      if (!askedBy.length) continue;
-      const hit = questionTexts(q).find((f) => norm(f.text).includes(needle));
-      if (!hit) continue;
-      res.questions.push({
-        sp,
-        q,
-        where: hit.label,
-        snippet: excerpt(hit.text, t),
-        doctors: askedBy,
-        sectionFor: (doctorId) => archives.get(doctorId)?.sections.find((s) => s.questions.some((x) => x.key === q.key))?.id ?? OTHER,
-      });
-    }
+  for (const sp of only ? [only] : allSpecialties()) {
+    const a = specialtyArchive(sp);
+    for (const sub of sp.subjects ?? [])
+      if (norm(sub.name).includes(needle))
+        res.subjects.push({ sp, subject: sub, count: a.sections.filter((x) => x.subjectId === sub.id).reduce((n, x) => n + x.questions.length, 0) });
+    for (const sec of a.sections) if (norm(sec.name).includes(needle)) res.topics.push({ sp, section: sec });
+    for (const sec of a.sections)
+      for (const q of sec.questions) {
+        if (res.questions.some((h) => h.q.key === q.key)) continue;
+        const hit = questionTexts(q).find((f) => norm(f.text).includes(needle));
+        if (hit) res.questions.push({ sp, q, where: hit.label, snippet: excerpt(hit.text, t), section: sec });
+      }
   }
   return res;
 }

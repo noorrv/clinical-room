@@ -1270,3 +1270,9 @@
     animation: none;
   }
 }
+
+/* a topic page on plain paper in its subject's colour (no painted pattern) */
+.da.da--plain {
+  background-image: var(--grain);
+  background-size: 220px;
+}

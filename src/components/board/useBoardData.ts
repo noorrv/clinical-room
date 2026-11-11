@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../auth/AuthProvider';
 import { allSpecialties } from '../../content';
 import type { SpecialtyId } from '../../content/types';
+import { maskNames } from '../../content/remote';
 import { supabase, supabaseConfigured } from '../../lib/supabase';
 import type { BoardData, Notice, RecentItem } from './types';
 
@@ -19,10 +20,10 @@ function where(specialtyId: SpecialtyId) {
 }
 
 async function load(): Promise<BoardData> {
-  const [ann, qs, docs, tops] = await Promise.all([
+  // doctors are never shown to students, so the noticeboard lists new questions and topics only
+  const [ann, qs, tops] = await Promise.all([
     supabase.from('announcements').select('id, title, body, pinned, created_at').eq('published', true).order('pinned', { ascending: false }).order('created_at', { ascending: false }).limit(4),
     supabase.from('questions').select('specialty_id, id, title, created_at').eq('status', 'published').order('created_at', { ascending: false }).limit(RECENT_COUNT),
-    supabase.from('doctors').select('specialty_id, id, name, created_at').order('created_at', { ascending: false }).limit(RECENT_COUNT),
     supabase.from('topics').select('specialty_id, id, name, created_at').order('created_at', { ascending: false }).limit(RECENT_COUNT),
   ]);
 
@@ -32,15 +33,11 @@ async function load(): Promise<BoardData> {
   const recent: RecentItem[] = [
     ...(qs.data ?? []).map((q) => {
       const w = where(q.specialty_id);
-      return { id: `q-${q.specialty_id}-${q.id}`, kind: 'question' as const, title: q.title, specialty: w.title, date: q.created_at, href: `/specialties/${w.slug}/questions/${q.id}` };
-    }),
-    ...(docs.data ?? []).map((d) => {
-      const w = where(d.specialty_id);
-      return { id: `d-${d.specialty_id}-${d.id}`, kind: 'doctor' as const, title: d.name, specialty: w.title, date: d.created_at, href: `/specialties/${w.slug}?tab=doctors&open=${d.id}` };
+      return { id: `q-${q.specialty_id}-${q.id}`, kind: 'question' as const, title: maskNames(q.title), specialty: w.title, date: q.created_at, href: `/specialties/${w.slug}/questions/${q.id}` };
     }),
     ...(tops.data ?? []).map((t) => {
       const w = where(t.specialty_id);
-      return { id: `t-${t.specialty_id}-${t.id}`, kind: 'topic' as const, title: t.name, specialty: w.title, date: t.created_at, href: `/specialties/${w.slug}?tab=topics&open=${t.id}` };
+      return { id: `t-${t.specialty_id}-${t.id}`, kind: 'topic' as const, title: t.name, specialty: w.title, date: t.created_at, href: `/specialties/${w.slug}/topics/${t.id}` };
     }),
   ]
     .sort((a, b) => Date.parse(b.date) - Date.parse(a.date))

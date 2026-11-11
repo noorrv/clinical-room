@@ -1,17 +1,17 @@
 import { useMemo, type ReactNode } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { SpecialtyArt } from '../../components/art/SpecialtyArt';
-import { questionsOf, type QuestionRef, type Specialty } from '../../content';
-import { byDoctor, byTopic, matches, pct, tally, topicsMastered, type GroupProgress } from '../../study/derive';
+import { questionsOf, type Specialty } from '../../content';
+import { byTopic, matches, pct, tally, topicsMastered } from '../../study/derive';
 import { useStudy } from '../../study/store';
 import { useGuestBrowsing } from '../../auth/guest';
 import { useApproaches } from '../../content/approaches';
-import { archivePath } from '../archive/data';
+import { topicPath } from '../archive/data';
+import { SubjectBoard } from './SubjectBoard';
 import '../approach/approach.css';
 import { EmptyState, Ledger, PreviewBanner, QuestionRow, StatusLegend } from './ui';
 
-// 'topics' has no tab of its own any more, but its old links (?tab=topics) still open the topic list
-type Tab = 'doctors' | 'approaches' | 'topics';
+type Tab = 'subjects' | 'approaches';
 
 export function Masthead({ sp, children }: { sp: Specialty; children?: ReactNode }) {
   return (
@@ -35,52 +35,13 @@ export function Masthead({ sp, children }: { sp: Specialty; children?: ReactNode
   );
 }
 
-function Drawer({ g, sp, open, kind, query, to }: { g: GroupProgress; sp: Specialty; open: boolean; kind: string; query: string; to?: string }) {
-  const shown = g.questions.filter((q) => matches(q, sp, query));
-  // an examiner's name opens their illustrated archive; while searching, matches still list here
-  if (to && query.trim() === '') {
-    return (
-      <div className="drawer" id={`${kind}-${g.id}`}>
-        <Link className="drawer__head" to={to}>
-          <bdi className="drawer__name">{g.name}</bdi>
-          <span className="drawer__count">
-            {g.tally.total} {g.tally.total === 1 ? 'question' : 'questions'} · {pct(g.tally.mastered)} mastered
-          </span>
-          <Ledger tally={g.tally} label={`${g.name} progress`} />
-          <span className="drawer__chev drawer__chev--go" aria-hidden />
-        </Link>
-      </div>
-    );
-  }
-  return (
-    <details className="drawer" open={open || (query.trim() !== '' && shown.length > 0)} id={`${kind}-${g.id}`}>
-      <summary className="drawer__head">
-        <bdi className="drawer__name">{g.name}</bdi>
-        <span className="drawer__count">
-          {g.tally.total} {g.tally.total === 1 ? 'question' : 'questions'} · {pct(g.tally.mastered)} mastered
-        </span>
-        <Ledger tally={g.tally} label={`${g.name} progress`} />
-        <span className="drawer__chev" aria-hidden />
-      </summary>
-      {shown.length ? (
-        <ul className="qlist">
-          {shown.map((q) => (
-            <QuestionRow key={q.key} q={q} sp={sp} />
-          ))}
-        </ul>
-      ) : (
-        <p className="drawer__none">{g.tally.total ? 'No questions here match your search.' : 'No questions linked yet.'}</p>
-      )}
-    </details>
-  );
-}
-
 export function DashboardHome({ sp }: { sp: Specialty }) {
   const st = useStudy();
   const guest = useGuestBrowsing();
   const [params, setParams] = useSearchParams();
   const tabParam = params.get('tab');
-  const tab: Tab = tabParam === 'topics' || tabParam === 'approaches' ? tabParam : 'doctors';
+  // old links (?tab=doctors, ?tab=topics) land on the subject board
+  const tab: Tab = tabParam === 'approaches' ? 'approaches' : 'subjects';
   const approaches = useApproaches(sp.id);
   const open = params.get('open');
   const query = params.get('q') ?? '';
@@ -88,10 +49,6 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
   const qs = useMemo(() => questionsOf(sp), [sp]);
   const all = tally(qs, st);
   const topics = byTopic(sp, st);
-  const doctors = byDoctor(sp, st);
-  const groups = tab === 'doctors' ? doctors : tab === 'topics' ? topics : [];
-  const linkedField = tab === 'doctors' ? 'doctorIds' : 'topicIds';
-  const loose: QuestionRef[] = qs.filter((q) => q[linkedField].length === 0);
 
   const setParam = (k: string, v: string | null) => {
     const next = new URLSearchParams(params);
@@ -102,11 +59,16 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
   };
 
   const results = query.trim() ? qs.filter((q) => matches(q, sp, query)) : [];
-  const groupHits = query.trim()
-    ? [...topics.map((t) => ({ ...t, kind: 'topics' as Tab })), ...doctors.map((d) => ({ ...d, kind: 'doctors' as Tab }))].filter((g) =>
-        g.name.toLowerCase().includes(query.trim().toLowerCase()),
-      )
+  const needle = query.trim().toLowerCase();
+  const groupHits = needle
+    ? [
+        ...(sp.subjects ?? []).filter((x) => x.name.toLowerCase().includes(needle)).map((x) => ({ key: `s-${x.id}`, name: x.name, label: 'Subject', to: `?tab=subjects&subject=${x.id}` })),
+        ...topics.filter((t) => t.name.toLowerCase().includes(needle)).map((t) => ({ key: `t-${t.id}`, name: t.name, label: 'Topic', to: topicPath(sp, t.id) })),
+      ]
     : [];
+
+  // an old ?tab=topics&open=<topic> link opens that topic's own page
+  if (tabParam === 'topics' && open && sp.topics.some((t) => t.id === open)) return <Navigate to={topicPath(sp, open)} replace />;
 
   return (
     <>
@@ -153,7 +115,7 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
         <input
           id={`dsearch-${sp.id}`}
           type="search"
-          placeholder="Questions, topics or doctors"
+          placeholder="Questions, subjects or topics"
           value={query}
           onChange={(e) => setParam('q', e.target.value || null)}
           autoComplete="off"
@@ -165,9 +127,9 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
           {groupHits.length > 0 && (
             <ul className="results__groups">
               {groupHits.map((g) => (
-                <li key={`${g.kind}-${g.id}`}>
-                  <Link to={`?tab=${g.kind}&open=${g.id}`} onClick={() => setParam('q', null)}>
-                    {g.name} <small>{g.kind === 'topics' ? 'Topic' : 'Examiner'}</small>
+                <li key={g.key}>
+                  <Link to={g.to} onClick={() => setParam('q', null)}>
+                    {g.name} <small>{g.label}</small>
                   </Link>
                 </li>
               ))}
@@ -190,7 +152,7 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
         <div className="tabs" role="tablist" aria-label="Browse by">
           {(
             [
-              ['doctors', 'Browse by doctor'],
+              ['subjects', 'Browse by subject'],
               ['approaches', 'Browse by approach'],
             ] as Array<[Tab, string]>
           ).map(([t, label]) => (
@@ -208,7 +170,7 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
             </button>
           ))}
         </div>
-        <div className="tabs__panel" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab === 'topics' ? 'approaches' : tab}`}>
+        <div className="tabs__panel" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
           {tab === 'approaches' ? (
             approaches.data === undefined ? (
               <p className="approaches__wait">Opening the approaches…</p>
@@ -245,36 +207,15 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
                 <p>Clinical approaches for {sp.title}, each with a case to practise, will appear here as they’re added.</p>
               </EmptyState>
             )
-          ) : groups.length === 0 && loose.length === 0 ? (
-            guest ? (
-              <EmptyState title={`Nothing in ${sp.title} is open to guests yet`}>
-                <p>
-                  The full {sp.title} library is for registered students. <Link to="/register">Create an account</Link> or{' '}
-                  <Link to={`/login?next=${encodeURIComponent(`/specialties/${sp.slug}`)}`}>sign in</Link> to open it.
-                </p>
-              </EmptyState>
-            ) : (
-              <EmptyState title={tab === 'doctors' ? 'No examiners in this volume yet' : 'No topics in this volume yet'}>
-                <p>
-                  {sp.title} questions, {tab === 'doctors' ? 'examiners' : 'topics'} and study material will appear here as soon as they’re added.
-                </p>
-              </EmptyState>
-            )
+          ) : qs.length === 0 && guest ? (
+            <EmptyState title={`Nothing in ${sp.title} is open to guests yet`}>
+              <p>
+                The full {sp.title} library is for registered students. <Link to="/register">Create an account</Link> or{' '}
+                <Link to={`/login?next=${encodeURIComponent(`/specialties/${sp.slug}`)}`}>sign in</Link> to open it.
+              </p>
+            </EmptyState>
           ) : (
-            <div className={`drawers${groups.length >= 8 ? ' drawers--grid' : ''}`}>
-              {groups.map((g) => (
-                <Drawer key={g.id} g={g} sp={sp} open={open === g.id} kind={tab} query={query} to={tab === 'doctors' ? archivePath(sp, g.id) : undefined} />
-              ))}
-              {loose.length > 0 && (
-                <Drawer
-                  g={{ id: 'unlinked', name: tab === 'doctors' ? 'Not linked to an examiner' : 'Not linked to a topic', questions: loose, tally: tally(loose, st) }}
-                  sp={sp}
-                  open={open === 'unlinked'}
-                  kind={tab}
-                  query={query}
-                />
-              )}
-            </div>
+            <SubjectBoard sp={sp} />
           )}
         </div>
       </section>

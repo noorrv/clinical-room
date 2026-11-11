@@ -1,9 +1,8 @@
 import type { CSSProperties } from 'react';
-import { Navigate, NavLink, Route, Routes, useParams } from 'react-router-dom';
+import { Navigate, NavLink, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { allSpecialties, questionsOf, specialtyBySlug, type Specialty } from '../../content';
 import { record, useStudy } from '../../study/store';
 import { ApproachPage } from '../approach/ApproachPage';
-import { DoctorArchive } from '../archive/DoctorArchive';
 import { NotFoundPage } from '../SystemPages';
 import { TopicPage } from '../archive/TopicPage';
 import { DashboardHome } from './DashboardHome';
@@ -90,13 +89,22 @@ export function SpecialtyRoutes() {
 
   return (
     <Routes>
-      {/* the examiner archives fill the page in their own illustrated style, without the study index */}
-      <Route path="doctors/:doctorId" element={<main id="main"><DoctorArchive sp={sp} /></main>} />
-      <Route path="doctors/:doctorId/topics/:topicId" element={<main id="main"><TopicPage sp={sp} /></main>} />
+      {/* topics fill the page in their own illustrated style, without the study index */}
+      <Route path="topics/:topicId" element={<main id="main"><TopicPage sp={sp} /></main>} />
+      {/* the old doctor addresses still work: they lead to the same topic, or to the subject board */}
+      <Route path="doctors/:doctorId/topics/:topicId" element={<OldTopicLink sp={sp} />} />
+      <Route path="doctors/:doctorId" element={<Navigate to={`/specialties/${sp.slug}?tab=subjects`} replace />} />
       <Route path="approaches/:approachId" element={<main id="main"><ApproachPage sp={sp} /></main>} />
       <Route path="*" element={<StudyLayout sp={sp} />} />
     </Routes>
   );
+}
+
+/** /doctors/:doctorId/topics/:topicId → /topics/:topicId, keeping a search highlight and a #q- jump. */
+function OldTopicLink({ sp }: { sp: Specialty }) {
+  const { topicId = '' } = useParams();
+  const { search, hash } = useLocation();
+  return <Navigate to={`/specialties/${sp.slug}/topics/${topicId}${search}${hash}`} replace />;
 }
 
 function StudyLayout({ sp }: { sp: Specialty }) {

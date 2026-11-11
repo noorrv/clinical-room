@@ -1,0 +1,397 @@
+/* ───────────────────────────────────────────────────────────────
+   The subject board: a plate from an anatomical atlas. A central
+   ink spine, subjects branching to either side on fine leader
+   lines, each with a numbered seal ringed by the student's progress.
+   Colours are the specialty's palette combination (palettes.ts).
+   ─────────────────────────────────────────────────────────────── */
+
+.atlas {
+  --atlas-paper: var(--t-paper, #faf6ec);
+  --atlas-ink: var(--t-ink, #2b2a22);
+  --atlas-head: var(--t-heading, #3f4a30);
+  --atlas-muted: var(--t-muted, #6b6a52);
+  --atlas-rule: color-mix(in srgb, var(--atlas-head) 30%, transparent);
+  position: relative;
+  padding: clamp(18px, 3vw, 34px) clamp(14px, 3vw, 36px) clamp(22px, 3vw, 38px);
+  border-radius: 6px;
+  background-color: var(--atlas-paper);
+  background-image: var(--grain);
+  background-size: 220px;
+  box-shadow:
+    inset 0 0 0 1px var(--atlas-rule),
+    inset 0 0 0 6px var(--atlas-paper),
+    inset 0 0 0 7px var(--atlas-rule),
+    0 10px 30px -22px rgba(30, 22, 12, 0.6);
+  color: var(--atlas-ink);
+}
+
+/* the plate's caption block, centred like an engraved title */
+.atlas__head {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin-bottom: clamp(18px, 3vw, 30px);
+  text-align: center;
+}
+
+.atlas__plate {
+  margin: 0;
+  font: 600 0.78rem/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--t-accent, #8a4f2e);
+}
+
+.atlas__title {
+  margin: 0;
+  font: 500 clamp(1.7rem, 1.3rem + 1.6vw, 2.4rem)/1.1 'Cormorant Garamond', Georgia, serif;
+  color: var(--atlas-head);
+}
+
+.atlas__meta {
+  margin: 0;
+  font-style: italic;
+  color: var(--atlas-muted);
+}
+
+.atlas__find {
+  width: min(420px, 100%);
+  margin-top: 10px;
+}
+
+.atlas__find input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--atlas-rule);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--atlas-ink);
+  font: 400 1rem/1 'EB Garamond', Georgia, serif;
+  text-align: center;
+}
+
+.atlas__find input:focus-visible {
+  outline: 2px solid var(--t-accent, #8a4f2e);
+  outline-offset: 2px;
+}
+
+/* the map: two columns about a central spine */
+.atlas__map {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 64px;
+  row-gap: 14px;
+  align-items: start;
+}
+
+.atlas__map::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+  background: linear-gradient(var(--atlas-rule), var(--atlas-rule)) center / 2px 100% no-repeat;
+}
+
+.atlas__node {
+  position: relative;
+  min-width: 0;
+}
+
+.atlas__node.is-left {
+  grid-column: 1;
+}
+
+.atlas__node.is-right {
+  grid-column: 2;
+}
+
+/* the leader line from the spine to the subject's seal */
+.atlas__node::before {
+  content: '';
+  position: absolute;
+  top: 27px;
+  width: 32px;
+  height: 0;
+  border-top: 1px solid var(--atlas-rule);
+}
+
+.atlas__node.is-left::before {
+  right: -32px;
+}
+
+.atlas__node.is-right::before {
+  left: -32px;
+}
+
+.atlas__node::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--node);
+}
+
+.atlas__node.is-left::after {
+  right: -35.5px;
+}
+
+.atlas__node.is-right::after {
+  left: -35.5px;
+}
+
+.atlas__label {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-height: 56px;
+  padding: 4px 10px 4px 4px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.atlas__node.is-left .atlas__label {
+  grid-template-columns: minmax(0, 1fr) 46px;
+  text-align: end;
+  padding: 4px 4px 4px 10px;
+}
+
+.atlas__label:hover,
+.atlas__node.is-open .atlas__label {
+  background: color-mix(in srgb, var(--node) 9%, transparent);
+}
+
+.atlas__label:focus-visible,
+.atlas__topic:focus-visible {
+  outline: 2px solid var(--node);
+  outline-offset: 2px;
+}
+
+/* the seal: a numbered disc ringed by the share of the subject already reviewed */
+.atlas__dot {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: conic-gradient(var(--node) var(--node-pct, 0deg), color-mix(in srgb, var(--node) 18%, transparent) 0);
+}
+
+.atlas__node.is-left .atlas__dot {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.atlas__dot span {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--atlas-paper);
+  font: 600 1.05rem/1 'Cormorant Garamond', Georgia, serif;
+  color: var(--node);
+  font-variant-numeric: lining-nums;
+}
+
+.atlas__name {
+  font: 600 1.18rem/1.2 'Cormorant Garamond', Georgia, serif;
+  color: var(--atlas-head);
+  overflow-wrap: anywhere;
+}
+
+.atlas__node.is-left .atlas__name,
+.atlas__node.is-left .atlas__count {
+  grid-column: 1;
+}
+
+.atlas__count {
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--atlas-muted);
+}
+
+/* empty subjects stay on the plate, quieter */
+.atlas__node.is-empty .atlas__dot {
+  background: repeating-conic-gradient(color-mix(in srgb, var(--node) 30%, transparent) 0 10deg, transparent 10deg 20deg);
+}
+
+.atlas__node.is-empty .atlas__name {
+  color: var(--atlas-muted);
+  font-weight: 500;
+}
+
+.atlas__node.is-dim {
+  opacity: 0.35;
+}
+
+/* a subject's topics unfold beneath it */
+.atlas__topics {
+  margin: 6px 0 4px;
+  padding: 2px 0 2px 14px;
+  border-left: 2px solid color-mix(in srgb, var(--node) 50%, transparent);
+  animation: atlas-open 200ms ease-out;
+}
+
+.atlas__node.is-left .atlas__topics {
+  margin-right: 58px;
+}
+
+.atlas__node.is-right .atlas__topics {
+  margin-left: 58px;
+}
+
+.atlas__topics[hidden] {
+  display: none;
+}
+
+.atlas__topics ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.atlas__topic {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 10px;
+  align-items: baseline;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--atlas-ink);
+  text-decoration: none;
+  transition:
+    background-color 140ms ease,
+    transform 140ms ease;
+}
+
+.atlas__topic:hover {
+  background: color-mix(in srgb, var(--node) 10%, transparent);
+  transform: translateX(2px);
+}
+
+.atlas__topic-name {
+  font: 600 1rem/1.3 'EB Garamond', Georgia, serif;
+}
+
+.atlas__topic-count {
+  font-size: 0.86rem;
+  color: var(--atlas-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.atlas__topic.is-empty .atlas__topic-name {
+  color: var(--atlas-muted);
+  font-weight: 500;
+}
+
+.atlas__bar {
+  grid-column: 1 / -1;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--node) 15%, transparent);
+  overflow: hidden;
+}
+
+.atlas__bar span {
+  display: block;
+  height: 100%;
+  background: var(--node);
+}
+
+.atlas__none,
+.atlas__empty {
+  margin: 4px 0;
+  font-style: italic;
+  color: var(--atlas-muted);
+}
+
+@keyframes atlas-open {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* narrow screens: one column, the spine down the left */
+@media (max-width: 720px) {
+  .atlas__map {
+    grid-template-columns: minmax(0, 1fr);
+    padding-left: 26px;
+  }
+
+  .atlas__map::before {
+    left: 9px;
+  }
+
+  .atlas__node.is-left,
+  .atlas__node.is-right {
+    grid-column: 1;
+  }
+
+  .atlas__node.is-left::before,
+  .atlas__node.is-right::before {
+    left: -17px;
+    right: auto;
+    width: 17px;
+  }
+
+  .atlas__node.is-left::after,
+  .atlas__node.is-right::after {
+    left: -20.5px;
+    right: auto;
+  }
+
+  .atlas__node.is-left .atlas__label {
+    grid-template-columns: 46px minmax(0, 1fr);
+    text-align: start;
+    padding: 4px 10px 4px 4px;
+  }
+
+  .atlas__node.is-left .atlas__dot {
+    grid-column: 1;
+  }
+
+  .atlas__node.is-left .atlas__name,
+  .atlas__node.is-left .atlas__count {
+    grid-column: 2;
+  }
+
+  .atlas__node.is-left .atlas__topics,
+  .atlas__node.is-right .atlas__topics {
+    margin-left: 24px;
+    margin-right: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atlas__topics {
+    animation: none;
+  }
+
+  .atlas__label,
+  .atlas__topic {
+    transition: none;
+  }
+}

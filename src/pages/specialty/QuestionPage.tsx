@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { StudySheet } from '../archive/StudySheet';
-import { doctorName, questionKey, questionPath, questionsOf, topicName, TYPE_LABEL, type Question, type Specialty } from '../../content';
+import { questionKey, questionPath, questionsOf, topicName, TYPE_LABEL, type Question, type Specialty } from '../../content';
 import { record, study, useStudy } from '../../study/store';
 import { useGuestBrowsing } from '../../auth/guest';
 import { EmptyState, PreviewBanner, Ribbon, StatusPicker } from './ui';
@@ -178,19 +178,7 @@ export function QuestionPage({ sp }: { sp: Specialty }) {
                 {q.topicIds.map((id, i) => (
                   <span key={id}>
                     {i > 0 && ', '}
-                    <Link to={`/specialties/${sp.slug}?tab=topics&open=${id}`}>{topicName(sp, id)}</Link>
-                  </span>
-                ))}
-              </>
-            )}
-            {q.doctorIds.length > 0 && (
-              <>
-                {q.topicIds.length > 0 && <span aria-hidden> · </span>}
-                Examiner:{' '}
-                {q.doctorIds.map((id, i) => (
-                  <span key={id}>
-                    {i > 0 && ', '}
-                    <Link to={`/specialties/${sp.slug}?tab=doctors&open=${id}`}><bdi>{doctorName(sp, id)}</bdi></Link>
+                    <Link to={`/specialties/${sp.slug}/topics/${id}`}>{topicName(sp, id)}</Link>
                   </span>
                 ))}
               </>

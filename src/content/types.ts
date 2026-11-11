@@ -27,6 +27,15 @@ export interface Topic {
   id: string;
   name: string;
   description?: string;
+  /** The subject it is filed under on the specialty's board. */
+  subjectId?: string;
+}
+
+/** A system or area within a specialty (e.g. Hepatobiliary system): a node on its board. */
+export interface Subject {
+  id: string;
+  name: string;
+  description?: string;
 }
 
 export interface Question {
@@ -61,6 +70,8 @@ export interface SpecialtyContent {
   /** Short description shown on the dashboard. Empty until written. */
   description: string;
   doctors: Doctor[];
+  /** In board order. Empty until subjects are set up for this specialty. */
+  subjects?: Subject[];
   topics: Topic[];
   questions: Question[];
 }

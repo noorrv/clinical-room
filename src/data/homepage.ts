@@ -47,7 +47,7 @@ export const streakDays = 5;
 export const navLinks = [
   { label: 'Home', href: '/', current: true },
   { label: 'Specialties', href: '/#specialties', hasMenu: true },
-  { label: 'Doctors', href: '/archive/search' },
+  { label: 'Subjects', href: '/archive/search' },
   { label: 'Study Tracker', href: '/#study-tracker' },
   { label: 'Library', href: '/#notices' },
 ];

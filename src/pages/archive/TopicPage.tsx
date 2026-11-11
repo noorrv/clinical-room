@@ -6,15 +6,15 @@ import { record, study, useStudy } from '../../study/store';
 import { ANSWER_ORDER, GIVEN } from '../specialty/QuestionPage';
 import { Ribbon } from '../specialty/ui';
 import { Bow, CheckSeal, Star } from './art';
-import { archivePath, doctorArchive, isReviewed, pad, sectionProgress, topicPath } from './data';
-import { paletteFor } from './palettes';
+import { archivePath, isReviewed, pad, sectionProgress, specialtyArchive, topicPath } from './data';
+import { themeFor, themePalette } from '../approach/palettes';
 import { ArchiveRoom, Highlight } from './shared';
 import { StudySheet } from './StudySheet';
 
 /*
-  One topic of one examiner's archive: every question that doctor asked on it, with the recorded
-  answer revealed on demand, review ticks and bookmarks that save to the student's progress,
-  and real previous / next navigation.
+  One topic of a specialty: every question filed under it, with the recorded answer revealed on
+  demand, review ticks and bookmarks that save to the student's progress, and real previous /
+  next navigation through the topics in board order. No doctor is named anywhere on it.
 */
 
 const PAGE = 8;
@@ -45,15 +45,18 @@ const filled = (q: Question, k: keyof Question) => {
 };
 
 export function TopicPage({ sp }: { sp: Specialty }) {
-  const { doctorId = '', topicId = '' } = useParams();
+  const { topicId = '' } = useParams();
   const [params] = useSearchParams();
   const { hash } = useLocation();
   const navigate = useNavigate();
   const st = useStudy();
   const term = params.get('hl');
-  const archive = useMemo(() => doctorArchive(sp, doctorId), [sp, doctorId]);
-  const sectionIndex = archive ? archive.sections.findIndex((s) => s.id === topicId) : -1;
-  const section = archive && sectionIndex >= 0 ? archive.sections[sectionIndex] : null;
+  const archive = useMemo(() => specialtyArchive(sp), [sp]);
+  const sectionIndex = archive.sections.findIndex((s) => s.id === topicId);
+  const section = sectionIndex >= 0 ? archive.sections[sectionIndex] : null;
+  const subject = sp.subjects?.find((x) => x.id === section?.subjectId);
+  // the topic wears its subject's colour combination (the approach palettes), on plain paper
+  const palette = themePalette(themeFor(subject ? `${sp.id}-${subject.id}` : sp.id));
 
   const [page, setPage] = useState(1);
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
@@ -69,11 +72,7 @@ export function TopicPage({ sp }: { sp: Specialty }) {
   // every question of this doctor's archive, for pathways to link to (same mechanism, related stage)
   const links = useMemo(
     () =>
-      archive
-        ? archive.sections.flatMap((s) =>
-            s.questions.map((q) => ({ id: q.id, title: q.title, href: `${topicPath(sp, archive.doctor.id, s.id)}#q-${encodeURIComponent(q.id)}`, text: q.modelAnswer })),
-          )
-        : [],
+      archive.sections.flatMap((s) => s.questions.map((q) => ({ id: q.id, title: q.title, href: `${topicPath(sp, s.id)}#q-${encodeURIComponent(q.id)}`, text: q.modelAnswer }))),
     [archive, sp],
   );
   const pages = Math.max(1, Math.ceil(list.length / PAGE));
@@ -100,18 +99,14 @@ export function TopicPage({ sp }: { sp: Specialty }) {
 
   useEffect(() => setPage(1), [topicId, onlyMarked]);
 
-  if (!archive || !section) {
+  if (!section) {
     return (
-      <ArchiveRoom palette={paletteFor(doctorId)}>
+      <ArchiveRoom className="da--plain" palette={palette}>
         <div className="da-wrap">
           <div className="da-card da-missing">
             <h1 className="da-h1">This topic isn’t in the archive</h1>
             <p>
-              {archive ? (
-                <Link to={archivePath(sp, doctorId)}>Back to {archive.doctor.name}’s archive</Link>
-              ) : (
-                <Link to={`/specialties/${sp.slug}`}>Back to {sp.title}</Link>
-              )}
+              <Link to={archivePath(sp)}>Back to the {sp.title} subjects</Link>
             </p>
           </div>
         </div>
@@ -119,7 +114,7 @@ export function TopicPage({ sp }: { sp: Specialty }) {
     );
   }
 
-  const { doctor, sections } = archive;
+  const { sections } = archive;
   const prog = sectionProgress(st, section);
   const prevTopic = sections[sectionIndex - 1];
   const nextTopic = sections[sectionIndex + 1];
@@ -148,14 +143,12 @@ export function TopicPage({ sp }: { sp: Specialty }) {
   };
 
   return (
-    <ArchiveRoom className="da-enter" palette={paletteFor(doctorId)}>
+    <ArchiveRoom className="da-enter da--plain" palette={palette}>
       <div className="da-wrap">
         <nav className="da-crumbs" aria-label="Breadcrumb">
-          <Link to={archivePath(sp, doctor.id)}>
-            ← <bdi>{doctor.name}</bdi>’s archive
-          </Link>
+          <Link to={archivePath(sp)}>← {sp.title} subjects</Link>
           <span aria-hidden> · </span>
-          <Link to="/archive/search">Search every archive</Link>
+          <Link to="/archive/search">Search every subject</Link>
         </nav>
 
         <header className="da-frame da-topic-head">
@@ -165,7 +158,8 @@ export function TopicPage({ sp }: { sp: Specialty }) {
             <span className="da-disc da-disc--big">{pad(section.number)}</span>
             <div>
               <p className="da-kicker">
-                <bdi>{doctor.name}</bdi> · {sp.title}
+                {subject ? `${subject.name} · ` : ''}
+                {sp.title}
               </p>
               <h1 className="da-h1">
                 <bdi>{section.name}</bdi>
@@ -295,7 +289,7 @@ export function TopicPage({ sp }: { sp: Specialty }) {
               ‹ Previous
             </button>
           ) : prevTopic ? (
-            <Link className="da-pager__step" to={topicPath(sp, doctor.id, prevTopic.id)}>
+            <Link className="da-pager__step" to={topicPath(sp, prevTopic.id)}>
               ‹ <bdi>{prevTopic.name}</bdi>
             </Link>
           ) : (
@@ -313,11 +307,11 @@ export function TopicPage({ sp }: { sp: Specialty }) {
               Next ›
             </button>
           ) : nextTopic ? (
-            <Link className="da-pager__step" to={topicPath(sp, doctor.id, nextTopic.id)}>
+            <Link className="da-pager__step" to={topicPath(sp, nextTopic.id)}>
               <bdi>{nextTopic.name}</bdi> ›
             </Link>
           ) : (
-            <button type="button" className="da-pager__step" onClick={() => navigate(archivePath(sp, doctor.id))}>
+            <button type="button" className="da-pager__step" onClick={() => navigate(archivePath(sp))}>
               Contents ›
             </button>
           )}

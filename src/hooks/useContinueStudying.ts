@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { questionPath, specialtyById } from '../content';
 import type { SpecialtyId } from '../content/types';
+import { maskNames } from '../content/remote';
 import { supabase } from '../lib/supabase';
 import { useNotifications } from '../notifications/useNotifications';
 import { record, useStudy } from '../study/store';
@@ -90,11 +91,9 @@ export function useContinueStudying(): Continue {
       }
       const spec = specialtyById(sp);
       const href =
-        topicId && doctorId
-          ? `/specialties/${spec.slug}/doctors/${doctorId}/topics/${topicId}#q-${encodeURIComponent(q.id)}`
-          : questionPath(spec, q.id);
+        topicId ? `/specialties/${spec.slug}/topics/${topicId}#q-${encodeURIComponent(q.id)}` : questionPath(spec, q.id);
       if (alive)
-        setResolved({ key, title: q.title, specialty: sp, topicName: topic?.data?.name, doctorName: doctor?.data?.name, href, topicKeys });
+        setResolved({ key, title: maskNames(q.title), specialty: sp, topicName: topic?.data?.name, doctorName: doctor?.data?.name, href, topicKeys });
     })().catch(() => alive && setResolved(null));
     return () => {
       alive = false;

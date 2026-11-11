@@ -35,15 +35,15 @@ function AppLink({ href, children, ...rest }: { href: string; children: ReactNod
   );
 }
 
-/** Everything a visitor might look for: specialties, every question, topic and doctor, and pages. */
+/** Everything a visitor might look for: specialties, every question, subject and topic, and pages. */
 function useSearchIndex() {
   const version = useContentVersion();
   return useMemo(
     () => [
       ...allSpecialties().flatMap((sp) => [
         ...questionsOf(sp).map((q) => ({ title: q.title, hint: `${sp.shortName} · ${TYPE_LABEL[q.type]}`, href: questionPath(sp, q.id) })),
-        ...sp.topics.map((t) => ({ title: t.name, hint: `${sp.shortName} topic`, href: `/specialties/${sp.slug}?tab=topics&open=${t.id}` })),
-        ...sp.doctors.map((d) => ({ title: d.name, hint: `${sp.shortName} examiner`, href: `/specialties/${sp.slug}?tab=doctors&open=${d.id}` })),
+        ...(sp.subjects ?? []).map((x) => ({ title: x.name, hint: `${sp.shortName} subject`, href: `/specialties/${sp.slug}?tab=subjects&subject=${x.id}` })),
+        ...sp.topics.map((t) => ({ title: t.name, hint: `${sp.shortName} topic`, href: `/specialties/${sp.slug}/topics/${t.id}` })),
       ]),
       ...specialties.flatMap((s) => [
         { title: s.title, hint: 'Specialty', href: s.href },

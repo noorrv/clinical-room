@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Bow, Star } from './art';
-import { archivePath, searchArchives, topicPath } from './data';
+import { searchArchives, topicPath } from './data';
 import { ArchiveRoom, Highlight } from './shared';
 
 /*
-  One search across every examiner's archive: doctor names, topic names and every word of every
-  recorded question and answer. Each result leads to the doctor, the topic and the exact question.
+  One search across every subject: subject and topic names and every word of every recorded
+  question and answer. Each result leads to its subject board, its topic or the exact question.
 */
 
 export function ArchiveSearch() {
@@ -14,7 +14,7 @@ export function ArchiveSearch() {
   const term = params.get('q') ?? '';
   const t = term.trim();
   const res = useMemo(() => searchArchives(term), [term]);
-  const total = res.doctors.length + res.topics.length + res.questions.length;
+  const total = res.subjects.length + res.topics.length + res.questions.length;
   const hl = `?hl=${encodeURIComponent(t)}`;
 
   return (
@@ -28,10 +28,10 @@ export function ArchiveSearch() {
           <Bow className="da-bow da-bow--tl" />
           <Bow className="da-bow da-bow--tr" flip />
           <div className="da-search-head">
-            <p className="da-kicker">Every examiner’s archive</p>
-            <h1 className="da-h1">Search the archives</h1>
+            <p className="da-kicker">Every subject</p>
+            <h1 className="da-h1">Search the library</h1>
             <label className="visually-hidden" htmlFor="da-gq">
-              Search doctors, topics, questions and answers
+              Search subjects, topics, questions and answers
             </label>
             <input
               id="da-gq"
@@ -39,7 +39,7 @@ export function ArchiveSearch() {
               className="da-input"
               autoFocus
               dir="auto"
-              placeholder="A doctor, a topic, a word from a question or answer…"
+              placeholder="A subject, a topic, a word from a question or answer…"
               value={term}
               onChange={(e) => setParams(e.target.value ? { q: e.target.value } : {}, { replace: true })}
             />
@@ -51,27 +51,27 @@ export function ArchiveSearch() {
         {t.length < 2 ? (
           <p className="da-card da-quiet">Type at least two letters to search.</p>
         ) : total === 0 ? (
-          <p className="da-card da-quiet">Nothing in the archives mentions “{t}”.</p>
+          <p className="da-card da-quiet">Nothing in the library mentions “{t}”.</p>
         ) : (
           <div className="da-found" aria-live="polite">
             <p className="da-found__count">
               {total} {total === 1 ? 'result' : 'results'} for “{t}”
             </p>
 
-            {res.doctors.length > 0 && (
+            {res.subjects.length > 0 && (
               <section className="da-card da-found__group">
-                <h2 className="da-caps">Doctors</h2>
+                <h2 className="da-caps">Subjects</h2>
                 <ul>
-                  {res.doctors.map((d) => (
-                    <li key={`${d.sp.id}/${d.doctor.id}`}>
-                      <Link to={archivePath(d.sp, d.doctor.id)}>
+                  {res.subjects.map((x) => (
+                    <li key={`${x.sp.id}/${x.subject.id}`}>
+                      <Link to={`/specialties/${x.sp.slug}?tab=subjects&subject=${x.subject.id}`}>
                         <strong>
                           <bdi>
-                            <Highlight text={d.doctor.name} term={t} />
+                            <Highlight text={x.subject.name} term={t} />
                           </bdi>
                         </strong>
                         <span className="da-found__meta">
-                          {d.sp.title} · {d.count} {d.count === 1 ? 'question' : 'questions'}
+                          {x.sp.title} · {x.count ? `${x.count} ${x.count === 1 ? 'question' : 'questions'}` : 'no questions yet'}
                         </span>
                       </Link>
                     </li>
@@ -85,15 +85,15 @@ export function ArchiveSearch() {
                 <h2 className="da-caps">Topics</h2>
                 <ul>
                   {res.topics.map((r) => (
-                    <li key={`${r.sp.id}/${r.doctor.id}/${r.section.id}`}>
-                      <Link to={topicPath(r.sp, r.doctor.id, r.section.id)}>
+                    <li key={`${r.sp.id}/${r.section.id}`}>
+                      <Link to={topicPath(r.sp, r.section.id)}>
                         <strong>
                           <bdi>
                             <Highlight text={r.section.name} term={t} />
                           </bdi>
                         </strong>
                         <span className="da-found__meta">
-                          <bdi>{r.doctor.name}</bdi> · {r.sp.title} · {r.section.questions.length} {r.section.questions.length === 1 ? 'question' : 'questions'}
+                          {r.sp.title} · {r.section.questions.length} {r.section.questions.length === 1 ? 'question' : 'questions'}
                         </span>
                       </Link>
                     </li>
@@ -122,18 +122,10 @@ export function ArchiveSearch() {
                         </bdi>
                       </p>
                       <p className="da-found__by">
-                        Asked by{' '}
-                        {h.doctors.map((d, i) => {
-                          const sec = h.sectionFor(d.id);
-                          return (
-                            <span key={d.id}>
-                              {i > 0 && ', '}
-                              <Link to={`${topicPath(h.sp, d.id, sec)}${hl}#q-${encodeURIComponent(h.q.id)}`}>
-                                <bdi>{d.name}</bdi>
-                              </Link>
-                            </span>
-                          );
-                        })}
+                        In{' '}
+                        <Link to={`${topicPath(h.sp, h.section.id)}${hl}#q-${encodeURIComponent(h.q.id)}`}>
+                          <bdi>{h.section.name}</bdi>
+                        </Link>
                       </p>
                     </li>
                   ))}

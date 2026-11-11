@@ -111,7 +111,7 @@ export function ContinueStudyingCard() {
             <bdi>{c.title}</bdi>
           </h3>
           <p className="ct__meta">
-            {[c.topic, c.doctor, c.specialty].filter(Boolean).map((part, i) => (
+            {[c.topic, c.specialty].filter(Boolean).map((part, i) => (
               <span key={i}>
                 {i > 0 && ' · '}
                 <bdi>{part}</bdi>

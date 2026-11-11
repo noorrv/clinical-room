@@ -1,7 +1,7 @@
 import { questionsOf, type QuestionRef, type Specialty } from '../content';
 import { record, STATUSES, type Status, type StudyState } from './store';
 
-/* Progress worked out from the study record, by specialty, topic, doctor or any list of questions. */
+/* Progress worked out from the study record, by specialty, subject, topic or any list of questions. */
 
 export interface Tally {
   total: number;
@@ -39,12 +39,16 @@ export function byTopic(sp: Specialty, s: StudyState): GroupProgress[] {
   });
 }
 
-export function byDoctor(sp: Specialty, s: StudyState): GroupProgress[] {
+/** Progress by subject: every question in the topics filed under it. */
+export function bySubject(sp: Specialty, st: StudyState): GroupProgress[] {
   const qs = questionsOf(sp);
-  return sp.doctors.map((d) => {
-    const items = qs.filter((q) => q.doctorIds.includes(d.id));
-    return { id: d.id, name: d.name, questions: items, tally: tally(items, s) };
-  });
+  return (sp.subjects ?? [])
+    .map((x) => {
+      const topicIds = new Set(sp.topics.filter((t) => t.subjectId === x.id).map((t) => t.id));
+      const items = qs.filter((q) => q.topicIds.some((id) => topicIds.has(id)));
+      return { id: x.id, name: x.name, questions: items, tally: tally(items, st) };
+    })
+    .filter((g) => g.questions.length > 0);
 }
 
 /** A topic counts as mastered when it has questions and every one is mastered. */
@@ -70,7 +74,6 @@ export function matches(q: QuestionRef, sp: Specialty, query: string): boolean {
     q.scenario,
     q.question,
     ...q.topicIds.map((id) => sp.topics.find((x) => x.id === id)?.name),
-    ...q.doctorIds.map((id) => sp.doctors.find((x) => x.id === id)?.name),
   ]
     .filter(Boolean)
     .join(' ')
