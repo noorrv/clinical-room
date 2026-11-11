@@ -5,6 +5,7 @@ import type { Question } from '../content/types';
 import { TopicPage } from '../pages/archive/TopicPage';
 import gallbladder from './gallbladder-preview.json';
 import spleen from './spleen-preview.json';
+import appendix from './appendix-preview.json';
 import { Link, useParams } from 'react-router-dom';
 
 /*
@@ -14,7 +15,7 @@ import { Link, useParams } from 'react-router-dom';
 */
 
 type Entry = { id: string; title: string; type: string; model_answer: string; source: string; doctor: string; topic: string; topicName?: string };
-const entries: Entry[] = [...(gallbladder as Entry[]), ...(spleen as Entry[])];
+const entries: Entry[] = [...(gallbladder as Entry[]), ...(spleen as Entry[]), ...(appendix as Entry[])];
 const TOPICS = [{ id: 'gallbladder-biliary-tract', name: 'Gallbladder and Biliary Tract' }];
 for (const e of entries) if (e.topicName && !TOPICS.some((t) => t.id === e.topic)) TOPICS.push({ id: e.topic, name: e.topicName });
 
