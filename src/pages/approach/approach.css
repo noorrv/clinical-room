@@ -161,3 +161,10 @@
   padding: 16px 0;
   font-style: italic;
 }
+
+/* approach pages: a plain paper ground in the approach's colour, no painted stripes */
+.da.ap {
+  background-image: var(--grain);
+  background-size: 220px;
+  background-repeat: repeat;
+}

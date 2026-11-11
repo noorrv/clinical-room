@@ -51,6 +51,23 @@ export interface ApproachTheme {
 
 export const APPROACH_THEMES: ApproachTheme[] = [
   {
+    // the Meadow palette alone, every colour from it
+    id: 'meadow',
+    name: 'Meadow',
+    ground: P.meadow.sand,
+    pattern: P.meadow.skyBlue,
+    paper: '#f8efe3', // sand, lightened for the reading page
+    ink: P.meadow.deepSea,
+    heading: P.meadow.deepSea,
+    muted: P.meadow.moss,
+    accent: P.meadow.terracotta,
+    danger: P.meadow.redWine,
+    info: '#2c6f78', // sky blue, deepened to read on paper
+    mech: '#9d4f48', // cherry blossom, deepened to read on paper
+    caution: '#9a5806', // sunshine, darkened to read on paper
+    calm: P.meadow.moss,
+  },
+  {
     id: 'meadow-lotus',
     name: 'Meadow and lotus',
     ground: P.lotus.beige,
@@ -117,7 +134,7 @@ export const APPROACH_THEMES: ApproachTheme[] = [
 ];
 
 /** Approaches given a combination on purpose; any other takes one by its id, spread across the list. */
-const CHOSEN: Record<string, string> = { jaundice: 'meadow-lotus' };
+const CHOSEN: Record<string, string> = { jaundice: 'meadow' };
 
 export function themeFor(approachId: string): ApproachTheme {
   const id = CHOSEN[approachId];
