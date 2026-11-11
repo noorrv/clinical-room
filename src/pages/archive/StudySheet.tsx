@@ -1,4 +1,6 @@
-import { Fragment, type ReactNode } from 'react';
+import { createContext, Fragment, useContext, useMemo, type ReactNode } from 'react';
+import { ClinicalPathway, type PathwayExplanation } from './ClinicalPathway';
+import { findChain, matchStages, stems, type Chain, type SheetLink } from './pathway';
 import { Highlight } from './shared';
 import './studysheet.css';
 
@@ -19,6 +21,10 @@ import './studysheet.css';
       art = arteries, blood, ischaemia, necrosis · vein = veins, venous drainage, oxygenation
       anat = normal anatomy and physiology · nerve = nerves and innervation
       warn = warnings, complications, risks · pearl = exam pearls and key facts
+
+  A paragraph that is a chain of four or more stages joined by arrows (or lines joined by "↓")
+  is shown as an interactive clinical pathway (ClinicalPathway); shorter arrow sequences stay
+  inline. A short "Label:" opening a list item is set in bold. The words never change.
 
   Plain text with none of this renders as paragraphs, so older answers look as they did.
   Nothing here injects HTML.
@@ -180,14 +186,35 @@ export function sheetText(src: string): string {
 /** [[kind:words]]: a term coloured by its medical meaning. */
 const TERM = /\[\[(art|vein|anat|nerve|warn|pearl):([^\]]+)\]\]/g;
 
+const ARROW_SPLIT = /\s*(→|⟶|⇒)\s*/;
+
+/** Plain text with its arrows drawn: each arrow stays on the line of the word before it. */
+function Arrows({ text, term }: { text: string; term: string | null }) {
+  const parts = text.split(ARROW_SPLIT);
+  if (parts.length === 1) return <Highlight text={text} term={term} />;
+  return (
+    <>
+      {parts.map((p, i) =>
+        i % 2 ? (
+          <Fragment key={i}>
+            <span className="ss-arrow">{p}</span>{' '}
+          </Fragment>
+        ) : (
+          p && <Highlight key={i} text={p} term={term} />
+        ),
+      )}
+    </>
+  );
+}
+
 /** Text with its coloured medical terms; search matches are still marked inside them. */
 function Terms({ text, term }: { text: string; term: string | null }) {
   const parts = text.split(TERM);
-  if (parts.length === 1) return <Highlight text={text} term={term} />;
+  if (parts.length === 1) return <Arrows text={text} term={term} />;
   // split() with two groups yields: text, kind, words, text, kind, words, …, text
   const out: ReactNode[] = [];
   for (let i = 0; i < parts.length; i += 3) {
-    if (parts[i]) out.push(<Highlight key={i} text={parts[i]} term={term} />);
+    if (parts[i]) out.push(<Arrows key={i} text={parts[i]} term={term} />);
     if (i + 2 < parts.length)
       out.push(
         <span key={`t${i}`} className={`ss-term ss-term--${parts[i + 1]}`}>
@@ -217,6 +244,99 @@ function Inline({ text, term }: { text: string; term: string | null }) {
   );
 }
 
+/** "Peritoneal injury: surgery, …" → the short lead-in set in bold (the words are unchanged). */
+function boldLead(item: string): string {
+  if (item.startsWith('**')) return item;
+  const m = item.match(/^([A-Z][^:*\[\]]{1,44}):\s+(\S.*)$/s);
+  if (!m || m[1].split(/\s+/).length > 5) return item;
+  return `**${m[1]}:** ${m[2]}`;
+}
+
+/* ───────────── pathways ───────────── */
+
+interface SheetCtx {
+  explanations: Array<{ label: string; text: string; render: () => ReactNode }>;
+  ignore: Set<string>;
+  links: SheetLink[];
+  term: string | null;
+}
+const Ctx = createContext<SheetCtx>({ explanations: [], ignore: new Set(), links: [], term: null });
+
+/** The answer's own numbered steps, which a pathway's stages can open in place. */
+function collectExplanations(blocks: Block[], term: string | null, out: SheetCtx['explanations'] = []): SheetCtx['explanations'] {
+  for (const b of blocks) {
+    if (b.t === 'ol')
+      b.items.forEach((it, k) =>
+        out.push({ label: `Step ${b.start + k}`, text: it, render: () => <Inline text={it} term={term} /> }),
+      );
+    else if (b.t === 'box' && b.kind === 'step') {
+      const text = [b.title, ...b.body.map((x) => ('text' in x ? x.text : 'items' in x ? x.items.join(' ') : ''))].join(' ');
+      out.push({
+        label: `Step ${b.num}`,
+        text,
+        render: () => (
+          <>
+            <strong>
+              <Inline text={b.title} term={term} />
+            </strong>
+            <div className="pw__ex-body">
+              <Blocks blocks={b.body} term={term} />
+            </div>
+          </>
+        ),
+      });
+    } else if (b.t === 'box') collectExplanations(b.body, term, out);
+  }
+  return out;
+}
+
+function Pathway({ chain, title }: { chain: Chain; title?: string }) {
+  const { explanations, ignore, links, term } = useContext(Ctx);
+  const explained = useMemo<Array<PathwayExplanation | null>>(() => {
+    const m = matchStages(
+      chain.stages,
+      explanations.map((e) => e.text),
+      ignore,
+    );
+    return m.map((i) => (i < 0 ? null : { label: explanations[i].label, body: explanations[i].render() }));
+  }, [chain, explanations, ignore]);
+  return (
+    <ClinicalPathway
+      title={chain.lead || title}
+      stages={chain.stages}
+      explanations={explained}
+      links={links}
+      renderInline={(t) => <Inline text={t} term={term} />}
+    />
+  );
+}
+
+/** A paragraph, or the pathway it holds with the sentences around it kept in place. */
+function Para({ text, term, title }: { text: string; term: string | null; title?: string }) {
+  const chain = useMemo(() => findChain(text), [text]);
+  if (!chain)
+    return (
+      <p className="ss-p">
+        <Inline text={text} term={term} />
+      </p>
+    );
+  return (
+    <>
+      {chain.before && (
+        <p className="ss-p">
+          <Inline text={chain.before} term={term} />
+        </p>
+      )}
+      <Pathway chain={chain} title={title} />
+      {chain.after && (
+        <p className="ss-p">
+          <Inline text={chain.after} term={term} />
+        </p>
+      )}
+    </>
+  );
+}
+
 const BOX_LABEL: Record<string, string> = {
   definition: 'Definition',
   pearl: 'Clinical pearl',
@@ -228,7 +348,7 @@ const BOX_LABEL: Record<string, string> = {
   reference: 'Reference',
 };
 
-function Blocks({ blocks, term }: { blocks: Block[]; term: string | null }) {
+function Blocks({ blocks, term, title }: { blocks: Block[]; term: string | null; title?: string }) {
   return (
     <>
       {blocks.map((b, i) => {
@@ -250,17 +370,13 @@ function Blocks({ blocks, term }: { blocks: Block[]; term: string | null }) {
               </h4>
             );
           case 'p':
-            return (
-              <p key={i} className="ss-p">
-                <Inline text={b.text} term={term} />
-              </p>
-            );
+            return <Para key={i} text={b.text} term={term} title={title} />;
           case 'ul':
             return (
               <ul key={i} className="ss-ul">
                 {b.items.map((it, k) => (
                   <li key={k}>
-                    <Inline text={it} term={term} />
+                    <Inline text={boldLead(it)} term={term} />
                   </li>
                 ))}
               </ul>
@@ -270,7 +386,12 @@ function Blocks({ blocks, term }: { blocks: Block[]; term: string | null }) {
               <ol key={i} className="ss-ol" start={b.start}>
                 {b.items.map((it, k) => (
                   <li key={k}>
-                    <Inline text={it} term={term} />
+                    <span className="ss-ol__n" aria-hidden>
+                      {b.start + k}
+                    </span>
+                    <span className="ss-ol__body">
+                      <Inline text={boldLead(it)} term={term} />
+                    </span>
                   </li>
                 ))}
               </ol>
@@ -380,6 +501,13 @@ function Blocks({ blocks, term }: { blocks: Block[]; term: string | null }) {
                   </div>
                 </section>
               );
+            // a note that holds a pathway gives the pathway its title instead of a second frame
+            if (b.body.some((x) => x.t === 'p' && findChain(x.text)))
+              return (
+                <div key={i} className="ss-pathgroup">
+                  <Blocks blocks={b.body} term={term} title={b.title || BOX_LABEL[b.kind]} />
+                </div>
+              );
             return (
               <aside key={i} className={`ss-box ss-box--${b.kind}`}>
                 <p className="ss-box__label">
@@ -394,11 +522,39 @@ function Blocks({ blocks, term }: { blocks: Block[]; term: string | null }) {
   );
 }
 
+const NO_LINKS: SheetLink[] = [];
+
 /** A recorded answer laid out as a study sheet. */
-export function StudySheet({ text, term = null }: { text: string; term?: string | null }): ReactNode {
+export function StudySheet({
+  text,
+  term = null,
+  links = NO_LINKS,
+  selfId = '',
+  title = '',
+}: {
+  text: string;
+  term?: string | null;
+  /** Questions a pathway may link to; the one with selfId (this question) is left out. */
+  links?: SheetLink[];
+  selfId?: string;
+  /** The question's title: its subject words don't count when matching stages to steps. */
+  title?: string;
+}): ReactNode {
+  const blocks = useMemo(() => parseSheet(text), [text]);
+  const ctx = useMemo<SheetCtx>(
+    () => ({
+      explanations: collectExplanations(blocks, term),
+      ignore: stems(title),
+      links: links.filter((l) => l.id !== selfId),
+      term,
+    }),
+    [blocks, term, title, links, selfId],
+  );
   return (
-    <div className="ss">
-      <Blocks blocks={parseSheet(text)} term={term} />
-    </div>
+    <Ctx.Provider value={ctx}>
+      <div className="ss">
+        <Blocks blocks={blocks} term={term} />
+      </div>
+    </Ctx.Provider>
   );
 }

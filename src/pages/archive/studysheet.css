@@ -44,6 +44,35 @@
 
 .ss strong {
   font-weight: 600;
+  color: #2b231b;
+}
+
+/* an arrow between two stages: drawn, centred on the x-height, kept on the line of the word
+   before it (the character stays underneath for copying and screen readers) */
+.ss-arrow {
+  display: inline-block;
+  width: 1.05em;
+  height: 0.62em;
+  margin-inline: 0.3em 0.05em;
+  overflow: hidden;
+  vertical-align: 0.02em;
+  color: transparent;
+  line-height: 0.62em;
+  background: #a8864a;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 12'%3E%3Cpath d='M1 6h16M12.5 1.5 17.5 6l-5 4.5' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 12'%3E%3Cpath d='M1 6h16M12.5 1.5 17.5 6l-5 4.5' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+@media (forced-colors: active) {
+  .ss-arrow {
+    -webkit-mask: none;
+    mask: none;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    color: CanvasText;
+    background: none;
+  }
 }
 
 .ss-h2 {
@@ -125,10 +154,42 @@
   font-size: 0.9em;
 }
 
-.ss-ol > li::marker {
+.ss-ol {
+  list-style: none;
+  padding-inline-start: 0;
+  gap: 12px;
+}
+
+.ss-ol > li {
+  display: grid;
+  grid-template-columns: 2.1em minmax(0, 1fr);
+  column-gap: 0.8em;
+  align-items: baseline;
+  unicode-bidi: plaintext;
+}
+
+.ss-ol__n {
+  align-self: stretch;
+  padding-inline-end: 0.55em;
+  border-inline-end: 1px solid var(--ss-rule);
+  text-align: end;
   font-family: var(--ss-display);
   font-weight: 600;
+  font-size: 1.12em;
+  line-height: 1.6;
+  font-variant-numeric: lining-nums tabular-nums;
   color: var(--ss-sage-deep);
+}
+
+.ss-ol__body {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* a note that carried a pathway: the pathway keeps the note's place, without a second frame */
+.ss-pathgroup {
+  display: grid;
+  gap: 14px;
 }
 
 /* ── examination steps ── */
@@ -542,7 +603,7 @@
   --wash: transparent;
   color: var(--term);
   background: var(--wash);
-  font-weight: 500;
+  font-weight: 600;
   /* the wash reaches a hair past the word without pushing punctuation away */
   padding-inline: 0.12em;
   margin-inline: -0.12em;
@@ -553,34 +614,37 @@
 
 /* arteries, blood, haemorrhage, ischaemia, necrosis, gangrene */
 .ss-term--art {
-  --term: #8b2232;
+  --term: #8b2a30;
 }
 
-/* veins, venous drainage, oxygenation */
+/* veins, venous drainage, oxygenation: muted blue */
 .ss-term--vein {
-  --term: #2b4f86;
+  --term: #2f4f80;
 }
 
-/* normal anatomy, physiology, healthy structures */
+/* normal anatomy, physiology, healthy structures: muted teal */
 .ss-term--anat {
-  --term: #3d6a35;
+  --term: #2c6763;
 }
 
 /* nerves, neurological structures, innervation */
 .ss-term--nerve {
-  --term: #62386f;
+  --term: #5d3d6b;
 }
 
-/* clinical warnings, complications, risks */
+/* complications, danger signs, emergencies: a deeper red, underscored so it reads first */
 .ss-term--warn {
-  --term: #a14a1f;
-  --wash: rgba(161, 74, 31, 0.09);
+  --term: #9a2418;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(154, 36, 24, 0.45);
+  text-underline-offset: 0.2em;
+  text-decoration-skip-ink: auto;
 }
 
-/* exam pearls and key facts: an antique-gold wash, like a highlighter on old paper */
+/* mechanisms, pathology and key facts: warm amber */
 .ss-term--pearl {
-  --term: #6e5112;
-  --wash: rgba(201, 162, 74, 0.3);
+  --term: #8a5a14;
 }
 
 /* inside a heading or bold label the term keeps the heading's weight */

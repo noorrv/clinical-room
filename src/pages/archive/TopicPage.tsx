@@ -66,6 +66,16 @@ export function TopicPage({ sp }: { sp: Specialty }) {
     if (!section) return [];
     return onlyMarked ? section.questions.filter((q) => record(st, q.key).bookmarked) : section.questions;
   }, [section, onlyMarked, st]);
+  // every question of this doctor's archive, for pathways to link to (same mechanism, related stage)
+  const links = useMemo(
+    () =>
+      archive
+        ? archive.sections.flatMap((s) =>
+            s.questions.map((q) => ({ id: q.id, title: q.title, href: `${topicPath(sp, archive.doctor.id, s.id)}#q-${encodeURIComponent(q.id)}`, text: q.modelAnswer })),
+          )
+        : [],
+    [archive, sp],
+  );
   const pages = Math.max(1, Math.ceil(list.length / PAGE));
   const shown = list.slice((page - 1) * PAGE, page * PAGE);
 
@@ -262,7 +272,7 @@ export function TopicPage({ sp }: { sp: Specialty }) {
                           <section key={s.key} className="da-q__section">
                             {!(s.key === 'modelAnswer' && answer.length === 1) && <h3 className="da-q__h">{s.label}</h3>}
                             {s.key === 'modelAnswer' ? (
-                              <StudySheet text={String(q.modelAnswer)} term={term} />
+                              <StudySheet text={String(q.modelAnswer)} term={term} links={links} selfId={q.id} title={q.title} />
                             ) : (
                               <Body value={q[s.key]} term={term} ordered={s.key === 'steps'} />
                             )}

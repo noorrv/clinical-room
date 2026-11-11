@@ -1,0 +1,350 @@
+/* ───────────────────────────────────────────────────────────────
+   Clinical pathway: a sequence of stages joined by an antique-gold
+   thread, set on the ivory study sheet. One vertical progression at
+   every width, so a long mechanism never wraps into a tangle.
+   ─────────────────────────────────────────────────────────────── */
+
+.pw {
+  --pw-gold: #a8864a;
+  --pw-gold-soft: rgba(168, 134, 74, 0.42);
+  --pw-ink: var(--ss-ink, #40382f);
+  --pw-paper: var(--ss-paper, #faf6ec);
+  --pw-dot: 30px;
+  margin: 2px 0;
+}
+
+.pw__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--ss-rule, #c9bda8);
+}
+
+.pw__title {
+  font-family: var(--ss-display, Georgia, serif);
+  font-weight: 600;
+  font-size: 1.24rem;
+  line-height: 1.2;
+  color: var(--ss-sage-deep, #687653);
+}
+
+.pw__count {
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums lining-nums;
+  color: color-mix(in srgb, var(--pw-ink) 72%, transparent);
+  margin-inline-end: auto;
+}
+
+.pw__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pw__btn {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--pw-gold-soft);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--pw-ink);
+  font: 500 0.95rem/1 var(--ss-body, Georgia, serif);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 120ms ease;
+}
+
+.pw__btn:hover:not(:disabled) {
+  background: rgba(168, 134, 74, 0.1);
+  border-color: var(--pw-gold);
+}
+
+.pw__btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.pw__btn:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+
+.pw__btn--quiet {
+  border-style: dashed;
+}
+
+.pw__btn:focus-visible,
+.pw__node:focus-visible {
+  outline: 2px solid var(--ss-sage-deep, #687653);
+  outline-offset: 2px;
+}
+
+/* ── the stages ── */
+.pw__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pw__stage {
+  --k: #6b5530;
+  position: relative;
+  padding-bottom: 12px;
+}
+
+.pw__stage:last-child {
+  padding-bottom: 0;
+}
+
+/* the gold thread to the next stage, ending in a small arrowhead */
+.pw__stage:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--pw-dot) / 2 + 3px);
+  top: calc(var(--pw-dot) + 9px);
+  bottom: 3px;
+  width: 1.5px;
+  margin-left: -0.75px;
+  background: var(--pw-gold-soft);
+}
+
+.pw__stage:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--pw-dot) / 2 + 3px);
+  bottom: 2px;
+  width: 7px;
+  height: 7px;
+  margin-left: -3.5px;
+  border-right: 1.5px solid var(--pw-gold);
+  border-bottom: 1.5px solid var(--pw-gold);
+  transform: rotate(45deg);
+}
+
+.pw__node {
+  display: grid;
+  grid-template-columns: var(--pw-dot) minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 14px;
+  width: 100%;
+  margin: 0;
+  padding: 3px 10px 3px 3px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1.55;
+  text-align: start;
+  min-height: 44px;
+}
+
+button.pw__node {
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 160ms ease;
+}
+
+button.pw__node:hover {
+  background: rgba(168, 134, 74, 0.08);
+}
+
+.pw__dot {
+  display: grid;
+  place-items: center;
+  width: var(--pw-dot);
+  height: var(--pw-dot);
+  margin-top: 3px;
+  border-radius: 50%;
+  border: 1.5px solid var(--k);
+  background: var(--pw-paper);
+  color: var(--k);
+  font: 600 0.98rem/1 var(--ss-display, Georgia, serif);
+  font-variant-numeric: lining-nums;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.pw__label {
+  padding-top: 5px;
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
+}
+
+.pw__label strong {
+  font-weight: 600;
+  color: color-mix(in srgb, var(--k) 70%, var(--pw-ink));
+}
+
+/* a stage with something to open shows a small turn-down mark */
+.pw__chev {
+  width: 9px;
+  height: 9px;
+  margin: 14px 2px 0 0;
+  border-right: 1.5px solid var(--pw-gold);
+  border-bottom: 1.5px solid var(--pw-gold);
+  transform: rotate(45deg);
+  transition: transform 200ms ease;
+}
+
+.is-open > .pw__node .pw__chev {
+  transform: translate(0, 4px) rotate(225deg);
+}
+
+/* the stage being read */
+.pw__stage.is-current > .pw__node {
+  background: rgba(168, 134, 74, 0.12);
+}
+
+.pw__stage.is-current .pw__dot {
+  background: var(--k);
+  color: var(--pw-paper);
+}
+
+/* ── an opened stage: its step from the answer, then related questions ── */
+.pw__more {
+  margin: 6px 0 4px calc(var(--pw-dot) + 17px);
+  padding: 2px 0 2px 14px;
+  border-left: 2px solid color-mix(in srgb, var(--k) 45%, transparent);
+  font-size: 0.97em;
+  line-height: 1.7;
+  animation: pw-open 180ms ease-out;
+}
+
+.pw__more[hidden] {
+  display: none;
+}
+
+.pw__from {
+  font-family: var(--ss-display, Georgia, serif);
+  font-weight: 600;
+  font-size: 0.95em;
+  color: var(--ss-sage-deep, #687653);
+  margin-inline-end: 4px;
+}
+
+.pw__from::after {
+  content: '.';
+}
+
+.pw__ex-body {
+  margin-top: 6px;
+}
+
+.pw__ex-body {
+  display: grid;
+  gap: 6px;
+}
+
+.pw__ex-body .ss-ul,
+.pw__ex-body .ss-ol {
+  gap: 2px;
+}
+
+.pw__rel {
+  margin: 6px 0 0;
+  font-size: 0.94rem;
+  color: color-mix(in srgb, var(--pw-ink) 80%, transparent);
+}
+
+.pw__rel ul {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.pw__rel-label {
+  font-family: var(--ss-display, Georgia, serif);
+  font-weight: 600;
+  color: var(--ss-sage-deep, #687653);
+}
+
+.pw__rel a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--pw-gold);
+  text-underline-offset: 3px;
+}
+
+.pw__rel a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.pw__rel--whole {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ss-rule, #c9bda8);
+}
+
+/* stage colours, the same family as the coloured terms in the text */
+.pw--art { --k: #8b2a30; }
+.pw--vein { --k: #2f4f80; }
+.pw--anat { --k: #2c6763; }
+.pw--nerve { --k: #5d3d6b; }
+.pw--pearl { --k: #8a5a14; }
+.pw--warn { --k: #9a2418; }
+.pw--plain { --k: #5b4c36; }
+
+.pw--warn .pw__dot {
+  border-width: 2px;
+}
+
+@keyframes pw-open {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+
+@media (max-width: 560px) {
+  .pw {
+    --pw-dot: 28px;
+  }
+
+  .pw__controls {
+    width: 100%;
+  }
+
+  .pw__btn {
+    flex: 1 1 0;
+    min-height: 44px;
+    padding: 0 10px;
+  }
+
+  .pw__node {
+    column-gap: 11px;
+  }
+
+  .pw__more {
+    margin-left: calc(var(--pw-dot) + 8px);
+    padding-left: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pw__more {
+    animation: none;
+  }
+
+  .pw__chev,
+  .pw__dot,
+  .pw__btn {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .pw__stage.is-current .pw__dot {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+  }
+}
