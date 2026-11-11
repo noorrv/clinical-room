@@ -69,7 +69,6 @@ export function matches(q: QuestionRef, sp: Specialty, query: string): boolean {
     q.title,
     q.scenario,
     q.question,
-    q.source,
     ...q.topicIds.map((id) => sp.topics.find((x) => x.id === id)?.name),
     ...q.doctorIds.map((id) => sp.doctors.find((x) => x.id === id)?.name),
   ]

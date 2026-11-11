@@ -273,7 +273,6 @@ export function TopicPage({ sp }: { sp: Specialty }) {
                   ) : (
                     <p className="da-quiet">The answer for this question hasn’t been added yet.</p>
                   )}
-                  {q.source && <p className="da-q__source">Source: {q.source}</p>}
                 </li>
               );
             })}

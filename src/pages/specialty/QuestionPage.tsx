@@ -195,7 +195,6 @@ export function QuestionPage({ sp }: { sp: Specialty }) {
                 ))}
               </>
             )}
-            {q.source && <span className="qpage__source"> · {q.source}</span>}
           </p>
         </div>
         <button type="button" className={`bookmark${r.bookmarked ? ' is-on' : ''}`} aria-pressed={r.bookmarked} onClick={() => study.toggleBookmark(k)}>

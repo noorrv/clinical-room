@@ -949,13 +949,6 @@
   background: var(--da-butter-2);
 }
 
-.da-q__source {
-  margin: 12px 0 0;
-  font-size: 0.85rem;
-  font-style: italic;
-  color: var(--da-olive-2);
-}
-
 /* ── pager: ‹ Previous 01 02 03 Next › ── */
 .da-pager {
   display: flex;

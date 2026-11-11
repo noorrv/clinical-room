@@ -76,7 +76,6 @@ export function questionTexts(q: QuestionRef): Array<{ label: string; text: stri
   add('Key points', q.keyPoints);
   add('Examiner expects', q.examinerExpects);
   add('Steps', q.steps);
-  add('Source', q.source);
   return out;
 }
 
