@@ -2,7 +2,7 @@ import { createContext, Fragment, useContext, useMemo, type ReactNode } from 're
 import { ClinicalPathway, type PathwayExplanation } from './ClinicalPathway';
 import { findChain, matchStages, stageKind, stems, type Chain, type SheetLink } from './pathway';
 import { LabTerm } from './LabTerm';
-import { splitLabs } from './labs';
+import { FIRST, markFirstLabs, splitLabs } from './labs';
 import { Highlight } from './shared';
 import './studysheet.css';
 
@@ -194,8 +194,8 @@ const NoLabs = createContext(false);
 /** Plain text with its lab terms ("hypokalaemia", "lactate") opening their normal ranges. */
 function Labs({ text, term }: { text: string; term: string | null }) {
   const off = useContext(NoLabs);
-  const parts = off ? [text] : splitLabs(text);
-  if (parts.length === 1 && typeof parts[0] === 'string') return <Highlight text={text} term={term} />;
+  const parts = off ? [text.split(FIRST).join('')] : splitLabs(text);
+  if (parts.length === 1 && typeof parts[0] === 'string') return <Highlight text={parts[0]} term={term} />;
   return (
     <>
       {parts.map((p, i) =>
@@ -569,7 +569,8 @@ export function StudySheet({
   /** The question's title: its subject words don't count when matching stages to steps. */
   title?: string;
 }): ReactNode {
-  const blocks = useMemo(() => parseSheet(text), [text]);
+  // only the first mention of each lab value opens its range card
+  const blocks = useMemo(() => parseSheet(markFirstLabs(text)), [text]);
   const ctx = useMemo<SheetCtx>(
     () => ({
       explanations: collectExplanations(blocks, term),

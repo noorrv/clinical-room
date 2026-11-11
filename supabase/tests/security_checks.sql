@@ -388,6 +388,85 @@ end $$;
 reset role;
 select set_config('request.jwt.claims', '', false);
 
+-- ── approaches and cases (migration 20261111000007) ──
+
+-- anyone not signed in: no protected approaches or cases
+set role anon;
+do $$
+declare n int;
+begin
+  select count(*) into n from public.approaches where access <> 'public';
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: read protected approaches', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
+  select count(*) into n from public.cases where access <> 'public';
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: read protected cases', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
+end $$;
+reset role;
+
+-- pending student: nothing protected, and no writes
+select set_config('request.jwt.claims', json_build_object('sub', current_setting('test.pending'), 'role', 'authenticated')::text, false);
+set role authenticated;
+do $$
+declare n int;
+begin
+  select count(*) into n from public.approaches where access <> 'public';
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: read protected approaches', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
+  select count(*) into n from public.cases where access <> 'public';
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: read protected cases', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
+  begin
+    insert into public.approaches (specialty_id, id, title) values ('medicine', 'security-test', 'security test');
+    raise exception using errcode = 'U0002';  -- undo
+  exception
+    when sqlstate 'U0002' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: add an approach', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: add an approach', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+  end;
+end $$;
+reset role;
+
+-- approved student (optional): sees no drafts, and can't add or change approaches or cases
+select set_config('request.jwt.claims', json_build_object('sub', nullif(current_setting('test.approved'), ''), 'role', 'authenticated')::text, false);
+set role authenticated;
+do $$
+declare n int;
+begin
+  if current_setting('test.approved') = '' then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: approach checks', 'run', 'skipped (no approved email)', 'skipped') || E'\n', false);
+    return;
+  end if;
+  select count(*) into n from public.approaches where status <> 'published';
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: read draft approaches', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
+  select count(*) into n from public.cases where status <> 'published';
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: read draft cases', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
+  begin
+    insert into public.approaches (specialty_id, id, title) values ('medicine', 'security-test', 'security test');
+    raise exception using errcode = 'U0002';  -- undo
+  exception
+    when sqlstate 'U0002' then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: add an approach', 'refused', 'allowed', coalesce((false)::text, 'skipped')) || E'\n', false);
+    when others then
+      perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: add an approach', 'refused', 'refused', coalesce((true)::text, 'skipped')) || E'\n', false);
+  end;
+  update public.cases set title = title where true;
+  get diagnostics n = row_count;
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'approved: change a case', '0 rows', n || ' rows', coalesce((n = 0)::text, 'skipped')) || E'\n', false);
+end $$;
+reset role;
+
+-- admin: sees drafts as well (the true total is counted first, outside any role)
+select set_config('test.approaches_total', (select count(*)::text from public.approaches), false);
+select set_config('request.jwt.claims', json_build_object('sub', current_setting('test.admin'), 'role', 'authenticated')::text, false);
+set role authenticated;
+do $$
+declare n int;
+declare total int := current_setting('test.approaches_total')::int;
+begin
+  select count(*) into n from public.approaches;
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'admin: read every approach, drafts too', total || ' rows', n || ' rows', coalesce((n = total)::text, 'skipped')) || E'\n', false);
+end $$;
+reset role;
+select set_config('request.jwt.claims', '', false);
+
 -- ── results ──
 select split_part(line, '|', 1) as check_name,
        split_part(line, '|', 2) as expected,

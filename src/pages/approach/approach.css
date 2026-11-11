@@ -1,0 +1,163 @@
+/* ── a clinical approach: read or practise ── */
+
+.ap__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin: 10px 0 22px;
+}
+
+.ap__head .da-h1 {
+  margin: 0;
+}
+
+/* the read / practise switch: two parchment tabs */
+.ap__switch {
+  display: inline-flex;
+  padding: 4px;
+  gap: 4px;
+  border-radius: 999px;
+  background: rgba(64, 56, 47, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(64, 56, 47, 0.18);
+}
+
+.ap__opt {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--da-ink, #3a3326);
+  font: 600 1rem/1 'EB Garamond', Georgia, serif;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.ap__opt:hover {
+  background: rgba(255, 249, 232, 0.6);
+}
+
+.ap__opt[aria-checked='true'] {
+  background: #fbf5e4;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 2px 6px -2px rgba(46, 34, 20, 0.35);
+}
+
+.ap__opt:focus-visible {
+  outline: 2px solid var(--da-ink, #3a3326);
+  outline-offset: 2px;
+}
+
+.ap__sheet {
+  margin-top: 0;
+}
+
+.ap__loading {
+  padding: 40px 0;
+  text-align: center;
+  font-style: italic;
+}
+
+.ap--practise .ap__wrap {
+  max-width: min(1320px, 100%);
+}
+
+@media (max-width: 560px) {
+  .ap__switch {
+    width: 100%;
+  }
+
+  .ap__opt {
+    flex: 1 1 0;
+    padding: 0 10px;
+  }
+}
+
+/* the approach cards on the specialty page */
+.approaches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.approach-card {
+  display: grid;
+  gap: 6px;
+  height: 100%;
+  padding: 18px 20px 16px;
+  border-radius: 10px;
+  background: var(--paper, #fbf6ea);
+  box-shadow: inset 0 0 0 1px rgba(64, 56, 47, 0.18);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.approach-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 0 0 1px rgba(64, 56, 47, 0.28),
+    0 8px 18px -12px rgba(46, 34, 20, 0.45);
+}
+
+.approach-card:focus-visible {
+  outline: 2px solid var(--accent-ink, #3a3326);
+  outline-offset: 2px;
+}
+
+.approach-card__title {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 600;
+  font-size: 1.4rem;
+  line-height: 1.15;
+}
+
+.approach-card__summary {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.approach-card__meta {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .approach-card,
+  .ap__opt {
+    transition: none;
+  }
+}
+
+.approach-card__draft,
+.ap__draft {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 3px 8px 2px;
+  border: 1.5px dashed currentColor;
+  border-radius: 999px;
+  font: 600 0.72rem/1 'EB Garamond', Georgia, serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  opacity: 0.75;
+}
+
+.approaches__wait {
+  margin: 0;
+  padding: 16px 0;
+  font-style: italic;
+}

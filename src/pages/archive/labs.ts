@@ -177,7 +177,7 @@ const RULES: Array<[RegExp, string, Dir, string?]> = [
   [/\blactic acidosis\b/i, 'lactate', 'high', 'Raised lactate with acidosis'],
   [/\blactate\b/i, 'lactate', 'none'],
   [/\bbase deficit\b/i, 'be', 'low', 'Negative base excess'],
-  [/\bh(a)?emoglobin\b|\bHb\b/, 'hb', 'none'],
+  [/\b[Hh](a)?emoglobin\b|\bHb\b/, 'hb', 'none'],
   [/\bh(a)?ematocrit\b/i, 'hct', 'none'],
   [/\bplatelet(s| count)?\b/i, 'plt', 'none'],
   [/\bCRP\b/, 'crp', 'none'],
@@ -189,22 +189,41 @@ const RULES: Array<[RegExp, string, Dir, string?]> = [
 
 const ANY = new RegExp(RULES.map(([re]) => `(?:${re.source})`).join('|'), 'gi');
 
-/** Splits text into plain runs and lab terms. */
+/** An invisible mark placed before the first mention of each lab value in an answer. */
+export const FIRST = '\u2063';
+
+const ruleFor = (word: string) => RULES.find(([re]) => new RegExp(`^(?:${re.source})$`, re.flags.replace('g', '')).test(word));
+
+/**
+ * Marks the first mention of each lab value in a whole answer, so only that one opens a card:
+ * an answer that says "bilirubin" twenty times gets one underline, not twenty.
+ */
+export function markFirstLabs(text: string): string {
+  const seen = new Set<string>();
+  return text.replace(ANY, (word) => {
+    const rule = ruleFor(word);
+    if (!rule || seen.has(rule[1])) return word;
+    seen.add(rule[1]);
+    return FIRST + word;
+  });
+}
+
+/** Splits text into plain runs and lab terms (only the mentions markFirstLabs marked). */
 export function splitLabs(text: string): Array<string | { text: string; hit: LabHit }> {
-  ANY.lastIndex = 0;
-  if (!ANY.test(text)) return [text];
-  ANY.lastIndex = 0;
+  if (!text.includes(FIRST)) return [text];
   const out: Array<string | { text: string; hit: LabHit }> = [];
-  let i = 0;
-  for (const m of text.matchAll(ANY)) {
-    const word = m[0];
-    const rule = RULES.find(([re]) => new RegExp(`^(?:${re.source})$`, re.flags.replace('g', '')).test(word));
-    // "Hb", "CRP", "ALP" only in capitals (the combined pattern ignores case)
-    if (!rule) continue;
-    if (m.index! > i) out.push(text.slice(i, m.index));
-    out.push({ text: word, hit: { lab: LABS[rule[1]], dir: rule[2], meaning: rule[3] } });
-    i = m.index! + word.length;
+  const parts = text.split(FIRST);
+  if (parts[0]) out.push(parts[0]);
+  for (const part of parts.slice(1)) {
+    ANY.lastIndex = 0;
+    const m = ANY.exec(part);
+    const rule = m && m.index === 0 ? ruleFor(m[0]) : undefined;
+    if (!m || !rule) {
+      if (part) out.push(part);
+      continue;
+    }
+    out.push({ text: m[0], hit: { lab: LABS[rule[1]], dir: rule[2], meaning: rule[3] } });
+    if (part.length > m[0].length) out.push(part.slice(m[0].length));
   }
-  if (i < text.length) out.push(text.slice(i));
   return out;
 }

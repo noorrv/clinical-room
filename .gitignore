@@ -10,3 +10,8 @@ dist
 .taste-skill
 *.tsbuildinfo
 .DS_Store
+
+# protected study content: the repo is public, so seed content stays on this computer
+# (it reaches students only through Supabase, behind the access rules)
+supabase/seed/content/
+supabase/seed/*.sql

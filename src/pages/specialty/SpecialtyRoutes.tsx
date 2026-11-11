@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import { Navigate, NavLink, Route, Routes, useParams } from 'react-router-dom';
 import { allSpecialties, questionsOf, specialtyBySlug, type Specialty } from '../../content';
 import { record, useStudy } from '../../study/store';
+import { ApproachPage } from '../approach/ApproachPage';
 import { DoctorArchive } from '../archive/DoctorArchive';
 import { NotFoundPage } from '../SystemPages';
 import { TopicPage } from '../archive/TopicPage';
@@ -92,6 +93,7 @@ export function SpecialtyRoutes() {
       {/* the examiner archives fill the page in their own illustrated style, without the study index */}
       <Route path="doctors/:doctorId" element={<main id="main"><DoctorArchive sp={sp} /></main>} />
       <Route path="doctors/:doctorId/topics/:topicId" element={<main id="main"><TopicPage sp={sp} /></main>} />
+      <Route path="approaches/:approachId" element={<main id="main"><ApproachPage sp={sp} /></main>} />
       <Route path="*" element={<StudyLayout sp={sp} />} />
     </Routes>
   );
