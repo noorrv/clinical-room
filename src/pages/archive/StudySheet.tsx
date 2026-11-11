@@ -1,6 +1,8 @@
 import { createContext, Fragment, useContext, useMemo, type ReactNode } from 'react';
 import { ClinicalPathway, type PathwayExplanation } from './ClinicalPathway';
 import { findChain, matchStages, stageKind, stems, type Chain, type SheetLink } from './pathway';
+import { LabTerm } from './LabTerm';
+import { splitLabs } from './labs';
 import { Highlight } from './shared';
 import './studysheet.css';
 
@@ -186,12 +188,35 @@ export function sheetText(src: string): string {
 /** [[kind:words]]: a term coloured by its medical meaning. */
 const TERM = /\[\[(art|vein|anat|nerve|warn|pearl):([^\]]+)\]\]/g;
 
+/** Inside a pathway's buttons a lab term stays plain text (no button inside a button). */
+const NoLabs = createContext(false);
+
+/** Plain text with its lab terms ("hypokalaemia", "lactate") opening their normal ranges. */
+function Labs({ text, term }: { text: string; term: string | null }) {
+  const off = useContext(NoLabs);
+  const parts = off ? [text] : splitLabs(text);
+  if (parts.length === 1 && typeof parts[0] === 'string') return <Highlight text={text} term={term} />;
+  return (
+    <>
+      {parts.map((p, i) =>
+        typeof p === 'string' ? (
+          <Highlight key={i} text={p} term={term} />
+        ) : (
+          <LabTerm key={i} hit={p.hit}>
+            <Highlight text={p.text} term={term} />
+          </LabTerm>
+        ),
+      )}
+    </>
+  );
+}
+
 const ARROW_SPLIT = /\s*(→|⟶|⇒)\s*/;
 
 /** Plain text with its arrows drawn: each arrow stays on the line of the word before it. */
 function Arrows({ text, term }: { text: string; term: string | null }) {
   const parts = text.split(ARROW_SPLIT);
-  if (parts.length === 1) return <Highlight text={text} term={term} />;
+  if (parts.length === 1) return <Labs text={text} term={term} />;
   return (
     <>
       {parts.map((p, i) =>
@@ -200,7 +225,7 @@ function Arrows({ text, term }: { text: string; term: string | null }) {
             <span className="ss-arrow">{p}</span>{' '}
           </Fragment>
         ) : (
-          p && <Highlight key={i} text={p} term={term} />
+          p && <Labs key={i} text={p} term={term} />
         ),
       )}
     </>
@@ -218,7 +243,7 @@ function Terms({ text, term }: { text: string; term: string | null }) {
     if (i + 2 < parts.length)
       out.push(
         <span key={`t${i}`} className={`ss-term ss-term--${parts[i + 1]}`}>
-          <Highlight text={parts[i + 2]} term={term} />
+          <Labs text={parts[i + 2]} term={term} />
         </span>,
       );
   }
@@ -306,7 +331,11 @@ function Pathway({ chain, title }: { chain: Chain; title?: string }) {
       stages={chain.stages}
       explanations={explained}
       links={links}
-      renderInline={(t) => <Inline text={t} term={term} />}
+      renderInline={(t) => (
+        <NoLabs.Provider value>
+          <Inline text={t} term={term} />
+        </NoLabs.Provider>
+      )}
     />
   );
 }

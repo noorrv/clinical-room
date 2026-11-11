@@ -1,0 +1,216 @@
+/* ── lab terms: a dotted underline, then a small card with the normal range drawn as a bar ── */
+
+.lab-term {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-decoration-color: #a8864a;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.22em;
+  touch-action: manipulation;
+  /* a bigger tap area than the word, without moving the text */
+  position: relative;
+}
+
+.lab-term::after {
+  content: '';
+  position: absolute;
+  inset: -6px -2px;
+}
+
+.lab-term:hover,
+.lab-term[aria-expanded='true'] {
+  text-decoration-style: solid;
+  background: rgba(168, 134, 74, 0.12);
+  border-radius: 3px;
+}
+
+.lab-term:focus-visible {
+  outline: 2px solid var(--ss-sage-deep, #687653);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.lab-card {
+  position: fixed;
+  z-index: 60;
+  width: min(320px, calc(100vw - 20px));
+  padding: 14px 16px 12px;
+  border: 1px solid #cdbf9f;
+  border-radius: 8px;
+  background: #fbf7ec;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 10px 28px -12px rgba(46, 34, 20, 0.35);
+  color: #40382f;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 0.98rem;
+  line-height: 1.45;
+  text-align: start;
+  animation: lab-in 140ms ease-out;
+}
+
+.lab-card__name {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 600;
+  font-size: 1.18rem;
+  line-height: 1.2;
+  color: #4f5c3e;
+}
+
+.lab-card__meaning {
+  margin: 2px 0 0;
+  color: #6b5a3c;
+}
+
+/* the bar: low, normal, high */
+.lab-bar {
+  margin: 12px 0 6px;
+}
+
+.lab-bar__track {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #e9e0cc;
+}
+
+.lab-bar__zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.lab-bar__zone--low {
+  left: 0;
+  background: rgba(47, 79, 128, 0.22);
+}
+
+.lab-bar__zone--ok {
+  background: #8fa57a;
+}
+
+.lab-bar__zone--high {
+  background: rgba(154, 36, 24, 0.2);
+}
+
+/* the side this term points to, in full colour */
+.lab-bar--low .lab-bar__zone--low {
+  background: repeating-linear-gradient(-45deg, #2f4f80 0 4px, #456aa3 4px 8px);
+}
+
+.lab-bar--high .lab-bar__zone--high {
+  background: repeating-linear-gradient(-45deg, #9a2418 0 4px, #b5432f 4px 8px);
+}
+
+.lab-bar__ticks {
+  position: relative;
+  height: 18px;
+  font-size: 0.82rem;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: #5b4c36;
+}
+
+.lab-bar__ticks span {
+  position: absolute;
+  top: 2px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.lab-bar__ticks span::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -14px;
+  height: 12px;
+  border-left: 1px solid #5b4c36;
+}
+
+.lab-bar__names {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: #8a7a5c;
+}
+
+.lab-bar--low .lab-bar__names span:first-child {
+  color: #2f4f80;
+  font-weight: 600;
+}
+
+.lab-bar--high .lab-bar__names span:last-child {
+  color: #9a2418;
+  font-weight: 600;
+}
+
+.lab-card__rows {
+  margin: 8px 0 0;
+  display: grid;
+  gap: 3px;
+}
+
+.lab-card__rows div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  padding-top: 3px;
+  border-top: 1px dotted #d8ccb0;
+}
+
+.lab-card__rows dt {
+  color: #5b4c36;
+}
+
+.lab-card__rows dd {
+  margin: 0;
+  text-align: end;
+  font-weight: 600;
+  font-variant-numeric: lining-nums;
+}
+
+.lab-card__alt {
+  font-weight: 400;
+  color: #6b5a3c;
+}
+
+.lab-card__note {
+  margin: 8px 0 0;
+  font-size: 0.92rem;
+}
+
+.lab-card__foot {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: #8a7a5c;
+}
+
+@keyframes lab-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-card {
+    animation: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .lab-bar__zone {
+    forced-color-adjust: none;
+  }
+}
