@@ -1,22 +1,42 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
-import { RequireAdmin, RequireApproved } from './auth/guards';
+import { RequireAdmin, RequireApproved, Waiting } from './auth/guards';
 import { SiteHeader } from './components/SiteHeader';
 import { ContentGate } from './content/ContentGate';
-import { AdminLayout } from './pages/admin/AdminLayout';
-import { DirectoryPage } from './pages/admin/DirectoryPage';
-import { OverviewPage } from './pages/admin/OverviewPage';
-import { QuestionEditorPage } from './pages/admin/QuestionEditorPage';
-import { QuestionsPage } from './pages/admin/QuestionsPage';
-import { SpecialtiesPage } from './pages/admin/SpecialtiesPage';
-import { RegistrationsPage } from './pages/admin/RegistrationsPage';
 import { AccountPage, CheckEmailPage, ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage } from './pages/auth/AuthPages';
-import { ArchiveSearch } from './pages/archive/ArchiveSearch';
 import { HomePage } from './pages/HomePage';
 import { NotFoundPage, PageBoundary } from './pages/SystemPages';
-import { SpecialtyRoutes } from './pages/specialty/SpecialtyRoutes';
 import { StudySync } from './study/sync';
+
+// the study pages are their own download too, fetched in the background once the first page is up
+const studyModule = () => import('./pages/studyRoutes');
+const SpecialtyRoutes = lazy(() => studyModule().then((m) => ({ default: m.SpecialtyRoutes })));
+const ArchiveSearch = lazy(() => studyModule().then((m) => ({ default: m.ArchiveSearch })));
+
+/** Fetch the study pages while the browser is idle, so the first click into them doesn't wait. */
+function PrefetchStudyPages() {
+  useEffect(() => {
+    const start = () => void studyModule().catch(() => undefined);
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(start, { timeout: 4000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = window.setTimeout(start, 1500);
+    return () => window.clearTimeout(t);
+  }, []);
+  return null;
+}
+
+// the admin dashboard is its own download, fetched the first time an admin opens it
+const adminModule = () => import('./pages/admin/routes');
+const AdminLayout = lazy(() => adminModule().then((m) => ({ default: m.AdminLayout })));
+const OverviewPage = lazy(() => adminModule().then((m) => ({ default: m.OverviewPage })));
+const QuestionsPage = lazy(() => adminModule().then((m) => ({ default: m.QuestionsPage })));
+const QuestionEditorPage = lazy(() => adminModule().then((m) => ({ default: m.QuestionEditorPage })));
+const DirectoryPage = lazy(() => adminModule().then((m) => ({ default: m.DirectoryPage })));
+const SpecialtiesPage = lazy(() => adminModule().then((m) => ({ default: m.SpecialtiesPage })));
+const RegistrationsPage = lazy(() => adminModule().then((m) => ({ default: m.RegistrationsPage })));
 
 // development-only comparison page; dropped from the built site
 const StreakPreview = import.meta.env.DEV ? lazy(() => import('./pages/StreakPreview').then((m) => ({ default: m.StreakPreview }))) : null;
@@ -43,6 +63,7 @@ export default function App() {
       <AuthProvider>
       <StudySync />
       <ScrollManager />
+      <PrefetchStudyPages />
       <div id="top">
         <a className="skip-link" href="#main">
           Skip to content
@@ -56,7 +77,9 @@ export default function App() {
             element={
               <RequireApproved>
                 <ContentGate>
-                  <SpecialtyRoutes />
+                  <Suspense fallback={<Waiting />}>
+                    <SpecialtyRoutes />
+                  </Suspense>
                 </ContentGate>
               </RequireApproved>
             }
@@ -67,7 +90,9 @@ export default function App() {
               <RequireApproved>
                 <ContentGate>
                   <main id="main">
-                    <ArchiveSearch />
+                    <Suspense fallback={<Waiting />}>
+                      <ArchiveSearch />
+                    </Suspense>
                   </main>
                 </ContentGate>
               </RequireApproved>
@@ -97,7 +122,9 @@ export default function App() {
             path="/admin"
             element={
               <RequireAdmin>
-                <AdminLayout />
+                <Suspense fallback={<Waiting />}>
+                  <AdminLayout />
+                </Suspense>
               </RequireAdmin>
             }
           >

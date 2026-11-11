@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useState, type CSSProperties, Suspense } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { setRemoteContent } from '../../content';
 import { supabase } from '../../lib/supabase';
@@ -81,7 +81,10 @@ export function AdminLayout() {
         </nav>
         <main id="main" className="archive__main">
           <ToastProvider>
-            <Outlet context={{ refreshCounts } satisfies AdminOutletContext} />
+            {/* each tab's page comes from the admin download; this keeps the menu in place while it resolves */}
+            <Suspense fallback={null}>
+              <Outlet context={{ refreshCounts } satisfies AdminOutletContext} />
+            </Suspense>
           </ToastProvider>
         </main>
       </div>

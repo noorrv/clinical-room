@@ -9,7 +9,8 @@ import { useGuestFlag } from './guest';
   actually stops an unapproved account from reading anything, with or without these.
 */
 
-function Waiting() {
+/** The parchment "one moment" card shown while an account or a page is loading. */
+export function Waiting() {
   return (
     <AuthShell title="One moment" kicker="The Clinical Room">
       <p className="auth-text" role="status">

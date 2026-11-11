@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef } from 'react';
+import { useLoopsInView } from '../../lib/motion';
 import { useArtIds } from './shared';
 
 /**
@@ -204,6 +205,7 @@ const COOLDOWN_MS = 1200;
 
 export function PanelVines() {
   const ref = useRef<HTMLDivElement>(null);
+  useLoopsInView(ref);
 
   useEffect(() => {
     const host = ref.current;
@@ -235,7 +237,7 @@ export function PanelVines() {
   }, []);
 
   return (
-    <div className="panel-vines" ref={ref}>
+    <div className="panel-vines" ref={ref} data-loops>
       <div className="panel-vine panel-vine--left">
         <Branch />
       </div>

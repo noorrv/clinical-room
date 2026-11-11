@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { telegramHandle } from '../data/homepage';
+import { useLoopsInView } from '../lib/motion';
 import { StudyStillLife } from './art/WidgetArt';
 import './QuoteBand.css';
 
@@ -27,6 +29,8 @@ function PaperPlane() {
 }
 
 export function QuoteBand() {
+  const band = useRef<HTMLDivElement>(null);
+  useLoopsInView(band);
   const handle = telegramHandle.replace(/^@/, '').trim();
   const inner = (
     <>
@@ -38,7 +42,7 @@ export function QuoteBand() {
     </>
   );
   return (
-    <div className="band">
+    <div className="band" ref={band} data-loops>
       <div className="band__art">
         <StudyStillLife />
       </div>

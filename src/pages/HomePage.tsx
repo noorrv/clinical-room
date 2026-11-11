@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { specialties } from '../data/homepage';
+import { useLoopsInView } from '../lib/motion';
 import { GazetteBoard } from '../components/board/GazetteBoard';
 import { useBoardData } from '../components/board/useBoardData';
 import type { RecentItem } from '../components/board/types';
@@ -38,6 +40,8 @@ function Noticeboard() {
 }
 
 export function HomePage() {
+  const dashRow = useRef<HTMLDivElement>(null);
+  useLoopsInView(dashRow);
   return (
     <>
       <Hero />
@@ -59,7 +63,7 @@ export function HomePage() {
             </ul>
           </section>
 
-          <div className="dash-row" id="study-tracker">
+          <div className="dash-row" id="study-tracker" ref={dashRow} data-loops>
             <Noticeboard />
             <ContinueStudyingCard />
             <StreakCard />

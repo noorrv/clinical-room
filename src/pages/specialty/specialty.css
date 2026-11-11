@@ -23,7 +23,7 @@
   color: var(--plum);
   /* blind-embossed botanical cotton paper: raised line-drawn flowers, tone on tone */
   background:
-    url('/textures/emboss-botanical.svg') 0 0 / 900px 900px,
+    var(--tex-emboss) 0 0 / 900px 900px,
     var(--paper-tooth-fine),
     linear-gradient(180deg, #f4f0e8, #ede7db);
   background-size: 900px 900px, 260px, auto;

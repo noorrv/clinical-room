@@ -87,7 +87,7 @@
 .da-frame {
   position: relative;
   border: 40px solid transparent;
-  border-image: url('/textures/archive-border.svg') 60 round;
+  border-image: var(--tex-archive-border) 60 round;
   background: var(--da-cream) padding-box;
   box-shadow: 0 18px 40px -26px rgba(64, 74, 40, 0.55);
 }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useLoopsInView } from '../lib/motion';
 import { rng } from './art/shared';
 import { ArrowRight, Pause, Play } from './Icons';
 import './Hero.css';
@@ -152,6 +153,8 @@ function PieceView({ piece }: { piece: Piece }) {
 
 export function Hero() {
   const stage = useRef<HTMLDivElement>(null);
+  const section = useRef<HTMLElement>(null);
+  useLoopsInView(section);
   const [paused, setPaused] = useState(false);
 
   // Hover: an ornament answers the pointer once; the stage leans a touch for the nutcrackers' parallax.
@@ -195,7 +198,7 @@ export function Hero() {
   }, []);
 
   return (
-    <section className={`hero${paused ? ' is-paused' : ''}`} aria-labelledby="hero-title">
+    <section ref={section} data-loops className={`hero${paused ? ' is-paused' : ''}`} aria-labelledby="hero-title">
       <div className="hero__frame">
         <div className="hero__stage" ref={stage}>
           <div

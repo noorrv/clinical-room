@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { useContinueStudying } from '../hooks/useContinueStudying';
+import { useLoopsInView } from '../lib/motion';
 import { Pause, Play } from './Icons';
 import './ContinueCard.css';
 
@@ -44,6 +45,10 @@ export function ContinueStudyingCard() {
   const [paused, setPaused] = useState(reduce);
   const [now, setNow] = useState(() => Date.now());
   const video = useRef<HTMLVideoElement>(null);
+  const card = useRef<HTMLElement>(null);
+  // the clip stops decoding while the card is off-screen, and plays again when it comes back
+  const [onScreen, setOnScreen] = useState(true);
+  useLoopsInView(card, setOnScreen);
 
   // keep "12 min ago" honest
   useEffect(() => {
@@ -54,12 +59,12 @@ export function ContinueStudyingCard() {
   useEffect(() => {
     const v = video.current;
     if (!v) return;
-    if (paused) v.pause();
+    if (paused || !onScreen) v.pause();
     else v.play().catch(() => undefined);
-  }, [paused]);
+  }, [paused, onScreen]);
 
   return (
-    <section className={`info ct${paused ? ' ct--paused' : ''}`} aria-labelledby="continue-title" style={{ '--ct-damask': DAMASK } as CSSProperties}>
+    <section ref={card} className={`info ct${paused ? ' ct--paused' : ''}`} aria-labelledby="continue-title" style={{ '--ct-damask': DAMASK } as CSSProperties}>
       <div className="ct__head">
         <h2 id="continue-title" className="card-title ct__title">
           Continue Studying

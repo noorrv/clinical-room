@@ -10,6 +10,17 @@
       content="An illustrated guide to clinical exams: OSCE stations, cases, examiner questions, and a study tracker."
     />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script>
+      // the homepage's painted hero is its largest picture: start fetching it before the app has loaded
+      if (location.pathname === '/') {
+        var l = document.createElement('link');
+        l.rel = 'preload';
+        l.as = 'image';
+        l.href = '/hero/osce-guide.webp';
+        l.fetchPriority = 'high';
+        document.head.appendChild(l);
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

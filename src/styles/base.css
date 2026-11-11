@@ -101,3 +101,16 @@ p {
     scroll-behavior: auto !important;
   }
 }
+
+/* Looping ornaments rest while the page scrolls and while they are off-screen (lib/motion.ts),
+   so scrolling gets the whole frame; they carry on from the same spot afterwards. */
+.is-scrolling [data-loops],
+.is-scrolling [data-loops] *,
+.is-scrolling [data-loops] *::before,
+.is-scrolling [data-loops] *::after,
+[data-loops][data-offscreen],
+[data-loops][data-offscreen] *,
+[data-loops][data-offscreen] *::before,
+[data-loops][data-offscreen] *::after {
+  animation-play-state: paused !important;
+}
