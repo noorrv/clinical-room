@@ -1,10 +1,10 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import type { Specialty } from '../../content';
 import { useApproach } from '../../content/approaches';
-import { PALETTES } from '../archive/palettes';
 import { ArchiveRoom } from '../archive/shared';
-import { StudySheet } from '../archive/StudySheet';
+import { ApproachReader } from './ApproachReader';
+import { themeFor, themePalette, themeVars } from './palettes';
 import './approach.css';
 
 /*
@@ -15,6 +15,23 @@ import './approach.css';
 const CaseGame = lazy(() => import('../game/CaseGame').then((m) => ({ default: m.CaseGame })));
 
 type Mode = 'read' | 'practise';
+
+/**
+ * Development only: with ?source=local the Read view shows the approach text from
+ * supabase/seed/content/ on this computer, so edits can be seen before the database changes.
+ * The file is fetched at run time from the dev server, so a production build never bundles it.
+ */
+function useLocalSheet(id: string, on: boolean): string | null {
+  const [text, setText] = useState<string | null>(null);
+  useEffect(() => {
+    if (!import.meta.env.DEV || !on) return;
+    const path = ['', 'supabase', 'seed', 'content', `${id}.md`].join('/');
+    fetch(path)
+      .then((r) => (r.ok ? r.text() : null))
+      .then(setText, () => setText(null));
+  }, [id, on]);
+  return on ? text : null;
+}
 const KEY = 'cr.approach.mode';
 
 function remembered(): Mode {
@@ -25,12 +42,15 @@ function remembered(): Mode {
   }
 }
 
-const sage = PALETTES.find((p) => p.id === 'olive') ?? PALETTES[0];
 
 export function ApproachPage({ sp }: { sp: Specialty }) {
   const { approachId = '' } = useParams();
   const [params, setParams] = useSearchParams();
   const loaded = useApproach(sp.id, approachId);
+  // each approach wears its own combination of the approach palettes
+  const theme = themeFor(approachId);
+  const sage = themePalette(theme);
+  const localSheet = useLocalSheet(approachId, params.get('source') === 'local');
   const a = loaded.data;
   const mode: Mode = params.get('mode') === 'practise' ? 'practise' : params.get('mode') === 'read' ? 'read' : remembered();
 
@@ -76,7 +96,7 @@ export function ApproachPage({ sp }: { sp: Specialty }) {
 
   return (
     <ArchiveRoom className={`ap ap--${mode}`} palette={sage}>
-      <div className="da-wrap ap__wrap">
+      <div className="da-wrap ap__wrap" style={themeVars(theme)}>
         <nav className="da-crumbs" aria-label="Breadcrumb">
           <Link to={`/specialties/${sp.slug}?tab=approaches`}>← {sp.title} approaches</Link>
         </nav>
@@ -104,9 +124,7 @@ export function ApproachPage({ sp }: { sp: Specialty }) {
         </header>
 
         {mode === 'read' ? (
-          <article className="da-q__answer da-q__answer--sheet ap__sheet">
-            <StudySheet text={a.sheet} title={a.title} />
-          </article>
+          <ApproachReader approachId={`${sp.id}/${a.id}`} title={a.title} sheet={localSheet ?? a.sheet} />
         ) : a.cases.length ? (
           <Suspense fallback={<p className="ap__loading">Opening the ward…</p>}>
             <CaseGame specialtyId={sp.id} caseId={a.cases[0].id} onRead={() => choose('read')} />

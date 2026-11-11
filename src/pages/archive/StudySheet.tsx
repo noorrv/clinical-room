@@ -22,7 +22,8 @@ import './studysheet.css';
     [[art:appendicular artery]]  a medical term coloured by what it is (the words stay as written):
       art = arteries, blood, ischaemia, necrosis · vein = veins, venous drainage, oxygenation
       anat = normal anatomy and physiology · nerve = nerves and innervation
-      warn = warnings, complications, risks · pearl = exam pearls and key facts
+      warn = emergencies, complications, risks · pearl = warnings, exam pearls and key facts
+      test = investigations · mech = mechanisms · ok = reassuring findings
 
   A paragraph that is a chain of four or more stages joined by arrows (or lines joined by "↓")
   is shown as an interactive clinical pathway (ClinicalPathway); shorter arrow sequences stay
@@ -186,7 +187,7 @@ export function sheetText(src: string): string {
 /* ───────────── inline text ───────────── */
 
 /** [[kind:words]]: a term coloured by its medical meaning. */
-const TERM = /\[\[(art|vein|anat|nerve|warn|pearl):([^\]]+)\]\]/g;
+const TERM = /\[\[(art|vein|anat|nerve|warn|pearl|test|mech|ok):([^\]]+)\]\]/g;
 
 /** Inside a pathway's buttons a lab term stays plain text (no button inside a button). */
 const NoLabs = createContext(false);
@@ -345,7 +346,8 @@ function Para({ text, term, title }: { text: string; term: string | null; title?
   const chain = useMemo(() => findChain(text), [text]);
   if (!chain)
     return (
-      <p className="ss-p">
+      // a paragraph that opens "Important:" is a caution, set as a quiet amber note
+      <p className={`ss-p${/^\*\*(Important|Note|Warning)[^*]*:\*\*/.test(text) ? ' ss-p--important' : ''}`}>
         <Inline text={text} term={term} />
       </p>
     );

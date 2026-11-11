@@ -692,6 +692,29 @@
   --term: #8a5a14;
 }
 
+/* investigations: blue */
+.ss-term--test {
+  --term: #2f4f80;
+}
+
+/* mechanisms: purple */
+.ss-term--mech {
+  --term: #5d3d6b;
+}
+
+/* reassuring findings: green */
+.ss-term--ok {
+  --term: #3d6a35;
+}
+
+/* a caution ("Important: …"): a quiet amber note, no box */
+.ss-p--important {
+  padding: 8px 12px;
+  border-left: 3px solid #b48a3c;
+  border-radius: 0 6px 6px 0;
+  background: rgba(201, 162, 74, 0.12);
+}
+
 /* inside a heading or bold label the term keeps the heading's weight */
 .ss-h2 .ss-term,
 .ss-h3 .ss-term,

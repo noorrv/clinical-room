@@ -156,7 +156,7 @@ const KIND_RULES: Array<[StageKind, RegExp]> = [
 
 /** A stage's colour: the first coloured term it carries, else what its words describe. */
 export function stageKind(stage: string): StageKind {
-  const tag = stage.match(/\[\[(art|vein|anat|nerve|warn|pearl):/);
+  const tag = stage.match(/\[\[(art|vein|anat|nerve|warn|pearl):/);  // test/mech/ok fall through to the word rules
   if (tag) return tag[1] as StageKind;
   const t = plain(stage);
   for (const [k, re] of KIND_RULES) if (re.test(t)) return k;

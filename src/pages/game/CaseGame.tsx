@@ -14,7 +14,8 @@ import {
   score,
   type GameState,
 } from './engine';
-import { PatientBody, type PatientLook } from './Patient';
+import type { PatientLook } from './Patient';
+import ward from './art/ward.jpg';
 import { WardScene } from './WardScene';
 import './game.css';
 
@@ -80,8 +81,9 @@ function Portrait({ who, look }: { who: 'patient' | 'consultant' | 'note'; look:
       {who === 'consultant' ? (
         <ConsultantPortrait />
       ) : who === 'patient' ? (
-        <span className="cg-portrait__crop">
-          <PatientBody p={look} />
+        // his own face, cropped from the ward picture, with the same clinical tint
+        <span className="cg-portrait__crop" style={{ backgroundImage: `url(${ward})` }}>
+          {(look.signs.jaundice ?? 0) > 0 && <span className="cg-portrait__tint" style={{ opacity: 0.55 * (look.signs.jaundice ?? 0) }} />}
         </span>
       ) : null}
     </div>
@@ -331,7 +333,7 @@ function Game({ c, onRead }: { c: CaseData; onRead?: () => void }) {
       </nav>
 
       <div className="cg-stage">
-        <WardScene patient={c.patient.look} heartRate={c.vitals.heartRate} spo2={c.vitals.spo2} />
+        <WardScene patient={c.patient.look} label={`${c.patient.name} lying in a hospital bed in a lamp-lit ward.`} />
 
         <div className="cg-tools">
           <span className="cg-points" title="Clinical reasoning points">

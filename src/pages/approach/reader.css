@@ -1,0 +1,575 @@
+/* ───────────────────────────────────────────────────────────────
+   The approach reader: a digital textbook. A contents column with
+   reading progress, one section at a time on the parchment page,
+   folding subsections, previous / next at the foot.
+   Tones by meaning: red emergencies, blue investigations,
+   purple mechanisms, amber warnings.
+   ─────────────────────────────────────────────────────────────── */
+
+.apx {
+  --apx-ink: #3a3326;
+  --apx-muted: #6b5f4a;
+  --apx-rule: #d8ccb0;
+  --apx-gold: #a8864a;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+/* tones: the approach's own colour for each meaning (palettes.ts), an edge and a faint wash */
+.apx-tone--red,
+.apx-page--red {
+  --tone: var(--t-danger, #9a2418);
+}
+.apx-tone--blue,
+.apx-page--blue {
+  --tone: var(--t-info, #2f4f80);
+}
+.apx-tone--purple,
+.apx-page--purple {
+  --tone: var(--t-mech, #5d3d6b);
+}
+.apx-tone--amber,
+.apx-page--amber {
+  --tone: var(--t-caution, #8a5a14);
+}
+.apx-tone--plain,
+.apx-page--plain {
+  --tone: var(--t-heading, #687653);
+}
+[class*='apx-tone--'] {
+  --tone-wash: color-mix(in srgb, var(--tone) 7%, transparent);
+}
+.apx-tone--plain {
+  --tone-wash: transparent;
+}
+
+/* the reading page and its text take the approach's paper, ink and headings */
+.apx .da-q__answer--sheet {
+  background-color: var(--t-paper, #faf6ec);
+}
+.apx .ss {
+  color: var(--t-ink, #40382f);
+}
+.apx .ss-h2,
+.apx .ss-h3,
+.apx-page__title,
+.apx-page__h {
+  color: var(--t-heading, #4f5c3e);
+}
+.apx .ss strong {
+  color: var(--t-ink, #2b231b);
+}
+.apx .ss-ul > li::before {
+  color: var(--t-muted, #89977a);
+}
+.apx .ss-term--warn {
+  --term: var(--t-danger);
+  text-decoration-color: color-mix(in srgb, var(--t-danger) 45%, transparent);
+}
+.apx .ss-term--pearl {
+  --term: var(--t-caution);
+}
+.apx .ss-term--test {
+  --term: var(--t-info);
+}
+.apx .ss-term--mech {
+  --term: var(--t-mech);
+}
+.apx .ss-term--ok {
+  --term: var(--t-calm);
+}
+.apx .ss-p--important {
+  border-left-color: var(--t-caution);
+  background: color-mix(in srgb, var(--t-caution) 10%, transparent);
+}
+.apx .lab-term {
+  text-decoration-color: var(--t-accent);
+}
+
+/* ── contents ── */
+.apx-nav {
+  position: sticky;
+  top: 12px;
+  max-height: calc(100vh - 24px);
+  min-width: 0;
+}
+
+.apx-nav__inner {
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px 10px 14px 14px;
+  border-radius: 10px;
+  background: rgba(251, 246, 234, 0.92);
+  box-shadow:
+    inset 0 0 0 1px rgba(64, 56, 47, 0.18),
+    0 8px 20px -16px rgba(46, 34, 20, 0.5);
+  scrollbar-width: thin;
+}
+
+.apx-nav__head {
+  margin: 0 0 8px;
+  font: 600 0.78rem/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--apx-muted);
+}
+
+.apx-progress {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.apx-progress__bar,
+.apx-bar__progress {
+  display: block;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(64, 56, 47, 0.1);
+  overflow: hidden;
+}
+
+.apx-progress__bar span,
+.apx-bar__progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--t-accent, #687653);
+  transition: width 300ms ease;
+}
+
+.apx-progress__text {
+  font-size: 0.85rem;
+  color: var(--apx-muted);
+}
+
+.apx-toc {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.apx-toc__item {
+  display: grid;
+  grid-template-columns: 1.7em minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: baseline;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 8px;
+  border: 0;
+  border-left: 3px solid transparent;
+  border-radius: 0 6px 6px 0;
+  background: none;
+  color: var(--apx-ink);
+  font: 400 0.95rem/1.3 'EB Garamond', Georgia, serif;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+
+.apx-toc__item:hover {
+  background: rgba(168, 134, 74, 0.1);
+}
+
+.apx-toc__item.is-here {
+  border-left-color: var(--tone, #687653);
+  background: color-mix(in srgb, var(--t-accent, #a8864a) 12%, transparent);
+  font-weight: 600;
+}
+
+.apx-toc__num {
+  font: 600 0.9rem/1 'Cormorant Garamond', Georgia, serif;
+  color: var(--tone, var(--apx-muted));
+  font-variant-numeric: lining-nums tabular-nums;
+  text-align: end;
+}
+
+.apx-toc__item.is-read:not(.is-here) .apx-toc__name {
+  color: var(--apx-muted);
+}
+
+.apx-toc__tick {
+  font-size: 0.8rem;
+  color: var(--t-calm, #3d6a35);
+}
+
+.apx-toc__item:focus-visible,
+.apx-overview__item:focus-visible,
+.apx-foot button:focus-visible,
+.apx-sub__head:focus-visible,
+.apx-page__toggle:focus-visible,
+.apx-bar button:focus-visible,
+.apx-bar select:focus-visible {
+  outline: 2px solid #4f5c3e;
+  outline-offset: 2px;
+}
+
+/* the narrow-screen bar is hidden on wide screens */
+.apx-bar {
+  display: none;
+}
+
+/* ── the page ── */
+.apx-main {
+  min-width: 0;
+}
+
+.apx-page {
+  margin-top: 0;
+  animation: apx-turn 260ms ease-out;
+}
+
+.apx-page .ss {
+  gap: 18px;
+}
+
+.apx-page__kicker {
+  margin: 0;
+  font: 600 0.78rem/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--apx-muted);
+}
+
+.apx-page__head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding-bottom: 14px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--apx-rule);
+}
+
+.apx-page__num {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1.5px solid var(--tone);
+  box-shadow:
+    inset 0 0 0 3px #faf6ec,
+    inset 0 0 0 4px var(--apx-rule);
+  font: 600 1.4rem/1 'Cormorant Garamond', Georgia, serif;
+  color: var(--tone);
+  font-variant-numeric: lining-nums;
+}
+
+
+.apx-page__title {
+  margin: 4px 0 0;
+  font: 500 clamp(1.45rem, 1.2rem + 0.9vw, 1.9rem)/1.15 'Cormorant Garamond', Georgia, serif;
+  color: #3f4a30;
+}
+
+.apx-page__h {
+  margin: 10px 0 0;
+  font: 600 1.3rem/1.2 'Cormorant Garamond', Georgia, serif;
+  color: #4f5c3e;
+}
+
+.apx-page__toggle {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px dashed rgba(168, 134, 74, 0.6);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--apx-ink);
+  font: 500 0.9rem/1 'EB Garamond', Georgia, serif;
+  cursor: pointer;
+}
+
+/* subsections: a quiet panel that folds; its edge carries the tone */
+.apx-sub {
+  border-left: 3px solid var(--tone);
+  border-radius: 0 8px 8px 0;
+  background: var(--tone-wash);
+}
+
+.apx-sub + .apx-sub {
+  margin-top: -8px;
+}
+
+.apx-sub__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 14px;
+  cursor: pointer;
+  list-style: none;
+  font: 600 1.18rem/1.25 'Cormorant Garamond', Georgia, serif;
+  color: var(--tone);
+}
+
+.apx-tone--plain .apx-sub__head {
+  color: #4f5c3e;
+}
+
+.apx-sub__head::-webkit-details-marker {
+  display: none;
+}
+
+.apx-sub__head:hover {
+  background: rgba(168, 134, 74, 0.08);
+}
+
+.apx-sub__chev {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-top: -4px;
+  border-right: 1.5px solid var(--apx-gold);
+  border-bottom: 1.5px solid var(--apx-gold);
+  transform: rotate(45deg);
+  transition: transform 180ms ease;
+}
+
+.apx-sub[open] > .apx-sub__head .apx-sub__chev {
+  transform: translateY(4px) rotate(225deg);
+}
+
+.apx-sub__body {
+  padding: 2px 16px 16px;
+}
+
+.apx-tone--plain.apx-sub {
+  border-left-color: var(--apx-rule);
+}
+
+/* overview: every section at a glance */
+.apx-overview {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 8px;
+}
+
+.apx-overview__item {
+  display: grid;
+  grid-template-columns: 2em minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  width: 100%;
+  height: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-left: 3px solid var(--tone);
+  border-radius: 0 8px 8px 0;
+  background: var(--tone-wash);
+  box-shadow: inset 0 0 0 1px rgba(64, 56, 47, 0.1);
+  color: var(--apx-ink);
+  text-align: start;
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    background-color 140ms ease;
+}
+
+.apx-tone--plain.apx-overview__item {
+  border-left-color: var(--apx-rule);
+}
+
+.apx-overview__item:hover {
+  transform: translateY(-1px);
+  background-color: rgba(168, 134, 74, 0.08);
+}
+
+.apx-overview__num {
+  grid-row: span 2;
+  font: 600 1.35rem/1.1 'Cormorant Garamond', Georgia, serif;
+  color: var(--tone);
+  font-variant-numeric: lining-nums;
+}
+
+.apx-overview__name {
+  font: 600 1rem/1.3 'EB Garamond', Georgia, serif;
+}
+
+.apx-overview__meta {
+  margin-top: 2px;
+  font-size: 0.85rem;
+  color: var(--apx-muted);
+}
+
+/* previous / next */
+.apx-foot {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--apx-rule);
+}
+
+.apx-foot__prev,
+.apx-foot__next {
+  display: grid;
+  gap: 3px;
+  min-height: 56px;
+  padding: 10px 14px;
+  border: 1px solid rgba(168, 134, 74, 0.45);
+  border-radius: 10px;
+  background: rgba(255, 252, 243, 0.7);
+  color: var(--apx-ink);
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    transform 140ms ease;
+}
+
+.apx-foot__next {
+  grid-column: 2;
+  text-align: end;
+}
+
+.apx-foot__prev:hover,
+.apx-foot__next:hover {
+  background: rgba(168, 134, 74, 0.12);
+  transform: translateY(-1px);
+}
+
+.apx-foot__dir {
+  font: 600 0.78rem/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--apx-muted);
+}
+
+.apx-foot__title {
+  font: 600 1rem/1.3 'EB Garamond', Georgia, serif;
+}
+
+@keyframes apx-turn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* ── narrow screens: the contents become a sticky bar with a section picker ── */
+@media (max-width: 1023px) {
+  .apx {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .apx-nav {
+    top: 0;
+    z-index: 20;
+    max-height: none;
+  }
+
+  .apx-nav__inner {
+    display: none;
+  }
+
+  .apx-bar {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 6px;
+    align-items: center;
+    padding: 8px 8px 10px;
+    border-radius: 0 0 10px 10px;
+    background: rgba(251, 246, 234, 0.97);
+    box-shadow:
+      inset 0 0 0 1px rgba(64, 56, 47, 0.16),
+      0 8px 16px -14px rgba(46, 34, 20, 0.6);
+  }
+
+  .apx-bar__step {
+    height: 44px;
+    border: 1px solid rgba(168, 134, 74, 0.5);
+    border-radius: 8px;
+    background: #fbf5e4;
+    color: var(--apx-ink);
+    font: 600 1.4rem/1 'EB Garamond', Georgia, serif;
+    cursor: pointer;
+  }
+
+  .apx-bar__step:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .apx-bar__pick select {
+    width: 100%;
+    height: 44px;
+    padding: 0 10px;
+    border: 1px solid rgba(64, 56, 47, 0.25);
+    border-radius: 8px;
+    background: #fffdf6;
+    color: var(--apx-ink);
+    font: 600 1rem/1 'EB Garamond', Georgia, serif;
+    text-overflow: ellipsis;
+  }
+
+  .apx-bar__progress {
+    grid-column: 1 / -1;
+    height: 4px;
+  }
+}
+
+@media (max-width: 560px) {
+  .apx-page__head {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .apx-page__toggle {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .apx-page__num {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+
+  .apx-sub__body {
+    padding: 2px 10px 14px;
+  }
+
+  .apx-foot {
+    grid-template-columns: 1fr;
+  }
+
+  .apx-foot__next {
+    grid-column: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apx-page {
+    animation: none;
+  }
+
+  .apx-sub__chev,
+  .apx-overview__item,
+  .apx-foot button,
+  .apx-progress__bar span,
+  .apx-bar__progress span {
+    transition: none;
+  }
+}
+
+/* compact lists on the textbook page */
+.apx-page .ss-ul,
+.apx-page .ss-ol {
+  gap: 4px;
+}
+
+.apx-page .ss {
+  line-height: 1.7;
+}

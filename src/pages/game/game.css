@@ -80,8 +80,7 @@
   aspect-ratio: 16 / 9;
 }
 
-.ward__layer,
-.pt {
+.ward__layer {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -91,136 +90,8 @@
   pointer-events: none;
 }
 
-/* paper grain over the whole scene, so the live patient sits in the same paper as the room */
-.ward::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: var(--grain);
-  background-size: 220px;
-  mix-blend-mode: multiply;
-  opacity: 0.35;
-  pointer-events: none;
-}
 
-.ward-vital {
-  font: 600 13px/1 ui-monospace, 'SF Mono', Menlo, monospace;
-}
 
-/* ── things that move: slow, small, and all of them rest under reduced motion ── */
-.pt-breathe {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
-  animation: pt-breathe 4.2s ease-in-out infinite;
-}
-
-.pt-breathe-soft {
-  animation: pt-rise 4.2s ease-in-out infinite;
-}
-
-.pt-head {
-  transform-box: fill-box;
-  transform-origin: 40% 95%;
-  animation: pt-head 9s ease-in-out infinite;
-}
-
-.pt-blink {
-  transform-box: fill-box;
-  transform-origin: 50% 0;
-  transform: scaleY(0);
-  animation: pt-blink 5.6s infinite;
-}
-
-.ward-ecg {
-  animation: ward-ecg 0.7s linear infinite;
-}
-
-.ward-drip {
-  animation: ward-drip 1.6s ease-in infinite;
-}
-
-.ward-glow {
-  animation: ward-glow 7s ease-in-out infinite;
-}
-
-@keyframes pt-breathe {
-  50% {
-    transform: scaleY(1.018) translateY(-1px);
-  }
-}
-
-@keyframes pt-rise {
-  50% {
-    transform: translateY(-1.4px);
-  }
-}
-
-@keyframes pt-head {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  45% {
-    transform: rotate(-1.4deg);
-  }
-  70% {
-    transform: rotate(0.6deg);
-  }
-}
-
-@keyframes pt-blink {
-  0%,
-  93%,
-  100% {
-    transform: scaleY(0);
-  }
-  95.5% {
-    transform: scaleY(1);
-  }
-}
-
-/* the trace slides left by one beat (72 units) per beat */
-@keyframes ward-ecg {
-  to {
-    transform: translateX(-72px);
-  }
-}
-
-@keyframes ward-drip {
-  0% {
-    transform: translateY(0);
-    opacity: 0;
-  }
-  15% {
-    opacity: 1;
-  }
-  80% {
-    transform: translateY(20px);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(22px);
-    opacity: 0;
-  }
-}
-
-@keyframes ward-glow {
-  50% {
-    opacity: 0.72;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pt-breathe,
-  .pt-breathe-soft,
-  .pt-head,
-  .pt-blink,
-  .ward-ecg,
-  .ward-drip,
-  .ward-glow {
-    animation: none;
-  }
-}
 
 /* ── panels in the reference's style: parchment, ink border ── */
 .cg-panel,
@@ -477,14 +348,17 @@
   background: #efe6d2;
 }
 
-.cg-portrait__crop .pt {
+.cg-portrait__crop {
+  background-repeat: no-repeat;
+  background-size: 1277px auto;
+  background-position: -940px -237px;
+}
+
+.cg-portrait__tint {
   position: absolute;
-  inset: auto;
-  max-width: none;
-  width: 1120px;
-  height: 630px;
-  left: -906px;
-  top: -275px;
+  inset: 0;
+  background: radial-gradient(circle at 48% 42%, #e8c437 0 38%, transparent 62%);
+  mix-blend-mode: color;
 }
 
 .cg-talk__who {
@@ -1079,11 +953,9 @@ button.cg-tab:disabled {
     height: 60px;
   }
 
-  .cg-portrait__crop .pt {
-    width: 800px;
-    height: 450px;
-    left: -647px;
-    top: -196px;
+  .cg-portrait__crop {
+    background-size: 912px auto;
+    background-position: -671px -169px;
   }
 
   .cg-dx {
