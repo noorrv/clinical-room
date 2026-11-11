@@ -962,3 +962,120 @@ button.cg-tab:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+/* ── the ward's small movements (WardScene) ── */
+.ward-breath,
+.ward-curtain {
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+/* chest and arms: a soft-edged copy that rises about a pixel and a half, once every four seconds */
+.ward-breath {
+  -webkit-mask-image: radial-gradient(ellipse 9.6% 9.4% at 74.8% 55.3%, #000 52%, transparent 100%);
+  mask-image: radial-gradient(ellipse 9.6% 9.4% at 74.8% 55.3%, #000 52%, transparent 100%);
+  transform-origin: 74.8% 65%;
+  animation: ward-breath 4.2s ease-in-out infinite;
+}
+
+/* the privacy curtain at the right edge: a slow, slight stir from its rail */
+.ward-curtain {
+  -webkit-mask-image: linear-gradient(to right, transparent 91.3%, #000 92.9%);
+  mask-image: linear-gradient(to right, transparent 91.3%, #000 92.9%);
+  transform-origin: 96% 0;
+  animation: ward-curtain 7s ease-in-out infinite;
+}
+
+.ward-ecg {
+  animation: ward-ecg 0.75s linear infinite;
+}
+
+.ward-drip {
+  animation: ward-drip 1.5s ease-in infinite;
+}
+
+.ward-blink {
+  opacity: 0;
+  animation: ward-blink 5.8s step-end infinite;
+}
+
+.ward-lamp {
+  mix-blend-mode: soft-light;
+  opacity: 0.35;
+  animation: ward-lamp 6s ease-in-out infinite;
+}
+
+@keyframes ward-breath {
+  50% {
+    transform: scaleY(1.012);
+  }
+}
+
+@keyframes ward-curtain {
+  0%,
+  100% {
+    transform: skewX(0deg);
+  }
+  45% {
+    transform: skewX(-0.35deg);
+  }
+  70% {
+    transform: skewX(0.15deg);
+  }
+}
+
+/* the trace slides left by one beat (43 units) per beat */
+@keyframes ward-ecg {
+  to {
+    transform: translateX(-43px);
+  }
+}
+
+@keyframes ward-drip {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(24px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(26px);
+    opacity: 0;
+  }
+}
+
+/* closed for about a fifth of a second, every six seconds or so */
+@keyframes ward-blink {
+  0% {
+    opacity: 0;
+  }
+  94% {
+    opacity: 1;
+  }
+  97.5% {
+    opacity: 0;
+  }
+}
+
+@keyframes ward-lamp {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ward-breath,
+  .ward-curtain,
+  .ward-ecg,
+  .ward-drip,
+  .ward-blink,
+  .ward-lamp {
+    animation: none;
+  }
+}

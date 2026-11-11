@@ -333,7 +333,7 @@ function Game({ c, onRead }: { c: CaseData; onRead?: () => void }) {
       </nav>
 
       <div className="cg-stage">
-        <WardScene patient={c.patient.look} label={`${c.patient.name} lying in a hospital bed in a lamp-lit ward.`} />
+        <WardScene patient={c.patient.look} heartRate={c.vitals.heartRate} label={`${c.patient.name} lying in a hospital bed in a lamp-lit ward.`} />
 
         <div className="cg-tools">
           <span className="cg-points" title="Clinical reasoning points">
