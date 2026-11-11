@@ -674,44 +674,227 @@
   scroll-margin-top: 90px;
 }
 
-.da-chips {
+/* ── the question navigator: a compact, collapsible index of the topic's questions ──
+   Each number wears its difficulty (easy sage, moderate ochre, difficult burgundy); a reviewed
+   question keeps its colour and gains a small tick; the page being read is filled in. */
+.da-lv-1 {
+  --lv: #5b6f4c; /* muted sage */
+}
+
+.da-lv-2 {
+  --lv: #94600f; /* warm ochre, deep enough to read */
+}
+
+.da-lv-3 {
+  --lv: #7d2e35; /* muted burgundy */
+}
+
+.da-nav {
+  border: 1px solid color-mix(in srgb, var(--da-olive) 22%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--da-cream) 78%, transparent);
+}
+
+.da-nav__head {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 4px 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px 12px;
+  border: 0;
+  background: none;
+  color: var(--da-olive);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.da-nav__head:focus-visible,
+.da-nav__filter:focus-visible,
+.da-chip:focus-visible {
+  outline: 2px solid var(--da-olive);
+  outline-offset: 2px;
+}
+
+.da-nav__title {
+  font-family: var(--da-display, inherit);
+  font-size: 1.02rem;
+  font-weight: 600;
+}
+
+.da-nav__count {
+  font-size: 0.84rem;
+  color: var(--da-olive-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.da-nav__chev {
+  width: 9px;
+  height: 9px;
+  margin: 0 2px 3px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 180ms ease;
+}
+
+.da-nav.is-open .da-nav__chev {
+  transform: rotate(-135deg);
+  margin-bottom: -3px;
+}
+
+.da-nav__bar {
+  grid-column: 1 / -1;
+  height: 3px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--da-olive) 14%, transparent);
+  overflow: hidden;
+}
+
+.da-nav__bar span {
+  display: block;
+  height: 100%;
+  background: var(--da-gold);
+  transition: width 300ms ease;
+}
+
+.da-nav__body {
+  display: grid;
+  gap: 10px;
+  padding: 2px 12px 12px;
+}
+
+.da-nav__body[hidden] {
+  display: none;
+}
+
+.da-nav__legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--da-olive-2);
+}
+
+.da-nav__key {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.da-nav__key i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--lv);
+}
+
+.da-nav__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.da-nav__filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--da-olive) 26%, transparent);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--da-olive);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+}
+
+.da-nav__filter:hover {
+  background: color-mix(in srgb, var(--da-olive) 8%, transparent);
+}
+
+.da-nav__filter[aria-pressed='true'] {
+  background: var(--da-olive);
+  border-color: var(--da-olive);
+  color: var(--da-cream);
+}
+
+.da-nav__n {
+  font-weight: 500;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+
+.da-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+  gap: 5px;
 }
 
 .da-chip {
-  min-width: 44px;
-  height: 38px;
-  padding: 0 10px;
+  position: relative;
+  height: 34px;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--lv, var(--da-olive-2)) 38%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--lv, var(--da-olive-2)) 10%, var(--da-cream));
+  color: var(--lv, var(--da-olive-2));
   font: inherit;
+  font-size: 0.8rem;
   font-weight: 700;
-  font-size: 0.9rem;
-  border-radius: 99px;
-  border: 1.5px solid rgba(79, 93, 60, 0.45);
-  background: var(--da-cream);
-  color: var(--da-olive);
+  font-variant-numeric: tabular-nums;
   cursor: pointer;
   transition:
-    transform 160ms ease,
-    background 160ms ease;
+    background 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
 }
 
 .da-chip:hover {
-  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--lv, var(--da-olive-2)) 20%, var(--da-cream));
 }
 
 .da-chip:active {
   transform: translateY(1px);
 }
 
+/* the questions on the page being read */
 .da-chip.is-here {
-  border-color: var(--da-olive);
+  background: var(--lv, var(--da-olive-2));
+  border-color: var(--lv, var(--da-olive-2));
+  color: var(--da-cream);
 }
 
-.da-chip.is-done {
-  background: var(--da-butter);
-  border-color: var(--da-gold);
+/* reviewed: the colour stays, a small tick sits on the corner */
+.da-chip.is-done::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 6.2l2 2 4-4.4' fill='none' stroke='%23fff' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 11px no-repeat,
+    var(--da-olive);
+  box-shadow: 0 0 0 1.5px var(--da-cream);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .da-nav__chev,
+  .da-nav__bar span,
+  .da-chip {
+    transition: none;
+  }
 }
 
 .da-switches {
@@ -1317,9 +1500,9 @@
   }
 }
 
-/* a question's difficulty, beside its type: easy in moss, medium in sunshine, hard in red wine */
+/* a question's difficulty, beside its type: easy in sage, moderate in ochre, difficult in burgundy */
 .da-level {
-  --lv: #4b5b34;
+  --lv: #5b6f4c;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1332,11 +1515,11 @@
 }
 
 .da-level--2 {
-  --lv: #9a5806;
+  --lv: #94600f;
 }
 
 .da-level--3 {
-  --lv: #980204;
+  --lv: #7d2e35;
 }
 
 .da-level__pips {

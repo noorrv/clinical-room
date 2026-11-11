@@ -43,7 +43,21 @@ function Body({ value, term, ordered }: { value: unknown; term: string | null; o
 /** A title without its old written number ("Q4. ", "10. "): the page numbers questions in difficulty order. */
 const unnumbered = (title: string) => title.replace(/^\s*(?:Q\s*)?\d+\s*[.)]\s+/i, '');
 
-const LEVEL = { 1: 'Easy', 2: 'Medium', 3: 'Hard' } as const;
+const LEVEL = { 1: 'Easy', 2: 'Moderate', 3: 'Difficult' } as const;
+
+type Filter = 'all' | 1 | 2 | 3 | 'marked';
+const NAV_KEY = 'cr.topic-navigator';
+
+/** Open or closed, as the student last left it; open on wide screens the first time. */
+function initialOpen(): boolean {
+  try {
+    const v = localStorage.getItem(NAV_KEY);
+    if (v === 'open' || v === 'closed') return v === 'open';
+  } catch {
+    /* storage unavailable: fall through */
+  }
+  return typeof window !== 'undefined' && window.matchMedia('(min-width: 720px)').matches;
+}
 
 /** The question's difficulty: its word and one to three filled marks. */
 function Level({ n }: { n: 1 | 2 | 3 }) {
@@ -82,14 +96,19 @@ export function TopicPage({ sp }: { sp: Specialty }) {
   const [page, setPage] = useState(1);
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [allOpen, setAllOpen] = useState(false);
-  const [onlyMarked, setOnlyMarked] = useState(false);
+  const [filter, setFilter] = useState<Filter>('all');
+  const [navOpen, setNavOpen] = useState(initialOpen);
   const [flash, setFlash] = useState<string | null>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
   const list: QuestionRef[] = useMemo(() => {
     if (!section) return [];
-    return onlyMarked ? section.questions.filter((q) => record(st, q.key).bookmarked) : section.questions;
-  }, [section, onlyMarked, st]);
+    if (filter === 'all') return section.questions;
+    if (filter === 'marked') return section.questions.filter((q) => record(st, q.key).bookmarked);
+    return section.questions.filter((q) => q.difficulty === filter);
+  }, [section, filter, st]);
+  // every question keeps its own number in the topic, whatever the filter shows
+  const numberOf = useMemo(() => new Map((section?.questions ?? []).map((q, i) => [q.key, i + 1])), [section]);
   // every question of this doctor's archive, for pathways to link to (same mechanism, related stage)
   const links = useMemo(
     () =>
@@ -105,7 +124,7 @@ export function TopicPage({ sp }: { sp: Specialty }) {
     const id = decodeURIComponent(hash.slice(3));
     const i = section.questions.findIndex((q) => q.id === id);
     if (i < 0) return;
-    setOnlyMarked(false);
+    setFilter('all');
     setPage(Math.floor(i / PAGE) + 1);
     const key = section.questions[i].key;
     setRevealed((r) => new Set(r).add(key));
@@ -118,7 +137,7 @@ export function TopicPage({ sp }: { sp: Specialty }) {
     };
   }, [hash, section]);
 
-  useEffect(() => setPage(1), [topicId, onlyMarked]);
+  useEffect(() => setPage(1), [topicId, filter]);
 
   if (!section) {
     return (
@@ -137,6 +156,14 @@ export function TopicPage({ sp }: { sp: Specialty }) {
 
   const { sections } = archive;
   const prog = sectionProgress(st, section);
+  const rated = section.questions.filter((q) => q.difficulty).length;
+  const count = (f: Filter) => (f === 'all' ? section.questions.length : f === 'marked' ? section.questions.filter((q) => record(st, q.key).bookmarked).length : section.questions.filter((q) => q.difficulty === f).length);
+  // difficulty filters appear once the topic's questions are rated
+  const filters: Array<{ id: Filter; label: string; count: number }> = [
+    { id: 'all', label: 'All', count: count('all') },
+    ...(rated > 0 ? ([1, 2, 3] as const).map((n) => ({ id: n as Filter, label: LEVEL[n], count: count(n) })) : []),
+    { id: 'marked', label: 'Bookmarked', count: count('marked') },
+  ];
   const prevTopic = sections[sectionIndex - 1];
   const nextTopic = sections[sectionIndex + 1];
 
@@ -198,35 +225,84 @@ export function TopicPage({ sp }: { sp: Specialty }) {
         </header>
 
         <div className="da-tools" ref={topRef}>
-          <div className="da-chips" role="navigation" aria-label="Questions in this topic">
-            {list.map((q, i) => (
-              <button
-                key={q.key}
-                type="button"
-                className={`da-chip${isReviewed(st, q.key) ? ' is-done' : ''}${Math.floor(i / PAGE) + 1 === page ? ' is-here' : ''}`}
-                onClick={() => jumpTo(q)}
-                aria-label={`Question ${i + 1}${isReviewed(st, q.key) ? ', reviewed' : ''}`}
-              >
-                {pad(i + 1)}
-              </button>
-            ))}
-          </div>
+          <section className={`da-nav${navOpen ? ' is-open' : ''}`} aria-label="Question navigator">
+            <button
+              type="button"
+              className="da-nav__head"
+              aria-expanded={navOpen}
+              aria-controls="da-nav-body"
+              onClick={() => {
+                const next = !navOpen;
+                setNavOpen(next);
+                try {
+                  localStorage.setItem(NAV_KEY, next ? 'open' : 'closed');
+                } catch {
+                  /* storage unavailable: the choice lasts for this visit */
+                }
+              }}
+            >
+              <span className="da-nav__title">Question navigator</span>
+              <span className="da-nav__count">
+                {prog.done} / {section.questions.length} reviewed
+              </span>
+              <span className="da-nav__chev" aria-hidden />
+              <span className="da-nav__bar" aria-hidden>
+                <span style={{ width: `${(prog.done / Math.max(1, section.questions.length)) * 100}%` }} />
+              </span>
+            </button>
+
+            <div id="da-nav-body" className="da-nav__body" hidden={!navOpen}>
+              {rated > 0 && (
+                <p className="da-nav__legend">
+                  {([1, 2, 3] as const).map((n) => (
+                    <span key={n} className={`da-nav__key da-lv-${n}`}>
+                      <i aria-hidden />
+                      {LEVEL[n]}
+                    </span>
+                  ))}
+                </p>
+              )}
+              <div className="da-nav__filters" role="group" aria-label="Show questions">
+                {filters.map((f) => (
+                  <button key={String(f.id)} type="button" className="da-nav__filter" aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>
+                    {f.label}
+                    <span className="da-nav__n">{f.count}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="da-chips" role="navigation" aria-label="Questions in this topic">
+                {list.map((q, i) => {
+                  const num = numberOf.get(q.key) ?? i + 1;
+                  const done = isReviewed(st, q.key);
+                  return (
+                    <button
+                      key={q.key}
+                      type="button"
+                      className={`da-chip${q.difficulty ? ` da-lv-${q.difficulty}` : ''}${done ? ' is-done' : ''}${Math.floor(i / PAGE) + 1 === page ? ' is-here' : ''}`}
+                      onClick={() => jumpTo(q)}
+                      aria-label={`Question ${num}${q.difficulty ? `, ${LEVEL[q.difficulty]}` : ''}${done ? ', reviewed' : ''}`}
+                    >
+                      {pad(num)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
           <div className="da-switches">
             <button type="button" className="da-switch" aria-pressed={allOpen} onClick={() => setAllOpen((v) => !v)}>
               {allOpen ? 'Hide all answers' : 'Show all answers'}
-            </button>
-            <button type="button" className="da-switch" aria-pressed={onlyMarked} onClick={() => setOnlyMarked((v) => !v)}>
-              {onlyMarked ? 'Show every question' : 'Bookmarked only'}
             </button>
           </div>
         </div>
 
         {list.length === 0 ? (
-          <p className="da-card da-quiet">{onlyMarked ? 'No bookmarked questions in this topic yet.' : 'No questions here yet.'}</p>
+          <p className="da-card da-quiet">{filter === 'marked' ? 'No bookmarked questions in this topic yet.' : filter === 'all' ? 'No questions here yet.' : `No ${LEVEL[filter].toLowerCase()} questions in this topic.`}</p>
         ) : (
           <ol className="da-questions" start={(page - 1) * PAGE + 1}>
             {shown.map((q, idx) => {
-              const n = (page - 1) * PAGE + idx + 1;
+              const n = numberOf.get(q.key) ?? (page - 1) * PAGE + idx + 1;
               const r = record(st, q.key);
               const done = isReviewed(st, q.key);
               const open = allOpen || revealed.has(q.key);
