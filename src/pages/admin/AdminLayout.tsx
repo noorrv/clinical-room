@@ -30,6 +30,7 @@ const SECTIONS: Array<{ to: string; label: string; end?: boolean; count?: keyof 
   { to: '/admin/examiners', label: 'Examiners' },
   { to: '/admin/topics', label: 'Topics' },
   { to: '/admin/specialties', label: 'Specialties' },
+  { to: '/admin/announcements', label: 'Announcements' },
   { to: '/admin/registrations', label: 'Registrations', count: 'pending' },
 ];
 

@@ -658,6 +658,24 @@
   color: #3f5a2e;
 }
 
+.admin-pill--pinned {
+  color: #8a5a12;
+}
+
+/* announcements: the notice's title over its message, and the date it was written */
+.admin-notice-cell {
+  max-width: 34rem;
+}
+
+.admin-notice-title {
+  display: block;
+}
+
+.admin-date {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 .admin-count {
   font-variant-numeric: tabular-nums;
 }

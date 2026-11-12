@@ -9,3 +9,4 @@ export { QuestionEditorPage } from './QuestionEditorPage';
 export { QuestionsPage } from './QuestionsPage';
 export { SpecialtiesPage } from './SpecialtiesPage';
 export { RegistrationsPage } from './RegistrationsPage';
+export { AnnouncementsPage } from './AnnouncementsPage';
