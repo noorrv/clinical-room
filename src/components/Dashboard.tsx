@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useStudy } from '../study/store';
 import { computeStreak, type DayState, type StreakInfo } from '../study/streak';
-import { LilyPlant, MiniLily } from './art/Lily';
+import { localDay } from '../study/store';
+import { GardenLily, GrowingLily, type LilyStage } from './art/GrowingLily';
 import {
 } from '../data/homepage';
 import { formatClock, spokenDuration, useStudyTimer } from '../hooks/useStudyTimer';
@@ -114,7 +115,7 @@ export function StreakCard() {
     return (
       <section className="streak streak--invite" aria-labelledby="streak-title">
         <div className="streak__plant" aria-hidden>
-          <LilyPlant stage={0} />
+          <GardenLily stage={5} />
         </div>
         <div className="streak__text">
           <h2 id="streak-title" className="streak__title">
@@ -129,19 +130,22 @@ export function StreakCard() {
     );
   }
 
-  return <StreakView info={info} />;
+  // every day with at least one question studied left a flower in the garden
+  const flowers = Object.values(st.days).filter((keys) => keys.length > 0).length;
+  return <StreakView info={info} flowers={flowers} />;
 }
 
 /** The streak card's face, given the numbers (also used by the dev preview). */
-export function StreakView({ info }: { info: StreakInfo }) {
-  const stage = Math.min(info.today, 5) as 0 | 1 | 2 | 3 | 4 | 5;
-  const wilted = info.today === 0 && info.yesterday === 'missed';
+export function StreakView({ info, flowers }: { info: StreakInfo; flowers?: number }) {
+  // one stage for each question studied today: five make a full bloom; a new day starts from soil
+  const stage = Math.min(info.today, 5) as LilyStage;
   const done = info.today >= info.goal;
+  const todayKey = localDay();
 
   return (
     <section className="streak" aria-labelledby="streak-title">
-      <div className="streak__plant" aria-hidden>
-        <LilyPlant stage={stage} wilted={wilted} />
+      <div className="streak__plant">
+        <GrowingLily stage={stage} day={todayKey} />
       </div>
       <div className="streak__text">
         <h2 id="streak-title" className="streak__title">
@@ -158,12 +162,19 @@ export function StreakView({ info }: { info: StreakInfo }) {
           </span>
           {done ? 'Today’s five are done' : `${info.today} of ${info.goal} today`}
         </p>
-        <p className="streak__best">Best: {info.best} {info.best === 1 ? 'day' : 'days'}</p>
+        <p className="streak__best">
+          Best: {info.best} {info.best === 1 ? 'day' : 'days'}
+        </p>
+        {flowers ? (
+          <p className="streak__best">
+            {flowers} {flowers === 1 ? 'flower' : 'flowers'} in your garden
+          </p>
+        ) : null}
       </div>
       <ol className="streak__week" aria-label="This week">
         {info.week.map((d) => (
-          <li key={d.day} aria-label={`${new Date(d.day + 'T12:00').toLocaleDateString(undefined, { weekday: 'long' })}: ${DAY_WORD[d.state]}`}>
-            <MiniLily state={d.state} />
+          <li key={d.day} aria-label={`${new Date(d.day + 'T12:00').toLocaleDateString(undefined, { weekday: 'long' })}: ${DAY_WORD[d.state]}${d.count ? `, ${Math.min(d.count, 5) === 5 ? 'a lily in full bloom' : `a lily at stage ${Math.min(d.count, 5)} of 5`}` : ''}`}>
+            <span className="streak__bed">{d.state === 'before' ? null : <GardenLily stage={Math.min(d.count, 5) as LilyStage} faint={d.state === 'future'} />}</span>
             <span aria-hidden>{d.label}</span>
           </li>
         ))}

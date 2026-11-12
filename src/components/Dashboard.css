@@ -431,6 +431,47 @@
   height: 28px;
 }
 
+/* today's lily (GrowingLily): the stages stacked in one frame, each growing in over the last */
+.glily {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 299 / 434;
+}
+
+.glily__sway,
+.glily__art {
+  position: absolute;
+  inset: 0;
+}
+
+.glily__art {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: 50% 100%;
+  user-select: none;
+  will-change: transform, opacity;
+}
+
+/* the garden row: each day's lily, small and still, standing on the same soil line */
+.streak__bed {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 40px;
+}
+
+.glily-mini {
+  display: block;
+  height: 40px;
+  width: auto;
+  user-select: none;
+}
+
+.glily-mini.is-faint {
+  opacity: 0.35;
+}
+
 /* the invitation for guests and visitors */
 .streak--invite .streak__invite {
   margin-top: 8px;
