@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase';
 import { computeStreak } from '../../study/streak';
 import { localDay, record, useStudy, type StudyState } from '../../study/store';
 import { ContinueStudyingCard } from '../../components/ContinueCard';
+import { MeNav } from './MeNav';
 import '../auth/auth.css';
 import './profile.css';
 
@@ -67,6 +68,7 @@ export function ProfilePage() {
   return (
     <div className="profile-page">
       <div className="profile container">
+        <MeNav />
         <section className="profile-card" aria-labelledby="profile-name">
           <div className="profile-card__pic">
             <UserAvatar profile={profile} size={128} label={`${profile.full_name}’s picture`} />

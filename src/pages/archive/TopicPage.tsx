@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { TYPE_LABEL, type QuestionRef, type Specialty } from '../../content';
-import type { Question } from '../../content/types';
-import { record, study, useStudy, type PositionFilter } from '../../study/store';
+import type { Question, SpecialtyId } from '../../content/types';
+import { record, study, useStudy, type PositionFilter, type TopicMarkState } from '../../study/store';
 import { ANSWER_ORDER, GIVEN } from '../specialty/QuestionPage';
 import { Ribbon } from '../specialty/ui';
 import { Bow, CheckSeal, Star } from './art';
@@ -74,6 +74,27 @@ function Level({ n }: { n: 1 | 2 | 3 }) {
       </span>
       {LEVEL[n]}
     </span>
+  );
+}
+
+/** The student's own mark on the topic: not marked, studying, or completed (separate from automatic progress). */
+function TopicMark({ sp, topicId, hidden }: { sp: SpecialtyId; topicId: string; hidden?: boolean }) {
+  const st = useStudy();
+  if (hidden) return null;
+  const mark = st.topicMarks?.[`${sp}/${topicId}`]?.state ?? null;
+  const opts: Array<[TopicMarkState | null, string]> = [
+    [null, 'Not marked'],
+    ['studying', 'Studying'],
+    ['completed', 'Completed'],
+  ];
+  return (
+    <div className="da-mark-topic" role="group" aria-label="Your mark on this topic">
+      {opts.map(([v, label]) => (
+        <button key={label} type="button" aria-pressed={mark === v} onClick={() => study.markTopic(sp, topicId, v)}>
+          {label}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -243,6 +264,7 @@ export function TopicPage({ sp }: { sp: Specialty }) {
               <h1 className="da-h1">
                 <bdi>{section.name}</bdi>
               </h1>
+              <TopicMark sp={sp.id} topicId={section.id} hidden={section.id === OTHER} />
               <p className="da-topic-head__meta">
                 {section.questions.length} {section.questions.length === 1 ? 'question' : 'questions'} · {prog.done} reviewed
                 {prog.complete && <CheckSeal className="da-inline-seal" />}

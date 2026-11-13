@@ -70,6 +70,23 @@ export interface Position {
   at: number;
 }
 
+export type TopicMarkState = 'studying' | 'completed';
+
+/** A topic the student marked by hand; state null = the mark was removed (kept so devices agree). */
+export interface TopicMark {
+  state: TopicMarkState | null;
+  at: number;
+}
+
+export type GoalPeriod = 'week' | 'month' | 'total';
+
+/** How many questions the student aims to complete in a subject; target 0 = the goal was removed. */
+export interface SubjectGoal {
+  target: number;
+  period: GoalPeriod;
+  at: number;
+}
+
 export interface StudyState {
   version: 1;
   /** local date (YYYY-MM-DD) → questions the student actually worked on that day (for the streak) */
@@ -80,12 +97,18 @@ export interface StudyState {
   mocks: MockResult[];
   /** scope → where the student stopped in that list */
   positions?: Record<string, Position>;
+  /** "specialty/topicId" → the student's own mark on that topic */
+  topicMarks?: Record<string, TopicMark>;
+  /** "specialty/subjectId" → the student's goal for that subject */
+  goals?: Record<string, SubjectGoal>;
+  /** local date → seconds of study timed with the study timer that day */
+  seconds?: Record<string, number>;
 }
 
 /** The old single-browser record, from before accounts. Moved into the first account that signs in. */
 export const LEGACY_KEY = 'clinical-room:study:v1';
 const SESSION_GAP = 30 * 60 * 1000;
-export const EMPTY: StudyState = { version: 1, days: {}, questions: {}, recent: [], sessions: [], mocks: [], positions: {} };
+export const EMPTY: StudyState = { version: 1, days: {}, questions: {}, recent: [], sessions: [], mocks: [], positions: {}, topicMarks: {}, goals: {}, seconds: {} };
 
 /** localStorage key of the signed-in account's copy, or null when nobody is attached. */
 let storageKey: string | null = null;
@@ -112,7 +135,15 @@ export const dirty = {
   sessions: new Set<string>(),
   mocks: new Set<string>(),
   positions: new Set<string>(),
+  topicMarks: new Set<string>(),
+  goals: new Set<string>(),
+  seconds: new Set<string>(),
 };
+
+/** Empties every "changed since the last save" list. */
+export function clearDirty() {
+  Object.values(dirty).forEach((s) => s.clear());
+}
 let onDirty: (() => void) | null = null;
 
 function commit(next: StudyState) {
@@ -133,12 +164,7 @@ export function switchRecord(userId: string | null, initial: StudyState, saveDir
   storageKey = userId ? `${LEGACY_KEY}:${userId}` : null;
   onDirty = saveDirty;
   if (!userId) {
-    dirty.days.clear();
-    dirty.questions.clear();
-    dirty.recent.clear();
-    dirty.sessions.clear();
-    dirty.mocks.clear();
-    dirty.positions.clear();
+    clearDirty();
   }
   commit(initial);
 }
@@ -148,12 +174,7 @@ export function switchRecord(userId: string | null, initial: StudyState, saveDir
 export function switchToGuestRecord() {
   storageKey = LEGACY_KEY;
   onDirty = null;
-  dirty.days.clear();
-  dirty.questions.clear();
-  dirty.recent.clear();
-  dirty.sessions.clear();
-  dirty.mocks.clear();
-  dirty.positions.clear();
+  clearDirty();
   commit(loadFrom(LEGACY_KEY));
 }
 
@@ -288,6 +309,30 @@ export const study = {
       .slice(0, 60);
     dirty.positions.add(p.scope);
     commit({ ...state, positions: Object.fromEntries(kept.map((x) => [x.scope, x])) });
+  },
+
+  /** Marks a topic as being studied or completed by hand, or removes the mark (null). */
+  markTopic(specialty: SpecialtyId, topicId: string, mark: TopicMarkState | null) {
+    const k = `${specialty}/${topicId}`;
+    dirty.topicMarks.add(k);
+    commit({ ...state, topicMarks: { ...(state.topicMarks ?? {}), [k]: { state: mark, at: Date.now() } } });
+  },
+
+  /** Sets a subject goal, or removes it (target 0). */
+  setGoal(specialty: SpecialtyId, subjectId: string, target: number, period: GoalPeriod) {
+    const k = `${specialty}/${subjectId}`;
+    dirty.goals.add(k);
+    commit({ ...state, goals: { ...(state.goals ?? {}), [k]: { target: Math.max(0, Math.min(2000, Math.round(target))), period, at: Date.now() } } });
+  },
+
+  /** Adds timed study to the day it was spent. */
+  addTime(seconds: number, at: number = Date.now()) {
+    const s = Math.round(seconds);
+    if (s < 1) return;
+    const day = localDay(at);
+    const total = Math.min(86400, (state.seconds?.[day] ?? 0) + s);
+    dirty.seconds.add(day);
+    commit({ ...state, seconds: { ...(state.seconds ?? {}), [day]: total } });
   },
 
   /** Wipes everything (with the student's confirmation in the UI), here and on the server. */

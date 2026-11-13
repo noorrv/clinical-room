@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { study } from '../study/store';
 
 export type TimerStatus = 'idle' | 'running' | 'paused';
 
@@ -42,8 +43,16 @@ function save(s: TimerState) {
 export function useStudyTimer() {
   const [state, setState] = useState<TimerState>(load);
   const [now, setNow] = useState(() => Date.now());
+  const live = useRef(state);
+  live.current = state;
 
   useEffect(() => save(state), [state]);
+
+  // each running stretch is added to the student's study time for the day, when it ends
+  const bank = () => {
+    const s = live.current;
+    if (s.status === 'running' && s.startedAt) study.addTime((Date.now() - s.startedAt) / 1000);
+  };
 
   useEffect(() => {
     if (state.status !== 'running') return;
@@ -60,6 +69,7 @@ export function useStudyTimer() {
   }, []);
 
   const pause = useCallback(() => {
+    bank();
     setState((s) =>
       s.status !== 'running' || !s.startedAt
         ? s
@@ -67,7 +77,10 @@ export function useStudyTimer() {
     );
   }, []);
 
-  const stop = useCallback(() => setState(IDLE), []);
+  const stop = useCallback(() => {
+    bank();
+    setState(IDLE);
+  }, []);
 
   return { status: state.status, elapsed, start, pause, resume: start, stop };
 }

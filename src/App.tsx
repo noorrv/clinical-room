@@ -13,7 +13,7 @@ import { StudySync } from './study/sync';
 const studyModule = () => import('./pages/studyRoutes');
 const SpecialtyRoutes = lazy(() => studyModule().then((m) => ({ default: m.SpecialtyRoutes })));
 const ArchiveSearch = lazy(() => studyModule().then((m) => ({ default: m.ArchiveSearch })));
-const ProfilePage = lazy(() => studyModule().then((m) => ({ default: m.ProfilePage })));
+const MeRoutes = lazy(() => studyModule().then((m) => ({ default: m.MeRoutes })));
 
 /** Fetch the study pages while the browser is idle, so the first click into them doesn't wait. */
 function PrefetchStudyPages() {
@@ -87,13 +87,13 @@ export default function App() {
             }
           />
           <Route
-            path="/me"
+            path="/me/*"
             element={
               <RequireApproved>
                 <ContentGate>
                   <main id="main">
                     <Suspense fallback={<Waiting />}>
-                      <ProfilePage />
+                      <MeRoutes />
                     </Suspense>
                   </main>
                 </ContentGate>

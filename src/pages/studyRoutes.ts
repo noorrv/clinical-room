@@ -5,4 +5,4 @@
 */
 export { ArchiveSearch } from './archive/ArchiveSearch';
 export { SpecialtyRoutes } from './specialty/SpecialtyRoutes';
-export { ProfilePage } from './profile/ProfilePage';
+export { MeRoutes } from './profile/MeRoutes';

@@ -294,6 +294,20 @@ function AccountPanel({ id, open, onDone }: { id: string; open: boolean; onDone:
                 </Link>
               </li>
             )}
+            {(profile.status === 'approved' || isAdmin) && (
+              <li>
+                <Link to="/me/bookmarks" onClick={onDone}>
+                  Bookmarks
+                </Link>
+              </li>
+            )}
+            {(profile.status === 'approved' || isAdmin) && (
+              <li>
+                <Link to="/me/tracker" onClick={onDone}>
+                  Tracker
+                </Link>
+              </li>
+            )}
             <li>
               <Link to="/account" onClick={onDone}>
                 My account

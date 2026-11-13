@@ -1537,3 +1537,37 @@
 .da-level__pips i.is-on {
   background: var(--lv);
 }
+
+/* the student's own mark on a topic, under its title */
+.da-mark-topic {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0 2px;
+  padding: 3px;
+  border-radius: 99px;
+  border: 1px solid color-mix(in srgb, var(--da-olive) 25%, transparent);
+}
+
+.da-mark-topic button {
+  min-height: 30px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 99px;
+  background: none;
+  color: var(--da-olive);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.da-mark-topic button[aria-pressed='true'] {
+  background: var(--da-olive);
+  color: var(--da-cream);
+}
+
+.da-mark-topic button:focus-visible {
+  outline: 2px solid var(--da-olive);
+  outline-offset: 2px;
+}
