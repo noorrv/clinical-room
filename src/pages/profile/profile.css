@@ -1,0 +1,269 @@
+/* ───────── The student's profile: a library card, then their study and account ───────── */
+
+/* the page itself: grainy cream paper, like the study pages */
+.profile-page {
+  min-height: 70vh;
+  background-color: #efe6d4;
+  background-image: var(--paper-tooth-fine), var(--paper-specks);
+  background-size:
+    260px 260px,
+    360px 360px;
+  background-blend-mode: multiply;
+}
+
+.profile {
+  display: grid;
+  gap: clamp(18px, 3vw, 28px);
+  max-width: 880px;
+  padding-block: clamp(22px, 4vw, 44px) 72px;
+  color: var(--ink);
+}
+
+.profile-card,
+.profile-section {
+  position: relative;
+  padding: clamp(18px, 3vw, 28px);
+  border-radius: var(--r-md);
+  background: var(--paper-tooth), linear-gradient(180deg, #fbf6ea, #f3ead6);
+  background-size: 260px, auto;
+  background-blend-mode: multiply, normal;
+  border: 1px solid rgba(111, 29, 27, 0.28);
+  outline: 1px solid rgba(111, 29, 27, 0.2);
+  outline-offset: -7px;
+  box-shadow: var(--shadow-card);
+}
+
+/* the library card: picture beside the name */
+.profile-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(16px, 3vw, 28px);
+}
+
+.profile-card__pic {
+  display: grid;
+  place-items: center;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: #f7efdf;
+  box-shadow:
+    0 0 0 1.5px rgba(111, 29, 27, 0.35),
+    0 0 0 6px #f7efdf,
+    0 0 0 7px rgba(111, 29, 27, 0.2);
+}
+
+.profile-card__kicker {
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  font-variant: small-caps;
+  color: var(--burgundy, #6f1d1b);
+}
+
+.profile-card__name {
+  margin: 2px 0 4px;
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 1.3rem + 2vw, 2.6rem);
+  font-weight: 500;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.profile-card__meta {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.profile-card__edit {
+  margin-top: 14px;
+}
+
+.profile-section__title {
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-size: var(--step-2, 1.5rem);
+  font-weight: 500;
+  color: var(--burgundy, #6f1d1b);
+}
+
+/* study figures */
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.profile-stats > div {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 252, 244, 0.7);
+  border: 1px solid rgba(111, 29, 27, 0.14);
+}
+
+.profile-stats dt {
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+}
+
+.profile-stats dd {
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--burgundy, #6f1d1b);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.profile-stats dd span {
+  font-family: inherit;
+  font-size: 0.5em;
+  color: var(--ink-soft);
+}
+
+/* account details */
+.profile-account {
+  display: grid;
+  margin: 0;
+}
+
+.profile-account > div {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.35fr) 1fr;
+  gap: 4px 16px;
+  padding: 10px 0;
+  border-bottom: 1px dotted rgba(111, 29, 27, 0.25);
+}
+
+.profile-account dt {
+  color: var(--ink-soft);
+}
+
+.profile-account dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.profile-note {
+  margin: 12px 0 0;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+/* the edit dialog */
+.profile-dialog {
+  width: min(560px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: clamp(18px, 3vw, 26px);
+  border: 1px solid rgba(111, 29, 27, 0.35);
+  border-radius: var(--r-md);
+  background: #fbf6ea;
+  color: var(--ink);
+  box-shadow: 0 30px 60px -20px rgba(30, 12, 6, 0.5);
+}
+
+.profile-dialog::backdrop {
+  background: rgba(30, 18, 10, 0.45);
+}
+
+.profile-dialog form {
+  display: grid;
+  gap: 16px;
+}
+
+.profile-dialog__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 500;
+}
+
+.profile-dialog__pic {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-dialog__pic-actions {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.avatar-grid legend {
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+}
+
+.avatar-grid__item {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 150ms ease;
+}
+
+.avatar-grid__item input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.avatar-grid__item:hover {
+  transform: translateY(-1px);
+}
+
+.avatar-grid__item.is-on {
+  box-shadow: 0 0 0 2.5px var(--burgundy, #6f1d1b);
+}
+
+.avatar-grid__item:has(input:focus-visible) {
+  outline: 2px solid var(--burgundy, #6f1d1b);
+  outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+  .profile-card {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    text-align: center;
+  }
+
+  .profile-account > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .profile-dialog__pic {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    text-align: center;
+  }
+
+  .profile-dialog__pic-actions {
+    justify-items: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-grid__item {
+    transition: none;
+  }
+}

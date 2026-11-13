@@ -467,6 +467,67 @@ end $$;
 reset role;
 select set_config('request.jwt.claims', '', false);
 
+-- ── profile and avatars (migration 20261113000010) ──
+-- nothing here is kept: a write that wrongly succeeds is undone at once and reported as not ok
+
+select set_config('request.jwt.claims', '', false);
+set role anon;
+do $$
+begin
+  begin
+    perform public.update_my_profile('Someone', null, null, null);
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: edit a profile', 'refused', 'allowed', 'false') || E'\n', false);
+  exception when others then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: edit a profile', 'refused', 'refused', 'true') || E'\n', false);
+  end;
+end $$;
+reset role;
+
+-- the pending student may not edit their profile yet
+select set_config('request.jwt.claims', json_build_object('sub', current_setting('test.pending'), 'role', 'authenticated')::text, false);
+set role authenticated;
+do $$
+begin
+  begin
+    perform public.update_my_profile('Pending Student', 'preset', 'bow-tie', null);
+    raise exception 'undo';
+  exception when others then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: edit own profile', 'refused', case when sqlerrm = 'undo' then 'allowed' else 'refused' end, (sqlerrm <> 'undo')::text) || E'\n', false);
+  end;
+end $$;
+reset role;
+
+-- the admin (approved): no direct writes to profiles, no photo outside their own folder
+select set_config('request.jwt.claims', json_build_object('sub', current_setting('test.admin'), 'role', 'authenticated')::text, false);
+set role authenticated;
+do $$
+declare n int;
+begin
+  begin
+    update public.profiles set status = 'rejected' where id = current_setting('test.admin')::uuid;
+    get diagnostics n = row_count;
+    raise exception 'undo:%', n;
+  exception when others then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'signed in: change own account status directly', 'refused or 0 rows',
+      case when sqlerrm like 'undo:%' then split_part(sqlerrm, ':', 2) || ' rows' else 'refused' end,
+      (sqlerrm not like 'undo:%' or sqlerrm = 'undo:0')::text) || E'\n', false);
+  end;
+  begin
+    perform public.update_my_profile('Admin', 'upload', null, '00000000-0000-0000-0000-000000000000/x.webp');
+    raise exception 'undo';
+  exception when others then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'signed in: use a photo from another folder', 'refused', case when sqlerrm = 'undo' then 'allowed' else 'refused' end, (sqlerrm <> 'undo')::text) || E'\n', false);
+  end;
+  begin
+    insert into storage.objects (bucket_id, name) values ('avatars', '00000000-0000-0000-0000-000000000000/x.webp');
+    raise exception 'undo';
+  exception when others then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'signed in: upload into another student''s folder', 'refused', case when sqlerrm = 'undo' then 'allowed' else 'refused' end, (sqlerrm <> 'undo')::text) || E'\n', false);
+  end;
+end $$;
+reset role;
+select set_config('request.jwt.claims', '', false);
+
 -- ── results ──
 select split_part(line, '|', 1) as check_name,
        split_part(line, '|', 2) as expected,

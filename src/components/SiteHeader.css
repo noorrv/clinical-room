@@ -658,3 +658,10 @@
   margin: 8px 8px 0;
   font-size: 0.92rem;
 }
+
+/* a student's uploaded photo, wherever their picture shows */
+.user-photo {
+  display: block;
+  border-radius: 50%;
+  object-fit: cover;
+}

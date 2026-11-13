@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { UserAvatar } from './UserAvatar';
 import { useAuth } from '../auth/AuthProvider';
 import { enterGuest, leaveGuest, useGuestFlag } from '../auth/guest';
 import { allSpecialties, questionPath, questionsOf, TYPE_LABEL, useContentVersion } from '../content';
@@ -9,18 +10,6 @@ import { AntiqueBell, CloseLines, Garland, IvT, MenuLines, SearchGlass } from '.
 import './SiteHeader.css';
 
 type Panel = 'menu' | 'search' | 'alerts' | 'account' | null;
-
-function Avatar() {
-  return (
-    <svg viewBox="0 0 40 40" width="40" height="40" aria-hidden>
-      <circle cx="20" cy="20" r="20" fill="#e9d6b4" />
-      <path d="M8 36 Q10 26 20 26 Q30 26 32 36 Z" fill="#6f1d1b" />
-      <path d="M16 26 L20 31 L24 26" fill="#f4e8d0" />
-      <circle cx="20" cy="17" r="7.5" fill="#d7a77e" />
-      <path d="M12.4 16 Q12 8 20 8 Q28 8 27.6 16 Q25 12 20 12.6 Q15 12 12.4 16 Z" fill="#3b2416" />
-    </svg>
-  );
-}
 
 /** Router link for in-app addresses, plain link for anything else. */
 function AppLink({ href, children, ...rest }: { href: string; children: ReactNode; onClick?: () => void; 'aria-current'?: 'page' }) {
@@ -139,7 +128,7 @@ export function SiteHeader() {
             aria-controls={`${ids}-account`}
             onClick={() => toggle('account')}
           >
-            <Avatar />
+            <HeaderAvatar />
           </button>
           <button
             type="button"
@@ -276,6 +265,12 @@ function whenText(d: Date) {
 
 const STATUS_WORD = { pending: 'Awaiting review', approved: 'Approved', rejected: 'Not approved' } as const;
 
+/** The signed-in student's own picture, or the default figure. */
+function HeaderAvatar() {
+  const { profile } = useAuth();
+  return <UserAvatar profile={profile} size={40} />;
+}
+
 function AccountPanel({ id, open, onDone }: { id: string; open: boolean; onDone: () => void }) {
   const { configured, session, profile, isAdmin, signOut } = useAuth();
   const guest = useGuestFlag();
@@ -292,6 +287,13 @@ function AccountPanel({ id, open, onDone }: { id: string; open: boolean; onDone:
             <span className={`account-panel__status account-panel__status--${profile.status}`}>{STATUS_WORD[profile.status]}</span>
           </p>
           <ul>
+            {(profile.status === 'approved' || isAdmin) && (
+              <li>
+                <Link to="/me" onClick={onDone}>
+                  My profile
+                </Link>
+              </li>
+            )}
             <li>
               <Link to="/account" onClick={onDone}>
                 My account

@@ -18,6 +18,10 @@ export interface Profile {
   created_at: string;
   reviewed_at: string | null;
   review_note: string | null;
+  /** the student's picture: an illustrated avatar, an uploaded photo, or neither (added by migration 010) */
+  avatar_kind?: 'preset' | 'upload' | null;
+  avatar_preset?: string | null;
+  avatar_path?: string | null;
 }
 
 interface AuthState {
