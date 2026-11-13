@@ -28,6 +28,9 @@ interface QuestionRow {
   difficulty?: number | null;
 }
 
+/** "References — Appendix and Appendicitis" and the like. */
+export const isReferenceList = (title: string) => /^\s*references\b/i.test(title);
+
 /* Development only: draft ratings (src/dev/difficulty-preview.json, kept off git) until the difficulty column exists. */
 const draftLevels: Record<string, number> = import.meta.env.DEV
   ? (Object.values(import.meta.glob('../dev/difficulty-preview.json', { eager: true, import: 'default' }))[0] as Record<string, number> | undefined) ?? {}
@@ -100,6 +103,9 @@ export async function fetchContent(): Promise<Record<SpecialtyId, SpecialtyConte
   const topLinks = linksFor(qt.data as Array<Record<string, string>> | null, 'topic_id');
 
   for (const q of (qs.data ?? []) as QuestionRow[]) {
+    // a topic's reference list is stored as a question but isn't one: students don't see it
+    // (it stays in the database and in the admin dashboard, unchanged)
+    if (isReferenceList(q.title)) continue;
     const k = `${q.specialty_id}/${q.id}`;
     out[q.specialty_id]?.questions.push({
       id: q.id,
