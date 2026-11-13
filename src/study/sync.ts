@@ -13,6 +13,7 @@ import {
   switchRecord,
   switchToGuestRecord,
   type MockResult,
+  type Position,
   type QuestionRecord,
   type Session,
   type Status,
@@ -81,18 +82,27 @@ function merge(local: StudyState, other: StudyState, markLocalWins: boolean): St
   }
   const mocks = [...mockMap.values()].sort((a, b) => b.at - a.at).slice(0, 50);
 
-  return { version: 1, days, questions, recent, sessions, mocks };
+  const positions: Record<string, Position> = { ...(other.positions ?? {}) };
+  for (const [scope, p] of Object.entries(local.positions ?? {})) {
+    if (!positions[scope] || p.at > positions[scope].at) {
+      positions[scope] = p;
+      if (markLocalWins) dirty.positions.add(scope);
+    }
+  }
+
+  return { version: 1, days, questions, recent, sessions, mocks, positions };
 }
 
 /* ── reading the server copy ── */
 
 async function pull(): Promise<StudyState> {
-  const [sd, qp, rv, ss, mr] = await Promise.all([
+  const [sd, qp, rv, ss, mr, sp] = await Promise.all([
     supabase.from('study_days').select('day, question_keys').order('day', { ascending: false }).limit(420),
     supabase.from('question_progress').select('question_key, status, bookmarked, note, note_updated_at, updated_at'),
     supabase.from('recent_views').select('question_key, viewed_at').order('viewed_at', { ascending: false }).limit(40),
     supabase.from('study_sessions').select('id, started_at, last_at, viewed, changes').order('started_at', { ascending: false }).limit(60),
     supabase.from('mock_results').select('id, at, scope, stations').order('at', { ascending: false }).limit(50),
+    supabase.from('study_position').select('scope, specialty_id, topic_id, question_key, list_index, page, filter, updated_at').order('updated_at', { ascending: false }).limit(60),
   ]);
   const failed = [qp, rv, ss, mr].find((r) => r.error);
   if (failed?.error) throw new Error(failed.error.message);
@@ -111,9 +121,16 @@ async function pull(): Promise<StudyState> {
       ...(r.note_updated_at ? { noteUpdatedAt: ms(r.note_updated_at) } : {}),
     };
   }
+  // study_position arrives in migration 011: until it exists, positions stay on this device
+  const positions: Record<string, Position> = {};
+  for (const r of sp.error ? [] : sp.data ?? []) {
+    positions[r.scope] = { scope: r.scope, specialty: r.specialty_id, topic: r.topic_id ?? '', key: r.question_key, index: r.list_index, page: r.page, filter: r.filter, at: ms(r.updated_at) };
+  }
+
   return {
     version: 1,
     days,
+    positions,
     questions,
     recent: (rv.data ?? []).map((r) => ({ key: r.question_key, at: ms(r.viewed_at) })),
     sessions: (ss.data ?? []).map(
@@ -143,7 +160,8 @@ async function flush() {
   const rKeys = take<string>(dirty.recent);
   const sIds = take<string>(dirty.sessions);
   const mIds = take<string>(dirty.mocks);
-  if (!dKeys.length && !qKeys.length && !rKeys.length && !sIds.length && !mIds.length) return;
+  const pIds = take<string>(dirty.positions);
+  if (!dKeys.length && !qKeys.length && !rKeys.length && !sIds.length && !mIds.length && !pIds.length) return;
 
   flushing = true;
   const user = attached;
@@ -178,7 +196,14 @@ async function flush() {
   });
   if (mRows.length) jobs.push(supabase.from('mock_results').upsert(mRows, { onConflict: 'user_id,id' }));
 
-  const results = await Promise.all(jobs);
+  const pRows = pIds.flatMap((scope) => {
+    const p = s.positions?.[scope];
+    return p ? [{ scope, specialty_id: p.specialty, topic_id: p.topic || null, question_key: p.key, list_index: p.index, page: p.page, filter: p.filter, updated_at: iso(p.at) }] : [];
+  });
+  // positions are a convenience: if the table isn't there yet, don't hold up the rest of the record
+  const posJob = pRows.length ? supabase.from('study_position').upsert(pRows, { onConflict: 'user_id,scope' }) : null;
+
+  const [results] = await Promise.all([Promise.all(jobs), posJob]);
   flushing = false;
   if (results.some((r) => r.error) && attached === user) {
     // keep the changes and try again shortly (offline, or the session was refreshing)
@@ -187,8 +212,9 @@ async function flush() {
     rKeys.forEach((k) => dirty.recent.add(k));
     sIds.forEach((k) => dirty.sessions.add(k));
     mIds.forEach((k) => dirty.mocks.add(k));
+    pIds.forEach((k) => dirty.positions.add(k));
     scheduleFlush(10_000);
-  } else if (dirty.days.size || dirty.questions.size || dirty.recent.size || dirty.sessions.size || dirty.mocks.size) {
+  } else if (dirty.days.size || dirty.questions.size || dirty.recent.size || dirty.sessions.size || dirty.mocks.size || dirty.positions.size) {
     scheduleFlush();
   }
 }
@@ -201,8 +227,9 @@ async function clearServerCopy() {
   dirty.recent.clear();
   dirty.sessions.clear();
   dirty.mocks.clear();
+  dirty.positions.clear();
   await Promise.all(
-    ['study_days', 'question_progress', 'recent_views', 'study_sessions', 'mock_results'].map((t) => supabase.from(t).delete().eq('user_id', u)),
+    ['study_days', 'question_progress', 'recent_views', 'study_sessions', 'mock_results', 'study_position'].map((t) => supabase.from(t).delete().eq('user_id', u)),
   );
 }
 
@@ -242,6 +269,7 @@ async function attach(userId: string) {
       s.recent.forEach((r) => dirty.recent.add(r.key));
       s.sessions.forEach((x) => dirty.sessions.add(x.id));
       s.mocks.forEach((m) => dirty.mocks.add(m.id));
+      Object.keys(s.positions ?? {}).forEach((k) => dirty.positions.add(k));
       scheduleFlush(15_000);
     }
   }

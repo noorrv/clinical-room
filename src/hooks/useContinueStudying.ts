@@ -44,7 +44,12 @@ const RECENT_TO_TRY = 8;
 export function useContinueStudying(): Continue {
   const st = useStudy();
   const feed = useNotifications(null);
-  const keys = st.recent.slice(0, RECENT_TO_TRY).map((r) => r.key);
+  // the newest places first: questions opened, and where the student stopped in a topic's list
+  const moments = [
+    ...st.recent.map((r) => ({ key: r.key, at: r.at })),
+    ...Object.values(st.positions ?? {}).flatMap((p) => (p.key ? [{ key: p.key, at: p.at }] : [])),
+  ].sort((a, b) => b.at - a.at);
+  const keys = [...new Set(moments.map((m) => m.key))].slice(0, RECENT_TO_TRY);
   const keySig = keys.join('|');
   const [resolved, setResolved] = useState<Resolved | null | undefined>(undefined);
 
@@ -90,8 +95,11 @@ export function useContinueStudying(): Continue {
         topicKeys = (visible.data ?? []).map((r) => `${sp}/${r.id}`);
       }
       const spec = specialtyById(sp);
-      const href =
-        topicId ? `/specialties/${spec.slug}/topics/${topicId}#q-${encodeURIComponent(q.id)}` : questionPath(spec, q.id);
+      // back to the exact place: the topic, the filter they had and the question they were on
+      const pos = Object.values(st.positions ?? {}).find((p) => p.key === key);
+      const listTopic = pos?.topic || topicId;
+      const filter = pos && pos.filter !== 'all' ? `?filter=${pos.filter}` : '';
+      const href = listTopic ? `/specialties/${spec.slug}/topics/${listTopic}${filter}#q-${encodeURIComponent(q.id)}` : questionPath(spec, q.id);
       if (alive)
         setResolved({ key, title: maskNames(q.title), specialty: sp, topicName: topic?.data?.name, doctorName: doctor?.data?.name, href, topicKeys });
     })().catch(() => alive && setResolved(null));
@@ -105,7 +113,7 @@ export function useContinueStudying(): Continue {
   return useMemo<Continue>(() => {
     if (resolved === undefined) return { state: 'loading' };
     if (resolved) {
-      const at = st.recent.find((r) => r.key === resolved.key)?.at ?? Date.now();
+      const at = Math.max(st.recent.find((r) => r.key === resolved.key)?.at ?? 0, ...Object.values(st.positions ?? {}).filter((p) => p.key === resolved.key).map((p) => p.at)) || Date.now();
       return {
         state: 'resume',
         title: resolved.title,

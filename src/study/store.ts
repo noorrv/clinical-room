@@ -53,6 +53,23 @@ export interface MockResult {
   stations: MockStationResult[];
 }
 
+export type PositionFilter = 'all' | 'easy' | 'moderate' | 'difficult' | 'bookmarked';
+
+/** Where the student stopped in one list (a topic's questions), for "Continue studying". */
+export interface Position {
+  /** 'topic:surgery/appendix' */
+  scope: string;
+  specialty: SpecialtyId;
+  topic: string;
+  /** the question they were on, "specialty/questionId" */
+  key: string | null;
+  /** its place in the topic, from 0 */
+  index: number;
+  page: number;
+  filter: PositionFilter;
+  at: number;
+}
+
 export interface StudyState {
   version: 1;
   /** local date (YYYY-MM-DD) → questions the student actually worked on that day (for the streak) */
@@ -61,12 +78,14 @@ export interface StudyState {
   recent: Array<{ key: string; at: number }>;
   sessions: Session[];
   mocks: MockResult[];
+  /** scope → where the student stopped in that list */
+  positions?: Record<string, Position>;
 }
 
 /** The old single-browser record, from before accounts. Moved into the first account that signs in. */
 export const LEGACY_KEY = 'clinical-room:study:v1';
 const SESSION_GAP = 30 * 60 * 1000;
-export const EMPTY: StudyState = { version: 1, days: {}, questions: {}, recent: [], sessions: [], mocks: [] };
+export const EMPTY: StudyState = { version: 1, days: {}, questions: {}, recent: [], sessions: [], mocks: [], positions: {} };
 
 /** localStorage key of the signed-in account's copy, or null when nobody is attached. */
 let storageKey: string | null = null;
@@ -92,6 +111,7 @@ export const dirty = {
   recent: new Set<string>(),
   sessions: new Set<string>(),
   mocks: new Set<string>(),
+  positions: new Set<string>(),
 };
 let onDirty: (() => void) | null = null;
 
@@ -118,6 +138,7 @@ export function switchRecord(userId: string | null, initial: StudyState, saveDir
     dirty.recent.clear();
     dirty.sessions.clear();
     dirty.mocks.clear();
+    dirty.positions.clear();
   }
   commit(initial);
 }
@@ -132,6 +153,7 @@ export function switchToGuestRecord() {
   dirty.recent.clear();
   dirty.sessions.clear();
   dirty.mocks.clear();
+  dirty.positions.clear();
   commit(loadFrom(LEGACY_KEY));
 }
 
@@ -254,6 +276,18 @@ export const study = {
     dirty.mocks.add(m.id);
     commit({ ...state, mocks: [m, ...state.mocks].slice(0, 50) });
     return m;
+  },
+
+  /** Remembers where the student is in a list; only the newest 60 lists are kept. */
+  position(p: Omit<Position, 'at'>) {
+    const prev = state.positions?.[p.scope];
+    if (prev && prev.key === p.key && prev.page === p.page && prev.filter === p.filter && prev.index === p.index && Date.now() - prev.at < 60_000) return;
+    const next: Position = { ...p, at: Date.now() };
+    const kept = Object.values({ ...(state.positions ?? {}), [p.scope]: next })
+      .sort((a, b) => b.at - a.at)
+      .slice(0, 60);
+    dirty.positions.add(p.scope);
+    commit({ ...state, positions: Object.fromEntries(kept.map((x) => [x.scope, x])) });
   },
 
   /** Wipes everything (with the student's confirmation in the UI), here and on the server. */

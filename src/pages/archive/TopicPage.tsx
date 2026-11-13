@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { TYPE_LABEL, type QuestionRef, type Specialty } from '../../content';
 import type { Question } from '../../content/types';
-import { record, study, useStudy } from '../../study/store';
+import { record, study, useStudy, type PositionFilter } from '../../study/store';
 import { ANSWER_ORDER, GIVEN } from '../specialty/QuestionPage';
 import { Ribbon } from '../specialty/ui';
 import { Bow, CheckSeal, Star } from './art';
-import { archivePath, isReviewed, pad, sectionProgress, specialtyArchive, topicPath } from './data';
+import { archivePath, isReviewed, OTHER, pad, sectionProgress, specialtyArchive, topicPath } from './data';
 import { pageThemeAt, SPECIALTY_OFFSET, themePalette } from '../approach/palettes';
 import { cardFor } from './cards';
 import { ArchiveRoom, Highlight } from './shared';
@@ -46,6 +46,10 @@ const unnumbered = (title: string) => title.replace(/^\s*(?:Q\s*)?\d+\s*[.)]\s+/
 const LEVEL = { 1: 'Easy', 2: 'Moderate', 3: 'Difficult' } as const;
 
 type Filter = 'all' | 1 | 2 | 3 | 'marked';
+
+/* the navigator's filter as it is saved in the student's position, and back */
+const TO_SAVED: Record<string, PositionFilter> = { all: 'all', 1: 'easy', 2: 'moderate', 3: 'difficult', marked: 'bookmarked' };
+const FROM_SAVED: Record<string, Filter> = { all: 'all', easy: 1, moderate: 2, difficult: 3, bookmarked: 'marked' };
 const NAV_KEY = 'cr.topic-navigator';
 
 /** Open or closed, as the student last left it; open on wide screens the first time. */
@@ -99,6 +103,8 @@ export function TopicPage({ sp }: { sp: Specialty }) {
   const [filter, setFilter] = useState<Filter>('all');
   const [navOpen, setNavOpen] = useState(initialOpen);
   const [flash, setFlash] = useState<string | null>(null);
+  // the question the student is on: the last one opened or jumped to
+  const [focusKey, setFocusKey] = useState<string | null>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
   const list: QuestionRef[] = useMemo(() => {
@@ -118,15 +124,29 @@ export function TopicPage({ sp }: { sp: Specialty }) {
   const pages = Math.max(1, Math.ceil(list.length / PAGE));
   const shown = list.slice((page - 1) * PAGE, page * PAGE);
 
+  // a new topic starts at its first page, unfiltered (a #q- link below may then move it)
+  useEffect(() => {
+    setPage(1);
+    setFilter('all');
+    setFocusKey(null);
+  }, [topicId]);
+
   // arriving at #q-<id> (from search or "continue"): open its page, reveal it and bring it into view
   useEffect(() => {
     if (!section || !hash.startsWith('#q-')) return;
     const id = decodeURIComponent(hash.slice(3));
-    const i = section.questions.findIndex((q) => q.id === id);
-    if (i < 0) return;
-    setFilter('all');
+    const target = section.questions.find((q) => q.id === id);
+    if (!target) return;
+    // "continue studying" brings back the filter the student had, when the question still fits it
+    const wanted = FROM_SAVED[params.get('filter') ?? 'all'] ?? 'all';
+    const fits = (f: Filter) => f === 'all' || (f === 'marked' ? record(st, target.key).bookmarked : target.difficulty === f);
+    const f = fits(wanted) ? wanted : 'all';
+    const inList = f === 'all' ? section.questions : section.questions.filter((q) => (f === 'marked' ? record(st, q.key).bookmarked : q.difficulty === f));
+    const i = inList.findIndex((q) => q.key === target.key);
+    setFilter(f);
     setPage(Math.floor(i / PAGE) + 1);
-    const key = section.questions[i].key;
+    const key = target.key;
+    setFocusKey(key);
     setRevealed((r) => new Set(r).add(key));
     setFlash(key);
     const t = window.setTimeout(() => document.getElementById(`q-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
@@ -137,7 +157,14 @@ export function TopicPage({ sp }: { sp: Specialty }) {
     };
   }, [hash, section]);
 
-  useEffect(() => setPage(1), [topicId, filter]);
+  // where the student is, remembered for "continue studying" (the question they're on, its page and filter)
+  useEffect(() => {
+    if (!section || section.id === OTHER || !list.length) return;
+    const onPage = list.slice((page - 1) * PAGE, page * PAGE);
+    const key = focusKey && onPage.some((q) => q.key === focusKey) ? focusKey : (onPage[0]?.key ?? null);
+    study.position({ scope: `topic:${sp.id}/${section.id}`, specialty: sp.id, topic: section.id, key, index: key ? (numberOf.get(key) ?? 1) - 1 : 0, page, filter: TO_SAVED[String(filter)] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, filter, focusKey, section?.id]);
 
   if (!section) {
     return (
@@ -176,7 +203,10 @@ export function TopicPage({ sp }: { sp: Specialty }) {
       return n;
     });
     // remembered for "continue where you stopped" (outside the updater: updaters run during render)
-    if (opening) study.viewed(q.key);
+    if (opening) {
+      study.viewed(q.key);
+      setFocusKey(q.key);
+    }
   };
 
   const goPage = (p: number) => {
@@ -187,6 +217,7 @@ export function TopicPage({ sp }: { sp: Specialty }) {
   const jumpTo = (q: QuestionRef) => {
     const i = list.findIndex((x) => x.key === q.key);
     setPage(Math.floor(i / PAGE) + 1);
+    setFocusKey(q.key);
     setTimeout(() => document.getElementById(`q-${q.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
 
@@ -264,7 +295,10 @@ export function TopicPage({ sp }: { sp: Specialty }) {
               )}
               <div className="da-nav__filters" role="group" aria-label="Show questions">
                 {filters.map((f) => (
-                  <button key={String(f.id)} type="button" className="da-nav__filter" aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>
+                  <button key={String(f.id)} type="button" className="da-nav__filter" aria-pressed={filter === f.id} onClick={() => {
+                      setFilter(f.id);
+                      setPage(1);
+                    }}>
                     {f.label}
                     <span className="da-nav__n">{f.count}</span>
                   </button>

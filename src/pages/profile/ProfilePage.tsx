@@ -6,7 +6,8 @@ import { UserAvatar, usePhoto } from '../../components/UserAvatar';
 import { allSpecialties, questionsOf } from '../../content';
 import { supabase } from '../../lib/supabase';
 import { computeStreak } from '../../study/streak';
-import { record, useStudy } from '../../study/store';
+import { localDay, record, useStudy, type StudyState } from '../../study/store';
+import { ContinueStudyingCard } from '../../components/ContinueCard';
 import '../auth/auth.css';
 import './profile.css';
 
@@ -127,6 +128,11 @@ export function ProfilePage() {
             </div>
           </dl>
           <p className="profile-note">Attempted counts every question you’ve opened; completed counts the ones you’ve marked as reviewed.</p>
+          <WeekActivity st={st} />
+        </section>
+
+        <section className="profile-continue" aria-label="Continue studying">
+          <ContinueStudyingCard />
         </section>
 
         {/* account details are for administrators; students see only their card and study */}
@@ -369,5 +375,55 @@ function EditProfile({ profile, onClose }: { profile: Profile; onClose: () => vo
         </div>
       </form>
     </dialog>
+  );
+}
+
+/* ───────────────────────── this week ───────────────────────── */
+
+/**
+ * The last seven days, one column each: questions worked on that day (the same count as the
+ * streak: marked or noted, each question once) and the minutes of study sessions begun that day.
+ */
+function WeekActivity({ st }: { st: StudyState }) {
+  const days = useMemo(() => {
+    const out: Array<{ day: string; label: string; questions: number; minutes: number; today: boolean }> = [];
+    const today = localDay();
+    for (let i = 6; i >= 0; i--) {
+      const at = new Date();
+      at.setDate(at.getDate() - i);
+      const day = localDay(at.getTime());
+      const minutes = Math.round(
+        st.sessions.filter((x) => localDay(x.startedAt) === day).reduce((m, x) => m + Math.min(x.lastAt - x.startedAt, 4 * 3600e3), 0) / 60000,
+      );
+      out.push({ day, label: at.toLocaleDateString(undefined, { weekday: 'short' }), questions: st.days[day]?.length ?? 0, minutes, today: day === today });
+    }
+    return out;
+  }, [st.days, st.sessions]);
+  const top = Math.max(5, ...days.map((d) => d.questions));
+  const total = days.reduce((n, d) => n + d.questions, 0);
+  const mins = days.reduce((n, d) => n + d.minutes, 0);
+
+  return (
+    <figure className="week">
+      <figcaption className="week__title">
+        This week: {total} {total === 1 ? 'question' : 'questions'}
+        {mins > 0 ? ` · ${mins >= 60 ? `${Math.floor(mins / 60)} h ${mins % 60} min` : `${mins} min`} of study` : ''}
+      </figcaption>
+      <ol className="week__days">
+        {days.map((d) => (
+          <li key={d.day} className={d.today ? 'is-today' : undefined}>
+            <span className="week__count">{d.questions || ''}</span>
+            <span className="week__bar" aria-hidden>
+              <span style={{ height: `${(d.questions / top) * 100}%` }} />
+            </span>
+            <span className="week__day">{d.label}</span>
+            <span className="visually-hidden">
+              : {d.questions} {d.questions === 1 ? 'question' : 'questions'}
+              {d.minutes ? `, ${d.minutes} minutes` : ''}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </figure>
   );
 }
