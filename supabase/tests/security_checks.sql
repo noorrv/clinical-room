@@ -528,6 +528,70 @@ end $$;
 reset role;
 select set_config('request.jwt.claims', '', false);
 
+-- ── flashcards (migration 20261116000013) ──
+
+select set_config('request.jwt.claims', '', false);
+set role anon;
+do $$
+declare n int;
+begin
+  begin
+    select count(*) into n from public.flashcard_reviews;
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: read flashcard schedules', 'refused', n || ' rows', 'false') || E'\n', false);
+  exception when insufficient_privilege then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: read flashcard schedules', 'refused', 'refused', 'true') || E'\n', false);
+  end;
+end $$;
+reset role;
+
+-- the pending student can't keep a schedule yet
+select set_config('request.jwt.claims', json_build_object('sub', current_setting('test.pending'), 'role', 'authenticated')::text, false);
+set role authenticated;
+do $$
+declare n int;
+begin
+  select count(*) into n from public.flashcard_reviews;
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: read flashcard schedules', '0 rows', n || ' rows', (n = 0)::text) || E'\n', false);
+  begin
+    insert into public.flashcard_sessions (session) values ('{}'::jsonb);
+    raise exception 'undo';
+  exception when others then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'pending: save a flashcard session', 'refused', case when sqlerrm = 'undo' then 'allowed' else 'refused' end, (sqlerrm <> 'undo')::text) || E'\n', false);
+  end;
+end $$;
+reset role;
+
+-- a signed-in, approved account: sees only its own schedule, and can't rewrite its history
+select set_config('test.fc_others', (select count(*)::text from public.flashcard_reviews where user_id <> current_setting('test.admin')::uuid), false);
+select set_config('request.jwt.claims', json_build_object('sub', current_setting('test.admin'), 'role', 'authenticated')::text, false);
+set role authenticated;
+do $$
+declare n int;
+begin
+  select count(*) into n from public.flashcard_reviews where user_id <> current_setting('test.admin')::uuid;
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'signed in: read other students'' flashcards', '0 rows (of ' || current_setting('test.fc_others') || ')', n || ' rows', (n = 0)::text) || E'\n', false);
+  begin
+    update public.flashcard_review_logs set rating = 4 where user_id = current_setting('test.admin')::uuid;
+    get diagnostics n = row_count;
+    raise exception 'undo:%', n;
+  exception when others then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'signed in: rewrite own flashcard history', 'refused or 0 rows',
+      case when sqlerrm like 'undo:%' then split_part(sqlerrm, ':', 2) || ' rows' else 'refused' end,
+      (sqlerrm not like 'undo:%' or sqlerrm = 'undo:0')::text) || E'\n', false);
+  end;
+  begin
+    delete from public.flashcard_review_logs where user_id = current_setting('test.admin')::uuid;
+    get diagnostics n = row_count;
+    raise exception 'undo:%', n;
+  exception when others then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'signed in: delete own flashcard history', 'refused or 0 rows',
+      case when sqlerrm like 'undo:%' then split_part(sqlerrm, ':', 2) || ' rows' else 'refused' end,
+      (sqlerrm not like 'undo:%' or sqlerrm = 'undo:0')::text) || E'\n', false);
+  end;
+end $$;
+reset role;
+select set_config('request.jwt.claims', '', false);
+
 -- ── results ──
 select split_part(line, '|', 1) as check_name,
        split_part(line, '|', 2) as expected,

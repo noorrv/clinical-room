@@ -14,6 +14,7 @@ const studyModule = () => import('./pages/studyRoutes');
 const SpecialtyRoutes = lazy(() => studyModule().then((m) => ({ default: m.SpecialtyRoutes })));
 const ArchiveSearch = lazy(() => studyModule().then((m) => ({ default: m.ArchiveSearch })));
 const MeRoutes = lazy(() => studyModule().then((m) => ({ default: m.MeRoutes })));
+const FlashRoutes = lazy(() => import('./flashcards/routes').then((m) => ({ default: m.FlashRoutes })));
 
 /** Fetch the study pages while the browser is idle, so the first click into them doesn't wait. */
 function PrefetchStudyPages() {
@@ -82,6 +83,20 @@ export default function App() {
                   <Suspense fallback={<Waiting />}>
                     <SpecialtyRoutes />
                   </Suspense>
+                </ContentGate>
+              </RequireApproved>
+            }
+          />
+          <Route
+            path="/flashcards/*"
+            element={
+              <RequireApproved>
+                <ContentGate>
+                  <main id="main">
+                    <Suspense fallback={<Waiting />}>
+                      <FlashRoutes />
+                    </Suspense>
+                  </main>
                 </ContentGate>
               </RequireApproved>
             }

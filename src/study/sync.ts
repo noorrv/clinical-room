@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import type { CardRecord, ReviewLogRecord } from '../flashcards/scheduler';
 import { useAuth } from '../auth/AuthProvider';
 import { leaveGuest, useGuestFlag } from '../auth/guest';
 import { contentLoadedFor, setRemoteContent } from '../content';
@@ -14,6 +15,7 @@ import {
   switchToGuestRecord,
   type MockResult,
   type Position,
+  type FlashSession,
   type SubjectGoal,
   type TopicMark,
   clearDirty,
@@ -116,13 +118,29 @@ function merge(local: StudyState, other: StudyState, markLocalWins: boolean): St
     }
   }
 
-  return { version: 1, days, questions, recent, sessions, mocks, positions, topicMarks, goals, seconds };
+  // flashcards: the newer schedule wins; the history keeps every rating from both sides
+  const cards = newer<CardRecord>(local.cards, other.cards, dirty.cards);
+  const logMap = new Map((other.reviews ?? []).map((r) => [r.id, r]));
+  for (const r of local.reviews ?? []) {
+    if (!logMap.has(r.id)) {
+      logMap.set(r.id, r);
+      if (markLocalWins) dirty.reviews.add(r.id);
+    }
+  }
+  const reviews = [...logMap.values()].sort((a, b) => b.at - a.at).slice(0, 500);
+  let fcSession = other.fcSession;
+  if (local.fcSession && (!fcSession || local.fcSession.at > fcSession.at)) {
+    fcSession = local.fcSession;
+    if (markLocalWins) dirty.fcSession.add('current');
+  }
+
+  return { version: 1, days, questions, recent, sessions, mocks, positions, topicMarks, goals, seconds, cards, reviews, fcSession };
 }
 
 /* ── reading the server copy ── */
 
 async function pull(): Promise<StudyState> {
-  const [sd, qp, rv, ss, mr, sp, tm, sg, sec] = await Promise.all([
+  const [sd, qp, rv, ss, mr, sp, tm, sg, sec, fc, fl, fs] = await Promise.all([
     supabase.from('study_days').select('day, question_keys').order('day', { ascending: false }).limit(420),
     supabase.from('question_progress').select('question_key, status, bookmarked, note, note_updated_at, updated_at'),
     supabase.from('recent_views').select('question_key, viewed_at').order('viewed_at', { ascending: false }).limit(40),
@@ -132,6 +150,9 @@ async function pull(): Promise<StudyState> {
     supabase.from('topic_marks').select('specialty_id, topic_id, state, updated_at'),
     supabase.from('subject_goals').select('specialty_id, subject_id, target, period, updated_at'),
     supabase.from('study_days').select('day, seconds_studied').gt('seconds_studied', 0).order('day', { ascending: false }).limit(420),
+    supabase.from('flashcard_reviews').select('specialty_id, question_id, state, stability, difficulty, repetitions, lapses, learning_steps, interval_days, next_review_at, last_reviewed_at, created_at, updated_at'),
+    supabase.from('flashcard_review_logs').select('id, specialty_id, question_id, rating, reviewed_at, state_before, previous_interval, next_interval, retrievability, stability, difficulty, duration_ms').order('reviewed_at', { ascending: false }).limit(500),
+    supabase.from('flashcard_sessions').select('session, updated_at').maybeSingle(),
   ]);
   const failed = [qp, rv, ss, mr].find((r) => r.error);
   if (failed?.error) throw new Error(failed.error.message);
@@ -164,10 +185,48 @@ async function pull(): Promise<StudyState> {
   const seconds: Record<string, number> = {};
   for (const r of sec.error ? [] : sec.data ?? []) seconds[r.day] = r.seconds_studied;
 
+  // migration 013: until its tables exist, flashcards stay on this device
+  const cards: Record<string, CardRecord> = {};
+  for (const r of fc.error ? [] : fc.data ?? []) {
+    const key = `${r.specialty_id}/${r.question_id}`;
+    cards[key] = {
+      key,
+      state: r.state,
+      stability: r.stability,
+      difficulty: r.difficulty,
+      reps: r.repetitions,
+      lapses: r.lapses,
+      learningSteps: r.learning_steps,
+      interval: r.interval_days,
+      due: ms(r.next_review_at),
+      lastReview: ms(r.last_reviewed_at),
+      createdAt: ms(r.created_at),
+      at: ms(r.updated_at),
+    };
+  }
+  const reviews: ReviewLogRecord[] = (fl.error ? [] : fl.data ?? []).map((r) => ({
+    id: r.id,
+    key: `${r.specialty_id}/${r.question_id}`,
+    rating: r.rating,
+    at: ms(r.reviewed_at),
+    stateBefore: r.state_before,
+    prevInterval: r.previous_interval,
+    nextInterval: r.next_interval,
+    retrievability: r.retrievability,
+    stability: r.stability,
+    difficulty: r.difficulty,
+    ...(r.duration_ms != null ? { durationMs: r.duration_ms } : {}),
+  }));
+  const fcRow = fs.error ? null : fs.data;
+  const fcSession = fcRow ? ({ ...(fcRow.session as FlashSession), at: ms(fcRow.updated_at) } as FlashSession) : undefined;
+
   return {
     version: 1,
     days,
     positions,
+    cards,
+    reviews,
+    ...(fcSession ? { fcSession } : {}),
     topicMarks,
     goals,
     seconds,
@@ -204,7 +263,10 @@ async function flush() {
   const tIds = take<string>(dirty.topicMarks);
   const gIds = take<string>(dirty.goals);
   const secDays = take<string>(dirty.seconds);
-  if (!dKeys.length && !qKeys.length && !rKeys.length && !sIds.length && !mIds.length && !pIds.length && !tIds.length && !gIds.length && !secDays.length) return;
+  const cKeys = take<string>(dirty.cards);
+  const lIds = take<string>(dirty.reviews);
+  const fsDirty = take<string>(dirty.fcSession).length > 0;
+  if (!dKeys.length && !qKeys.length && !rKeys.length && !sIds.length && !mIds.length && !pIds.length && !tIds.length && !gIds.length && !secDays.length && !cKeys.length && !lIds.length && !fsDirty) return;
 
   flushing = true;
   const user = attached;
@@ -272,6 +334,30 @@ async function flush() {
   // only the time column: an existing day keeps its questions
   if (secDays.length) extras.push(supabase.from('study_days').upsert(secDays.map((day) => ({ day, seconds_studied: s.seconds?.[day] ?? 0 })), { onConflict: 'user_id,day' }));
 
+  // flashcards (migration 013), also saved on their own
+  const cRows = cKeys.flatMap((k) => {
+    const c = s.cards?.[k];
+    if (!c) return [];
+    const [sp, id] = split(k);
+    return [{ specialty_id: sp, question_id: id, state: c.state, stability: c.stability, difficulty: c.difficulty, repetitions: c.reps, lapses: c.lapses, learning_steps: c.learningSteps, interval_days: c.interval, next_review_at: iso(c.due), last_reviewed_at: iso(c.lastReview), created_at: iso(c.createdAt), updated_at: iso(c.at) }];
+  });
+  if (cRows.length) extras.push(supabase.from('flashcard_reviews').upsert(cRows, { onConflict: 'user_id,specialty_id,question_id' }));
+  const lRows = lIds.flatMap((id) => {
+    const r = s.reviews?.find((x) => x.id === id);
+    if (!r) return [];
+    const [sp, qid] = split(r.key);
+    return [{ id, specialty_id: sp, question_id: qid, rating: r.rating, reviewed_at: iso(r.at), state_before: r.stateBefore, previous_interval: r.prevInterval, next_interval: r.nextInterval, retrievability: r.retrievability, stability: r.stability, difficulty: r.difficulty, duration_ms: r.durationMs ?? null }];
+  });
+  // the history is only ever added to: a rating already saved is left as it is
+  if (lRows.length) extras.push(supabase.from('flashcard_review_logs').upsert(lRows, { onConflict: 'user_id,id', ignoreDuplicates: true }));
+  if (fsDirty) {
+    const cur = s.fcSession;
+    if (cur && !('closed' in cur)) {
+      const { at, ...session } = cur;
+      extras.push(supabase.from('flashcard_sessions').upsert({ session, updated_at: iso(at) }, { onConflict: 'user_id' }));
+    } else if (cur) extras.push(supabase.from('flashcard_sessions').delete().eq('user_id', user));
+  }
+
   const [results] = await Promise.all([Promise.all(jobs), posJob, ...extras]);
   flushing = false;
   if (results.some((r) => r.error) && attached === user) {
@@ -283,7 +369,7 @@ async function flush() {
     mIds.forEach((k) => dirty.mocks.add(k));
     pIds.forEach((k) => dirty.positions.add(k));
     scheduleFlush(10_000);
-  } else if (dirty.days.size || dirty.questions.size || dirty.recent.size || dirty.sessions.size || dirty.mocks.size || dirty.positions.size || dirty.topicMarks.size || dirty.goals.size || dirty.seconds.size) {
+  } else if (dirty.days.size || dirty.questions.size || dirty.recent.size || dirty.sessions.size || dirty.mocks.size || dirty.positions.size || dirty.topicMarks.size || dirty.goals.size || dirty.seconds.size || dirty.cards.size || dirty.reviews.size || dirty.fcSession.size) {
     scheduleFlush();
   }
 }
@@ -293,7 +379,7 @@ async function clearServerCopy() {
   const u = attached;
   clearDirty();
   await Promise.all(
-    ['study_days', 'question_progress', 'recent_views', 'study_sessions', 'mock_results', 'study_position', 'topic_marks', 'subject_goals'].map((t) => supabase.from(t).delete().eq('user_id', u)),
+    ['study_days', 'question_progress', 'recent_views', 'study_sessions', 'mock_results', 'study_position', 'topic_marks', 'subject_goals', 'flashcard_reviews', 'flashcard_sessions'].map((t) => supabase.from(t).delete().eq('user_id', u)),
   );
 }
 
@@ -337,6 +423,9 @@ async function attach(userId: string) {
       Object.keys(s.topicMarks ?? {}).forEach((k) => dirty.topicMarks.add(k));
       Object.keys(s.goals ?? {}).forEach((k) => dirty.goals.add(k));
       Object.keys(s.seconds ?? {}).forEach((k) => dirty.seconds.add(k));
+      Object.keys(s.cards ?? {}).forEach((k) => dirty.cards.add(k));
+      (s.reviews ?? []).forEach((r) => dirty.reviews.add(r.id));
+      if (s.fcSession) dirty.fcSession.add('current');
       scheduleFlush(15_000);
     }
   }

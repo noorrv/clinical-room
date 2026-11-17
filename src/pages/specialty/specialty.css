@@ -1491,3 +1491,10 @@ table.gtable {
     transition: none !important;
   }
 }
+
+/* questions or flashcards, above the browse tabs */
+.dash-mode {
+  display: flex;
+  margin: 4px 0 -4px;
+  color: var(--accent-ink);
+}

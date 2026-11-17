@@ -1,0 +1,41 @@
+/* questions or flashcards: two joined tabs that take the colours of the page around them */
+.mode-switch {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 99px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+}
+
+.mode-switch__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 99px;
+  color: inherit;
+  font-weight: 600;
+  font-size: 0.92rem;
+  text-decoration: none;
+}
+
+.mode-switch__item.is-here {
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+a.mode-switch__item:hover {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+a.mode-switch__item:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.mode-switch__due {
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: #22344f;
+  color: #f6efdc;
+  font-size: 0.74rem;
+}

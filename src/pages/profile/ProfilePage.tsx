@@ -9,6 +9,7 @@ import { computeStreak } from '../../study/streak';
 import { localDay, record, useStudy, type StudyState } from '../../study/store';
 import { ContinueStudyingCard } from '../../components/ContinueCard';
 import { MeNav } from './MeNav';
+import { isDue, isMastered } from '../../flashcards/categories';
 import '../auth/auth.css';
 import './profile.css';
 
@@ -59,6 +60,9 @@ export function ProfilePage() {
       streak: streak.current,
       best: streak.best,
       thisWeek,
+      // flashcards: a published question is a card; these are the ones with a schedule
+      cardsDue: keys.filter((k) => isDue(st.cards?.[k])).length,
+      cardsMastered: keys.filter((k) => isMastered(st.cards?.[k])).length,
     };
   }, [st, profile?.created_at]);
 
@@ -127,6 +131,16 @@ export function ProfilePage() {
                 {stats.thisWeek}
                 <span> {stats.thisWeek === 1 ? 'question' : 'questions'}</span>
               </dd>
+            </div>
+            <div>
+              <dt>
+                <Link to="/flashcards">Flashcards due</Link>
+              </dt>
+              <dd>{stats.cardsDue}</dd>
+            </div>
+            <div>
+              <dt>Flashcards mastered</dt>
+              <dd>{stats.cardsMastered}</dd>
             </div>
           </dl>
           <p className="profile-note">Attempted counts every question you’ve opened; completed counts the ones you’ve marked as reviewed.</p>

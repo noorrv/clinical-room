@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import type { SpecialtyId } from '../content/types';
+import type { CardRecord, ReviewLogRecord } from '../flashcards/scheduler';
 
 /*
   The student's study record, shared by every page. It lives in memory and in this browser
@@ -103,12 +104,43 @@ export interface StudyState {
   goals?: Record<string, SubjectGoal>;
   /** local date → seconds of study timed with the study timer that day */
   seconds?: Record<string, number>;
+  /** "specialty/questionId" → the student's flashcard schedule for that question */
+  cards?: Record<string, CardRecord>;
+  /** flashcard ratings, newest first (the latest 500 here; all of them on the server) */
+  reviews?: ReviewLogRecord[];
+  /** the open flashcard session, or a closed marker (kept so devices agree it was closed) */
+  fcSession?: FlashSession | { closed: true; at: number };
+}
+
+export interface FlashFilters {
+  specialty?: SpecialtyId;
+  subject?: string;
+  topic?: string;
+  bookmarked?: boolean;
+  /** 'due' (due today, overdue included), 'new', 'learning', 'difficult', 'mastered' or 'all' */
+  status?: 'due' | 'new' | 'learning' | 'difficult' | 'mastered' | 'all';
+}
+
+/** A flashcard session, saved as it goes so it can be resumed on any device. */
+export interface FlashSession {
+  id: string;
+  filters: FlashFilters;
+  /** the cards, in order */
+  queue: string[];
+  /** where the student is in the queue */
+  pos: number;
+  /** cards rated in this session */
+  rated: string[];
+  /** cards skipped (moved to the end, not counted as reviews) */
+  skipped: string[];
+  startedAt: number;
+  at: number;
 }
 
 /** The old single-browser record, from before accounts. Moved into the first account that signs in. */
 export const LEGACY_KEY = 'clinical-room:study:v1';
 const SESSION_GAP = 30 * 60 * 1000;
-export const EMPTY: StudyState = { version: 1, days: {}, questions: {}, recent: [], sessions: [], mocks: [], positions: {}, topicMarks: {}, goals: {}, seconds: {} };
+export const EMPTY: StudyState = { version: 1, days: {}, questions: {}, recent: [], sessions: [], mocks: [], positions: {}, topicMarks: {}, goals: {}, seconds: {}, cards: {}, reviews: [] };
 
 /** localStorage key of the signed-in account's copy, or null when nobody is attached. */
 let storageKey: string | null = null;
@@ -138,6 +170,9 @@ export const dirty = {
   topicMarks: new Set<string>(),
   goals: new Set<string>(),
   seconds: new Set<string>(),
+  cards: new Set<string>(),
+  reviews: new Set<string>(),
+  fcSession: new Set<string>(),
 };
 
 /** Empties every "changed since the last save" list. */
@@ -333,6 +368,33 @@ export const study = {
     const total = Math.min(86400, (state.seconds?.[day] ?? 0) + s);
     dirty.seconds.add(day);
     commit({ ...state, seconds: { ...(state.seconds ?? {}), [day]: total } });
+  },
+
+  /**
+   * A flashcard rating, made after the answer was revealed: the card's new schedule (worked out
+   * by flashcards/scheduler.ts, loaded only on the flashcard pages), a line in the history, and
+   * the question counted toward today's streak (once a day, like marking it).
+   */
+  rateCard(key: string, card: CardRecord, log: ReviewLogRecord) {
+    const now = log.at;
+    dirty.cards.add(key);
+    dirty.reviews.add(log.id);
+    const sessions = withSession(state, now, (c) => ({ ...c, viewed: c.viewed.includes(key) ? c.viewed : [...c.viewed, key] }));
+    dirty.sessions.add(sessions[sessions.length - 1].id);
+    commit({
+      ...state,
+      ...withDay(state, key, now),
+      sessions,
+      cards: { ...(state.cards ?? {}), [key]: card },
+      reviews: [log, ...(state.reviews ?? [])].slice(0, 500),
+    });
+    return card;
+  },
+
+  /** Saves the open flashcard session (or closes it, with null). */
+  saveFlashSession(session: FlashSession | null) {
+    dirty.fcSession.add('current');
+    commit({ ...state, fcSession: session ? { ...session, at: Date.now() } : { closed: true, at: Date.now() } });
   },
 
   /** Wipes everything (with the student's confirmation in the UI), here and on the server. */

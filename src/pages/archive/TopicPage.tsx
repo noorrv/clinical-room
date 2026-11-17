@@ -11,6 +11,8 @@ import { pageThemeAt, SPECIALTY_OFFSET, themePalette } from '../approach/palette
 import { cardFor } from './cards';
 import { ArchiveRoom, Highlight } from './shared';
 import { StudySheet } from './StudySheet';
+import { ModeSwitch } from '../../components/ModeSwitch';
+import { isDue } from '../../flashcards/categories';
 
 /*
   One topic of a specialty: every question filed under it, with the recorded answer revealed on
@@ -276,6 +278,16 @@ export function TopicPage({ sp }: { sp: Specialty }) {
           <Star className="da-star da-star--a" size={16} />
           <Star className="da-star da-star--c" size={12} color="#e3a24c" />
         </header>
+
+        {section.id !== OTHER && (
+          <div className="da-mode">
+            <ModeSwitch
+              label={section.name}
+              flashcardsTo={`/flashcards/session?topic=${sp.id}/${section.id}&status=all&limit=${Math.min(40, section.questions.length) || 20}`}
+              due={section.questions.filter((q) => isDue(st.cards?.[q.key])).length}
+            />
+          </div>
+        )}
 
         <div className="da-tools" ref={topRef}>
           <section className={`da-nav${navOpen ? ' is-open' : ''}`} aria-label="Question navigator">

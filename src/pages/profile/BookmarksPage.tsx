@@ -57,6 +57,11 @@ export function BookmarksPage() {
           <p className="me-head__intro">
             {marked.length ? `${marked.length} ${marked.length === 1 ? 'question' : 'questions'} saved, with your notes. Only you can see them.` : 'Questions you bookmark appear here, with your notes. Only you can see them.'}
           </p>
+          {marked.length > 0 && (
+            <Link className="me-link" to="/flashcards/session?bookmarked=1&status=all&limit=40">
+              Study your bookmarks as flashcards
+            </Link>
+          )}
         </header>
 
         {marked.length > 0 && (

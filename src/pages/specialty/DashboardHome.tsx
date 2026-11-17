@@ -8,6 +8,8 @@ import { useGuestBrowsing } from '../../auth/guest';
 import { useApproaches } from '../../content/approaches';
 import { topicPath } from '../archive/data';
 import { SubjectBoard } from './SubjectBoard';
+import { ModeSwitch } from '../../components/ModeSwitch';
+import { isDue } from '../../flashcards/categories';
 import '../approach/approach.css';
 import { EmptyState, Ledger, PreviewBanner, QuestionRow, StatusLegend } from './ui';
 
@@ -146,6 +148,10 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
           )}
         </section>
       )}
+
+      <div className="dash-mode">
+        <ModeSwitch label={sp.title} flashcardsTo={`/flashcards?specialty=${sp.id}`} due={qs.filter((q) => isDue(st.cards?.[q.key])).length} />
+      </div>
 
       {/* browse tabs */}
       <section className="browse" aria-label="Browse questions">

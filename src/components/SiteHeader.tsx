@@ -1,6 +1,8 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { UserAvatar } from './UserAvatar';
+import { useStudy } from '../study/store';
+import { isDue } from '../flashcards/categories';
 import { useAuth } from '../auth/AuthProvider';
 import { enterGuest, leaveGuest, useGuestFlag } from '../auth/guest';
 import { allSpecialties, questionPath, questionsOf, TYPE_LABEL, useContentVersion } from '../content';
@@ -274,6 +276,8 @@ function HeaderAvatar() {
 function AccountPanel({ id, open, onDone }: { id: string; open: boolean; onDone: () => void }) {
   const { configured, session, profile, isAdmin, signOut } = useAuth();
   const guest = useGuestFlag();
+  const st = useStudy();
+  const dueCards = Object.values(st.cards ?? {}).filter((c) => isDue(c)).length;
   return (
     <div className={`header-panel alerts-panel account-panel${open ? ' is-open' : ''}`} id={id} role="region" aria-label="Your account">
       <p className="alerts-panel__title">Your account</p>
@@ -305,6 +309,14 @@ function AccountPanel({ id, open, onDone }: { id: string; open: boolean; onDone:
               <li>
                 <Link to="/me/tracker" onClick={onDone}>
                   Tracker
+                </Link>
+              </li>
+            )}
+            {(profile.status === 'approved' || isAdmin) && (
+              <li>
+                <Link to="/flashcards" onClick={onDone}>
+                  Flashcards
+                  {dueCards > 0 && <span className="account-panel__due"> · {dueCards} due</span>}
                 </Link>
               </li>
             )}
