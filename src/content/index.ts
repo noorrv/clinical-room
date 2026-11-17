@@ -112,8 +112,10 @@ function withBankPreview(id: SpecialtyId, content: SpecialtyContent): SpecialtyC
   const bank = bankPreviews[id];
   if (!bank || !bankPreviewOn()) return content;
   const have = new Set(content.questions.map((q) => q.id));
+  // a bank question that is already live shows in its preview version, so edits can be checked before they're imported
+  const draft = new Map(bank.questions.map((q) => [q.id, q]));
   const subjects = [...(content.subjects ?? []), ...(bank.subjects ?? []).filter((s) => !(content.subjects ?? []).some((x) => x.id === s.id))];
-  return { ...content, subjects, topics: [...content.topics.filter((t) => !bank.topics.some((b) => b.id === t.id)), ...bank.topics], questions: [...content.questions, ...bank.questions.filter((q) => !have.has(q.id))] };
+  return { ...content, subjects, topics: [...content.topics.filter((t) => !bank.topics.some((b) => b.id === t.id)), ...bank.topics], questions: [...content.questions.map((q) => draft.get(q.id) ?? q), ...bank.questions.filter((q) => !have.has(q.id))] };
 }
 
 export function allSpecialties(): Specialty[] {

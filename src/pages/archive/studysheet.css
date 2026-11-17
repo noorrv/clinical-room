@@ -465,6 +465,32 @@
   background: var(--ss-paper-2);
 }
 
+/* grouped tables (a label spanning its rows): shade by group, rule between groups */
+.ss-table--grouped tbody tr:nth-child(even) {
+  background: none;
+}
+.ss-table--grouped tbody tr.ss-row--alt {
+  background: var(--ss-paper-2);
+}
+.ss-table--grouped tbody tr:not(.ss-row--start) td {
+  border-top: 0;
+  padding-top: 4px;
+}
+.ss-table--grouped tbody tr.ss-row--start > * {
+  border-top: 1.5px solid var(--ss-rule);
+}
+.ss-table--grouped tbody th {
+  vertical-align: top;
+}
+.ss-table td[style*='right'],
+.ss-table th[style*='right'] {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ss-table td[style*='right'] {
+  font-weight: 600;
+}
+
 /* ── plates: photographs and illustrations ── */
 .ss-fig {
   margin: 6px auto;

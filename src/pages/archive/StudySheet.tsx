@@ -13,7 +13,9 @@ import './studysheet.css';
 
     ## Section title            ### Sub-heading
     - bullet                     1. numbered item
-    | a | b |  tables (first row is the header; <br> breaks a line inside a cell)
+    | a | b |  tables (first row is the header; <br> breaks a line inside a cell; a |---:| rule
+               sets a column right, |:--:| centre; a row whose first cell is empty continues
+               the group above it, so a label such as "Eye opening" spans its rows)
     ![Caption](/clinical/photo.jpg)          a captioned photograph or illustration
     :::kind Title                a boxed note, closed by a line with ::: on its own
       kinds: definition, pearl, remember, important, tip, say, note, reference, group,
@@ -37,7 +39,7 @@ import './studysheet.css';
 type Block =
   | { t: 'h2' | 'h3' | 'p'; text: string }
   | { t: 'ul' | 'ol'; items: string[]; start: number }
-  | { t: 'table'; head: string[]; rows: string[][] }
+  | { t: 'table'; head: string[]; rows: string[][]; align: Array<'left' | 'right' | 'center'> }
   | { t: 'img'; src: string; caption: string; attrs: Record<string, string> }
   | { t: 'box'; kind: string; title: string; body: Block[]; num?: string };
 
@@ -136,12 +138,14 @@ export function parseSheet(src: string): Block[] {
     if (trimmed.startsWith('|')) {
       flush();
       const rows: string[][] = [];
+      let align: Array<'left' | 'right' | 'center'> = [];
       while (i < lines.length && lines[i].trim().startsWith('|')) {
         const r = splitRow(lines[i]);
-        if (!r.every((c) => /^:?-{2,}:?$/.test(c))) rows.push(r);
+        if (r.every((c) => /^:?-{2,}:?$/.test(c))) align = r.map((c) => (c.startsWith(':') && c.endsWith(':') ? 'center' : c.endsWith(':') ? 'right' : 'left'));
+        else rows.push(r);
         i++;
       }
-      out.push({ t: 'table', head: rows[0] ?? [], rows: rows.slice(1) });
+      out.push({ t: 'table', head: rows[0] ?? [], rows: rows.slice(1), align });
       continue;
     }
 
@@ -276,6 +280,8 @@ function boldLead(item: string): string {
   if (item.startsWith('**')) return item;
   const m = item.match(/^([A-Z][^:*\[\]]{1,44}):\s+(\S.*)$/s);
   if (!m || m[1].split(/\s+/).length > 5) return item;
+  // "Eye opening (4: spontaneous, …)": the colon is inside a bracket, so there is no lead-in
+  if ((m[1].match(/\(/g) ?? []).length > (m[1].match(/\)/g) ?? []).length) return item;
   return `**${m[1]}:** ${m[2]}`;
 }
 
@@ -475,39 +481,55 @@ function Blocks({ blocks, term, title }: { blocks: Block[]; term: string | null;
                 ))}
               </ol>
             );
-          case 'table':
+          case 'table': {
+            // a row with an empty first cell belongs to the group above: its label spans them all
+            const grouped = b.rows.length > 1 && b.rows.some((r, k) => k > 0 && r[0] === '');
+            const span = b.rows.map((r, k) => {
+              if (!grouped || r[0] === '') return 0;
+              let n = 1;
+              while (b.rows[k + n]?.[0] === '') n++;
+              return n;
+            });
+            let group = -1;
+            const style = (n: number) => (b.align[n] && b.align[n] !== 'left' ? { textAlign: b.align[n] } : undefined);
             return (
-              <div key={i} className="ss-table" role="region" aria-label="Table" tabIndex={0}>
+              <div key={i} className={`ss-table${grouped ? ' ss-table--grouped' : ''}`} role="region" aria-label="Table" tabIndex={0}>
                 <table>
                   <thead>
                     <tr>
                       {b.head.map((h, k) => (
-                        <th key={k} scope="col">
+                        <th key={k} scope="col" style={style(k)}>
                           <Inline text={h} term={term} />
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {b.rows.map((r, k) => (
-                      <tr key={k}>
-                        {r.map((c, n) =>
-                          n === 0 ? (
-                            <th key={n} scope="row">
-                              <Inline text={c} term={term} />
-                            </th>
-                          ) : (
-                            <td key={n}>
-                              <Inline text={c} term={term} />
-                            </td>
-                          ),
-                        )}
-                      </tr>
-                    ))}
+                    {b.rows.map((r, k) => {
+                      if (span[k]) group++;
+                      return (
+                        <tr key={k} className={grouped ? `${span[k] ? 'ss-row--start' : ''}${group % 2 ? ' ss-row--alt' : ''}`.trim() || undefined : undefined}>
+                          {r.map((c, n) =>
+                            n === 0 ? (
+                              grouped && !span[k] ? null : (
+                                <th key={n} scope={grouped ? 'rowgroup' : 'row'} rowSpan={span[k] > 1 ? span[k] : undefined}>
+                                  <Inline text={c} term={term} />
+                                </th>
+                              )
+                            ) : (
+                              <td key={n} style={style(n)}>
+                                <Inline text={c} term={term} />
+                              </td>
+                            ),
+                          )}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             );
+          }
           case 'img': {
             const page = safeUrl(b.attrs.page);
             const src = safeUrl(b.src);

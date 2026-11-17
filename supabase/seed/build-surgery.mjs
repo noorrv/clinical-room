@@ -11,7 +11,7 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { decorate, formatAnswer } from './format-answer.mjs';
-import { FIXES, PICTURES } from './content/surgery-extra.mjs';
+import { FIXES, PICTURES, REWRITES } from './content/surgery-extra.mjs';
 
 const sheets = JSON.parse(readFileSync('supabase/seed/content/surgery-sheets.json', 'utf8'));
 const [, ...raw] = sheets['Questions & Answers'];
@@ -163,7 +163,7 @@ for (const r of main) {
       type: 'viva',
       topicIds: [topic],
       doctorIds: [],
-      modelAnswer: [layout(row.answer), ...blocks].join('\n\n'),
+      modelAnswer: [REWRITES[row.no] ?? layout(row.answer), ...blocks].join('\n\n'),
       difficulty: difficulty(row.question, row.answer),
       _no: row.no,
     };
