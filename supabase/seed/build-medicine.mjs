@@ -17,11 +17,42 @@
 //   • V answers (doses or numbers to check) are listed in the review sheet
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { decorate, formatAnswer } from './format-answer.mjs';
+import { decorate, formatAnswer, unpack } from './format-answer.mjs';
 
 // clear, case-specific answers written in place of the spreadsheet's "Template" outlines (git-ignored)
 const REWRITES_FILE = new URL('./content/medicine-rewrites.mjs', import.meta.url);
 const REWRITES = existsSync(REWRITES_FILE) ? (await import(REWRITES_FILE.href)).REWRITES : {};
+// fuller answers where the spreadsheet's was too short for the question (git-ignored)
+const LONGER_FILE = new URL('./content/longer-answers.mjs', import.meta.url);
+const LONGER = existsSync(LONGER_FILE) ? (await import(LONGER_FILE.href)).LONGER : {};
+// answers brought in line with UK guidance, doses written in place of "verify locally" notes (git-ignored)
+const DOSES_FILE = new URL('./content/medicine-dose-fixes.mjs', import.meta.url);
+const DOSES = existsSync(DOSES_FILE) ? await import(DOSES_FILE.href) : { PATCHES: {}, ANSWERS: {}, KEY_POINTS: {}, DROP_NOTE: /$^/ };
+const unusedFix = new Set([...Object.keys(DOSES.PATCHES), ...Object.keys(DOSES.ANSWERS), ...Object.keys(DOSES.KEY_POINTS)]);
+/** A row's answer text with its guideline corrections applied. */
+function answerOf(r) {
+  if (DOSES.ANSWERS[r.ID]) {
+    unusedFix.delete(r.ID);
+    return DOSES.ANSWERS[r.ID];
+  }
+  let a = r.Answer;
+  for (const [from, to] of DOSES.PATCHES[r.ID] ?? []) {
+    if (!a.includes(from)) throw new Error(`Dose fix for ${r.ID} doesn't match: ${from.slice(0, 60)}`);
+    a = a.replace(from, to);
+    unusedFix.delete(r.ID);
+  }
+  return a;
+}
+/** A row's key points, with corrections applied and "verify" notes removed. */
+function keyPointsOf(r) {
+  let kp = bullets(r['Key points']);
+  for (const [from, to] of DOSES.KEY_POINTS[r.ID] ?? []) {
+    if (!kp.includes(from)) throw new Error(`Key-point fix for ${r.ID} doesn't match: ${from.slice(0, 60)}`);
+    kp = kp.map((k) => (k === from ? to : k));
+    unusedFix.delete(r.ID);
+  }
+  return kp.filter((k) => k && !DOSES.DROP_NOTE.test(k));
+}
 
 const sheets = JSON.parse(readFileSync('supabase/seed/content/im-sheets.json', 'utf8'));
 const rowsOf = (name) => {
@@ -142,8 +173,8 @@ const bullets = (kp) =>
     .filter((l) => l && !/^case[\s-]dependent\.?$/i.test(l)); // "Case-dependent" tells a student nothing
 const answerText = (r) => {
   // the answer laid out for study: headings, lists, bold labels, coloured terms, bold doses
-  const parts = [formatAnswer(r.Answer)];
-  const kp = bullets(r['Key points']);
+  const parts = [formatAnswer(answerOf(r))];
+  const kp = keyPointsOf(r);
   if (kp.length) parts.push(':::remember Key points\n' + kp.map((k) => `- ${decorate(k)}`).join('\n') + '\n:::');
   return parts.join('\n\n');
 };
@@ -236,7 +267,7 @@ for (const r of all) {
     ...(station ? { scenario: station.charAt(0).toUpperCase() + station.slice(1) } : {}),
     topicIds: [topicId],
     doctorIds: [],
-    modelAnswer: REWRITES[r.ID]?.answer ?? answerText(r),
+    modelAnswer: REWRITES[r.ID]?.answer ?? LONGER[`im:${r.ID}`] ?? answerText(r),
     difficulty: difficulty(r),
     _row: r,
   });
@@ -265,8 +296,9 @@ for (const [pid, list] of followUps) {
   // inside a follow-up its key points are a plain list: boxes can't sit inside boxes
   const followAnswer = (f) => {
     if (REWRITES[f.ID]) return REWRITES[f.ID].answer;
-    const kp = bullets(f['Key points']);
-    return [formatAnswer(f.Answer), ...(kp.length ? [`**Key points:** ${decorate(kp.join(' · '))}`] : [])].join('\n\n');
+    if (LONGER[`im:${f.ID}`]) return LONGER[`im:${f.ID}`];
+    const kp = keyPointsOf(f);
+    return [formatAnswer(answerOf(f)), ...(kp.length ? [`**Key points:** ${decorate(kp.join(' · '))}`] : [])].join('\n\n');
   };
   const blocks = list.map((f) => `:::followup ${clean(f['Exact question'])}\n${followAnswer(f)}\n:::`);
   q.modelAnswer += '\n\n' + blocks.join('\n\n');
@@ -280,7 +312,9 @@ for (const q of questions.values()) {
 
 /* ───────────── writing the preview, the review sheet and the import ───────────── */
 
-const list = [...questions.values()].map(({ _row, _follow, ...q }) => q);
+if (unusedFix.size) console.warn(`Dose fixes not used (row not in the bank or replaced by a rewrite): ${[...unusedFix].join(', ')}`);
+// the last layout pass: no line left packed with a long comma list
+const list = [...questions.values()].map(({ _row, _follow, ...q }) => ({ ...q, modelAnswer: unpack(q.modelAnswer) }));
 const topicList = [...topics.values()].sort((a, b) => a.sort - b.sort);
 // a new subject is only added when something is filed under it
 const usedSubjects = new Set(topicList.map((t) => t.subjectId));

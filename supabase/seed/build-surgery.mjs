@@ -10,8 +10,12 @@
 // topics sit under the existing Surgery subjects plus four new ones. Run: node supabase/seed/build-surgery.mjs
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { decorate, formatAnswer } from './format-answer.mjs';
+import { decorate, formatAnswer, unpack } from './format-answer.mjs';
 import { FIXES, PICTURES, REWRITES } from './content/surgery-extra.mjs';
+import { LONGER } from './content/longer-answers.mjs';
+
+// a whole answer written in markup: a rewrite, or a fuller answer where the spreadsheet's was too short
+const written = (no) => REWRITES[no] ?? LONGER[`sx:${no}`];
 
 const sheets = JSON.parse(readFileSync('supabase/seed/content/surgery-sheets.json', 'utf8'));
 const [, ...raw] = sheets['Questions & Answers'];
@@ -156,15 +160,16 @@ for (const r of main) {
   const make = (row, toggles) => {
     if (row.note) flagged.push([row.no, row.question, row.note]);
     for (const f of toggles) if (f.note) flagged.push([f.no, f.question, f.note]);
-    const blocks = toggles.map((f) => `:::followup ${f.question}\n${layout(f.answer)}\n:::`);
+    const blocks = toggles.map((f) => `:::followup ${f.question}\n${written(f.no) ?? layout(f.answer)}\n:::`);
     return {
       id: idOf(row.no),
       title: row.question,
       type: 'viva',
       topicIds: [topic],
       doctorIds: [],
-      modelAnswer: [REWRITES[row.no] ?? layout(row.answer), ...blocks].join('\n\n'),
-      difficulty: difficulty(row.question, row.answer),
+      modelAnswer: [written(row.no) ?? layout(row.answer), ...blocks].join('\n\n'),
+      // a rewritten or fuller answer counts at its new length
+      difficulty: difficulty(row.question, written(row.no)?.replace(/[#*|:\[\]-]/g, '') ?? row.answer),
       _no: row.no,
     };
   };
@@ -191,7 +196,8 @@ for (const q of questions) {
 
 /* ───────────── preview, review sheet, import ───────────── */
 
-const list = questions.map(({ _no, ...q }) => q);
+// the last layout pass: no line left packed with a long comma list
+const list = questions.map(({ _no, ...q }) => ({ ...q, modelAnswer: unpack(q.modelAnswer) }));
 writeFileSync('src/dev/surgery-preview.json', JSON.stringify({ subjects: NEW_SUBJECTS.map(([id, name]) => ({ id, name })), topics: topicList.map(({ sort, ...t }) => t), questions: list }, null, 1));
 
 const LEVEL = { 1: 'Easy', 2: 'Moderate', 3: 'Difficult' };

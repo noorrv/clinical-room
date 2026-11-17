@@ -41,7 +41,8 @@ function splitTop(text, sep) {
 }
 
 const stripEnd = (s) => s.replace(/[.;,]\s*$/, '').trim();
-const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+// capital first letter, also when the item opens with a coloured term: "[[warn:perforated]] bowel"
+const cap = (s) => (!s ? s : s.startsWith('[[') ? s.replace(/^(\[\[\w+:)(.)/, (_, k, c) => k + c.toUpperCase()) : s.charAt(0).toUpperCase() + s.slice(1));
 
 /** "Label: …" at the start of a sentence (a short label, not a time like "10:30"). */
 // up to ~70 characters, may hold a bracket ("High SAAG (≥1.1 g/dL, portal hypertension):"), no other colon
@@ -107,6 +108,69 @@ export function decorate(text) {
   return t.replace(/\u0000(\d+)\u0000/g, (_, i) => keep[+i]);
 }
 
+/* ───────────── long comma lists → bullets; investigations grouped ───────────── */
+
+const plainOf = (t) => t.replace(/\[\[\w+:([^\]]+)\]\]/g, '$1').replace(/\*\*/g, '').toLowerCase();
+// which group an investigation belongs to (checked in this order: "blood cultures" is microbiology,
+// "LP if CT is safe" a special test)
+const TEST_GROUPS = [
+  ['Microbiology', /cultur|gram stain|sputum|swab|antigen|\bpcr\b|smear|malaria|widal|serolog|stool|\bgse\b|\bafb\b|genexpert|difficile|naat/],
+  ['Special tests', /\blp\b|lumbar puncture|\beeg\b|endoscop|\bogd\b|colonoscop|sigmoidoscop|biopsy|bronchoscop|spirometr|nerve conduction|\bercp\b|\beus\b|aspiration|paracentesis|ascitic|pleural tap|cystoscop|holter|tilt.table|fnac/],
+  ['Imaging', /x-ray|\bcxr\b|\baxr\b|\bct\b|ctpa|\bmri\b|mrcp|ultrasound|\bus\b|doppler|\becho|angiogra|\bscan\b|\bkub\b|\bivu\b|mammogra|dexa|cystogram|urethrogram|renogram/],
+  ['Bedside', /\becg\b|urinalysis|dipstick|capillary glucose|pregnancy|hcg|peak flow|\bpef\b|bladder scan|vital signs|\bgue\b|urine output|bm\b/],
+  ['Bloods', /\bcbc\b|\bfbc\b|u&e|urea|creatinine|electrolyte|sodium|potassium|\bna\b|\bk\+|\bcrp\b|\besr\b|\blft|glucose|hba1c|calcium|magnesium|phosphate|\babg\b|\bvbg\b|blood gas|\btft|\btsh\b|\bt4\b|troponin|\bbnp|ammonia|coagulation|\binr\b|\bpt\b|aptt|clotting|lipase|amylase|lactate|d-dimer|ferritin|\biron\b|\bb12\b|folate|cortisol|procalcitonin|drug level|toxicolog|paracetamol|salicylate|group and|cross-?match|lipid|albumin|bilirubin|\bck\b|urate|\bana\b|antibod|complement|\bldh\b|reticulocyte|blood film|haptoglobin|\bpsa\b|ca-?125|\bafp\b|serum|\blevels?\b|bloods?\b/],
+];
+const groupOf = (item) => TEST_GROUPS.find(([, re]) => re.test(plainOf(item)))?.[0];
+
+const LEAD = /^(send|check|do|order|request|look for|ask about|includes?|including|causes include|consider)\s+/i;
+
+// a clause with a verb is a sentence, not a list item ("Torsades … is the classic one")
+const VERB = /\b(is|are|was|were|causes?|caused|potentiates?|means|suggests?|gives?|should|can|may|might|will|has|have|had|occurs?|leads?|makes?|becomes?|needs?|depends?)\b/i;
+// a lead-in hiding in the first item: "In a woman with a breast lump also ask about duration"
+const LEAD_IN = /^(.{12,}?\b(?:ask about|about|include|includes|including|such as|like|consider|check for|look for))\s+(.+)$/i;
+
+/**
+ * The items of a run of text, or null when it isn't really a list: fewer than five items, an item
+ * too long to read as one line, or clauses with verbs (prose). A lead-in caught in the first item
+ * is returned separately.
+ */
+function listParts(text) {
+  const items = splitTop(stripEnd(text), ';').flatMap((part) => splitTop(part, ', '));
+  if (items.length < 5 || items.some((i) => plainOf(i).length > 120)) return null;
+  if (items.filter((i) => VERB.test(plainOf(i))).length > items.length / 3) return null;
+  const last = items.length - 1;
+  items[last] = items[last].replace(/^(?:and|or)\s+/i, '');
+  let lead = null;
+  const first = items[0].match(LEAD_IN);
+  if (first && plainOf(items[0]).split(/\s+/).length >= 6) {
+    lead = first[1];
+    items[0] = first[2];
+  }
+  return { lead, items: items.filter(Boolean) };
+}
+
+/** Five or more short items run together with commas or semicolons, outside brackets: the items, else null. */
+function packedItems(sentence) {
+  const parts = listParts(sentence);
+  if (!parts) return null;
+  return { lead: parts.lead, items: parts.items.map((i) => i.replace(LEAD, '')).filter(Boolean) };
+}
+
+/** A list laid out for study: grouped by kind when most items are investigations, else plain bullets. */
+function listOf(items) {
+  const groups = items.map(groupOf);
+  if (items.length >= 5 && groups.filter(Boolean).length / items.length >= 0.6) {
+    const order = ['Bedside', 'Bloods', 'Microbiology', 'Imaging', 'Special tests', 'Also'];
+    const by = new Map(order.map((g) => [g, []]));
+    items.forEach((it, n) => by.get(groups[n] ?? 'Also').push(it));
+    return order
+      .filter((g) => by.get(g).length)
+      .map((g) => `### ${g}\n\n${by.get(g).map((i) => `- ${decorate(cap(i))}`).join('\n')}`)
+      .join('\n\n');
+  }
+  return items.map((i) => `- ${decorate(pairUp(i))}`).join('\n');
+}
+
 /* ───────────── the layout ───────────── */
 
 export function formatAnswer(raw) {
@@ -146,7 +210,17 @@ export function formatAnswer(raw) {
     for (const s of ss) {
       const m = s.match(LABEL);
       if (!m) {
-        para.push(s);
+        const packed = packedItems(s);
+        if (!packed) {
+          para.push(s);
+          continue;
+        }
+        if (para.length) {
+          blocks.push(decorate(para.join(' ')));
+          para = [];
+        }
+        if (packed.lead) blocks.push(decorate(`${cap(packed.lead)}:`));
+        blocks.push(listOf(packed.items));
         continue;
       }
       if (para.length) {
@@ -158,10 +232,10 @@ export function formatAnswer(raw) {
       if (labelled >= 2) {
         // several groups: each its own small heading
         blocks.push(`### ${label}`);
-        blocks.push(items ? items.map((i) => `- ${decorate(pairUp(i))}`).join('\n') : decorate(cap(body)));
+        blocks.push(items ? listOf(items) : decorate(cap(body)));
       } else if (items) {
         blocks.push(`**${label}:**`);
-        blocks.push(items.map((i) => `- ${decorate(pairUp(i))}`).join('\n'));
+        blocks.push(listOf(items));
       } else blocks.push(decorate(`**${label}:** ${body}`));
     }
     if (para.length) {
@@ -174,4 +248,66 @@ export function formatAnswer(raw) {
     if (blocks[0]) blocks[0] = blocks[0].replace(/^(Yes|No|Not necessarily|Not always|Usually|Rarely)\b([.,:;]|\s[-–])/, '**$1**$2');
     return blocks;
   }
+}
+
+/* ───────────── the last pass: no line left packed with a comma list ───────────── */
+
+/** Top-level items of a run of text split on commas and semicolons (never inside brackets or [[terms]]). */
+function topItems(text) {
+  return splitTop(stripEnd(text), ';').flatMap((part) => splitTop(part, ', '));
+}
+
+/**
+ * Runs over a finished answer (any author) and unpacks every line that still holds five or more
+ * items in a row: a bullet "Label: a, b, c, …" becomes a small bold heading with its items listed
+ * under it; a paragraph becomes its lead-in (if any) and a bulleted list. Tables, headings, box
+ * markers and key-point lines are left as they are.
+ */
+export function unpack(markup) {
+  const out = [];
+  // a paragraph of several sentences is looked at one sentence at a time
+  const lines = markup.split('\n').flatMap((line) => {
+    const t = line.trim();
+    if (!t || /^(\||#|:::|!\[|-\s|\d+\.\s|\*\*Key points)/.test(t)) return [line];
+    const ss = sentences(t);
+    if (ss.length < 2 || !ss.some((x) => listParts(x))) return [line];
+    // keep plain sentences together; a packed one stands alone so it can become a list
+    const parts = [];
+    let run = [];
+    for (const x of ss) {
+      if (listParts(x)) {
+        if (run.length) parts.push(run.join(' '), '');
+        parts.push(x, '');
+        run = [];
+      } else run.push(x);
+    }
+    if (run.length) parts.push(run.join(' '));
+    return parts;
+  });
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t || /^(\||#|:::|!\[)/.test(t) || /^\*\*Key points:\*\*/.test(t)) {
+      out.push(line);
+      continue;
+    }
+    const bullet = t.match(/^(?:-|\d+\.)\s+(.*)$/);
+    const body = bullet ? bullet[1] : t;
+    // a lead-in ending in a colon, outside brackets: "**CNS:** …", "Common precipitants: …"
+    const lead = body.match(/^(\*\*[^*]{1,60}?:\*\*|[A-Z(][^:[\]]{1,60}?:)\s+(.+)$/s);
+    const rest = lead ? lead[2] : body;
+    const parts = listParts(rest);
+    if (!parts) {
+      out.push(line);
+      continue;
+    }
+    const items = parts.items;
+    const label = lead ? lead[1].replace(/\*\*/g, '').replace(/:$/, '').trim() : parts.lead ? cap(parts.lead) : null;
+    const list = items.map((i) => `- ${cap(i)}`).join('\n');
+    if (bullet) out.push('', label ? `**${label}**` : '', '', list, '');
+    else out.push(label ? `**${label}:**` : '', '', list, '');
+  }
+  return out
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
