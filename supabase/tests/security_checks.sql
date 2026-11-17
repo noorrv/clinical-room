@@ -592,6 +592,40 @@ end $$;
 reset role;
 select set_config('request.jwt.claims', '', false);
 
+-- ── reminders (migration 20261117000014) ──
+
+select set_config('request.jwt.claims', '', false);
+set role anon;
+do $$
+declare n int;
+begin
+  begin
+    select count(*) into n from public.push_subscriptions;
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: read push subscriptions', 'refused', n || ' rows', 'false') || E'\n', false);
+  exception when insufficient_privilege then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'anon: read push subscriptions', 'refused', 'refused', 'true') || E'\n', false);
+  end;
+end $$;
+reset role;
+
+select set_config('test.push_others', (select count(*)::text from public.push_subscriptions where user_id <> current_setting('test.admin')::uuid), false);
+select set_config('request.jwt.claims', json_build_object('sub', current_setting('test.admin'), 'role', 'authenticated')::text, false);
+set role authenticated;
+do $$
+declare n int;
+begin
+  select count(*) into n from public.push_subscriptions where user_id <> current_setting('test.admin')::uuid;
+  perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'signed in: read other students'' push subscriptions', '0 rows (of ' || current_setting('test.push_others') || ')', n || ' rows', (n = 0)::text) || E'\n', false);
+  begin
+    insert into public.reminder_log (user_id, sent_on) values (current_setting('test.admin')::uuid, current_date);
+    raise exception 'undo';
+  exception when others then
+    perform set_config('test.results', current_setting('test.results') || concat_ws('|', 'signed in: write the reminder log', 'refused', case when sqlerrm = 'undo' then 'allowed' else 'refused' end, (sqlerrm <> 'undo')::text) || E'\n', false);
+  end;
+end $$;
+reset role;
+select set_config('request.jwt.claims', '', false);
+
 -- ── results ──
 select split_part(line, '|', 1) as check_name,
        split_part(line, '|', 2) as expected,

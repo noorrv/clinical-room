@@ -68,6 +68,10 @@ export function SiteHeader() {
 
   const toggle = (p: Exclude<Panel, null>) => setOpen((cur) => (cur === p ? null : p));
   const feed = useNotifications(open === 'alerts');
+  // the in-app reminder: due flashcards show in the bell for everyone, push or not
+  const study = useStudy();
+  const dueCards = feed.allowed ? Object.values(study.cards ?? {}).filter((c) => isDue(c)).length : 0;
+  const bellNews = [feed.unreadCount ? `${feed.unreadCount} unread` : '', dueCards ? `${dueCards} flashcards due` : ''].filter(Boolean);
 
   // Esc and clicks outside close whichever panel is open
   useEffect(() => {
@@ -113,13 +117,13 @@ export function SiteHeader() {
           <button
             type="button"
             className="icon-btn"
-            aria-label={feed.unreadCount ? `Notifications, ${feed.unreadCount} unread` : 'Notifications'}
+            aria-label={bellNews.length ? `Notifications, ${bellNews.join(', ')}` : 'Notifications'}
             aria-expanded={open === 'alerts'}
             aria-controls={`${ids}-alerts`}
             onClick={() => toggle('alerts')}
           >
             <AntiqueBell />
-            {feed.unreadCount > 0 && <span className="icon-btn__dot" aria-hidden />}
+            {(feed.unreadCount > 0 || dueCards > 0) && <span className="icon-btn__dot" aria-hidden />}
           </button>
           <span className="header-actions__rule" aria-hidden />
           <button
@@ -216,6 +220,17 @@ export function SiteHeader() {
         aria-label="Notifications"
       >
         <p className="alerts-panel__title">Notifications</p>
+        {dueCards > 0 && (
+          <AppLink href="/flashcards?status=due" onClick={() => setOpen(null)}>
+            <span className="alerts-due">
+              <span className="alerts-due__n">{dueCards}</span>
+              <span>
+                <strong>{dueCards === 1 ? 'flashcard is due' : 'flashcards are due'}</strong>
+                <span className="alerts-due__go">Review them now</span>
+              </span>
+            </span>
+          </AppLink>
+        )}
         {!feed.allowed ? (
           <p className="alerts-panel__empty">Sign in to hear when new questions and topics are added.</p>
         ) : !feed.loaded ? (

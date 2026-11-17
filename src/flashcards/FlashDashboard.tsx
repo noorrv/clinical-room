@@ -7,6 +7,7 @@ import { deck, filtered, filtersFrom, type Status } from './deck';
 import { isDifficult, isDue, isLearning, isMastered, isOverdue } from './categories';
 import { describe, PALETTE } from './FlashSession';
 import { RATE_WORD, spanWord, type Rate } from './scheduler';
+import { Reminders } from './Reminders';
 import './flashcards.css';
 
 /*
@@ -173,6 +174,8 @@ export function FlashDashboard() {
         </section>
 
         <Stats byKey={byKey} />
+
+        <Reminders due={counts.due} />
       </div>
     </ArchiveRoom>
   );

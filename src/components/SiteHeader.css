@@ -665,3 +665,38 @@
   border-radius: 50%;
   object-fit: cover;
 }
+
+/* due flashcards, at the top of the notifications */
+.alerts-due {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #22344f;
+  color: #f6efdc;
+}
+
+.alerts-due__n {
+  display: grid;
+  place-items: center;
+  min-width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #d6ba78;
+  color: #1f2a3d;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.alerts-due strong {
+  display: block;
+}
+
+.alerts-due__go {
+  font-size: 0.85rem;
+  color: #d6ba78;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

@@ -940,3 +940,44 @@
     transition: none;
   }
 }
+
+/* reminders */
+.fc-reminder-note {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.fc-reminder-note p {
+  margin: 0;
+}
+
+.fc-reminder-form {
+  display: grid;
+  gap: 12px;
+}
+
+.fc-picker input[type='time'] {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid rgba(34, 52, 79, 0.3);
+  border-radius: 10px;
+  background: #fffcf4;
+  color: var(--fc-ink);
+  font: inherit;
+}
+
+.fc-picker input[type='time']:focus-visible {
+  outline: 2px solid var(--fc-gold);
+  outline-offset: 2px;
+}
+
+.fc-note__actions--start {
+  justify-content: flex-start;
+}
+
+.fc-error {
+  margin: 0;
+  color: var(--fc-burgundy);
+  font-weight: 600;
+}

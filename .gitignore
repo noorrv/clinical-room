@@ -18,3 +18,6 @@ supabase/seed/*.sql
 
 # dev preview data: Dr. Salah's recorded answers, local only
 src/dev/*-preview.json
+
+# push reminder secrets (VAPID private key, cron secret): local only, set them in Supabase
+supabase/functions/.env
