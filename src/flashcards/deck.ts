@@ -99,7 +99,7 @@ export function splitFollowUps(text: string): { main: string; followUps: string[
   const main: string[] = [];
   const followUps: string[] = [];
   for (let i = 0; i < lines.length; i++) {
-    if (/^:::\w+\s+.*follow[\s-]?up/i.test(lines[i])) {
+    if (/^:::(followup\b|\w+\s+.*follow[\s-]?up)/i.test(lines[i])) {
       const block = [lines[i]];
       i++;
       while (i < lines.length && lines[i].trim() !== ':::') block.push(lines[i++]);

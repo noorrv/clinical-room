@@ -733,3 +733,109 @@
     text-decoration: underline;
   }
 }
+
+/* ── examiner follow-ups: a compact numbered list; one opens at a time ── */
+.ss-follows {
+  margin: 4px 0 0;
+}
+
+.ss-follows__head {
+  margin: 0 0 6px;
+  font-family: var(--ss-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ss-sage-deep);
+}
+
+.ss-follows__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--ss-rule);
+}
+
+.ss-follows__list > li {
+  border-bottom: 1px solid var(--ss-rule);
+}
+
+.ss-follow__q {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 34px 10px 2px;
+  list-style: none;
+  font-size: 0.98rem;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.ss-follow__q::-webkit-details-marker {
+  display: none;
+}
+
+.ss-follow__q:hover .ss-follow__text {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--ss-rule);
+}
+
+.ss-follow__n {
+  font-family: var(--ss-display);
+  font-weight: 600;
+  color: var(--ss-sage-deep);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* a small chevron that turns when the follow-up opens */
+.ss-follow__q::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin-top: -5px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  opacity: 0.7;
+  transform: rotate(45deg);
+  transition: transform 180ms ease;
+}
+
+.ss-follow[open] > .ss-follow__q::after {
+  transform: rotate(-135deg);
+  margin-top: -1px;
+}
+
+.ss-follow[open] > .ss-follow__q {
+  color: var(--ss-sage-deep);
+}
+
+.ss-follow__q:focus-visible {
+  outline: 2px solid var(--ss-sage-deep);
+  outline-offset: 2px;
+}
+
+/* the answer: smaller type, indented under the question */
+.ss-follow__a {
+  display: grid;
+  gap: 6px;
+  padding: 0 4px 12px 32px;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.ss-follow__a .ss-p {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-follow__q::after {
+    transition: none;
+  }
+}

@@ -117,6 +117,8 @@ export function TopicPage({ sp }: { sp: Specialty }) {
   const section = sectionIndex >= 0 ? archive.sections[sectionIndex] : null;
   const subject = sp.subjects?.find((x) => x.id === section?.subjectId);
   const card = section ? cardFor(sp.id, section.id) : null;
+  // long cases carry their clinical scenario as the topic's description
+  const scenario = section && section.id.startsWith('long-case-') ? sp.topics.find((t) => t.id === section.id)?.description : undefined;
   // every topic its own combination of the palettes, in board order so neighbours never match
   const palette = themePalette(pageThemeAt(Math.max(0, sectionIndex), SPECIALTY_OFFSET[sp.id] ?? 0));
 
@@ -278,6 +280,16 @@ export function TopicPage({ sp }: { sp: Specialty }) {
           <Star className="da-star da-star--a" size={16} />
           <Star className="da-star da-star--c" size={12} color="#e3a24c" />
         </header>
+
+        {/* a long case: its scenario once, above its questions */}
+        {scenario && (
+          <section className="da-card da-scenario" aria-label="Clinical scenario">
+            <p className="da-scenario__label">Clinical scenario</p>
+            <p className="da-scenario__text">
+              <bdi>{scenario}</bdi>
+            </p>
+          </section>
+        )}
 
         {section.id !== OTHER && (
           <div className="da-mode">

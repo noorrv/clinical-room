@@ -327,6 +327,71 @@
   color: var(--atlas-muted);
 }
 
+/* a subject's long cases: one folded row after its topics */
+.atlas__cases {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed color-mix(in srgb, var(--node) 35%, transparent);
+}
+
+.atlas__cases-toggle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--node) 7%, transparent);
+  color: var(--atlas-ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.atlas__cases-toggle:hover {
+  background: color-mix(in srgb, var(--node) 13%, transparent);
+}
+
+.atlas__cases-toggle:focus-visible {
+  outline: 2px solid var(--node);
+  outline-offset: 2px;
+}
+
+.atlas__cases-label {
+  font: 600 0.82rem/1.2 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--node);
+}
+
+.atlas__cases-count {
+  font-size: 0.86rem;
+  font-style: italic;
+  color: var(--atlas-muted);
+}
+
+.atlas__cases-chev {
+  width: 8px;
+  height: 8px;
+  margin: 0 4px 3px;
+  border-right: 1.5px solid var(--node);
+  border-bottom: 1.5px solid var(--node);
+  transform: rotate(45deg);
+  transition: transform 180ms ease;
+}
+
+.atlas__cases-toggle[aria-expanded='true'] .atlas__cases-chev {
+  transform: rotate(-135deg);
+  margin-bottom: -3px;
+}
+
+.atlas__cases > div > ul {
+  margin-top: 4px;
+}
+
 @keyframes atlas-open {
   from {
     opacity: 0;
@@ -391,7 +456,8 @@
   }
 
   .atlas__label,
-  .atlas__topic {
+  .atlas__topic,
+  .atlas__cases-chev {
     transition: none;
   }
 }

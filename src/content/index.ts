@@ -82,13 +82,47 @@ export interface QuestionRef extends Question {
 
 let cache: Specialty[] | null = null;
 
+/*
+  Development only: a question bank waiting for review (src/dev/<specialty>-preview.json, kept
+  off git), shown on top of the live content after visiting any page with ?preview-bank=1.
+  Never part of a production build.
+*/
+type BankPreview = { subjects?: SpecialtyContent['subjects']; topics: Topic[]; questions: Question[] };
+const bankPreviews: Record<string, BankPreview> = import.meta.env.DEV
+  ? Object.fromEntries(
+      Object.entries(import.meta.glob('../dev/*-preview.json', { eager: true, import: 'default' }))
+        .filter(([path, v]) => /\/(medicine|surgery|obgyn|paediatrics)-preview\.json$/.test(path) && v && typeof v === 'object' && 'questions' in (v as object) && 'topics' in (v as object))
+        .map(([path, v]) => [path.match(/(\w+)-preview\.json$/)![1], v as BankPreview]),
+    )
+  : {};
+
+function bankPreviewOn(): boolean {
+  if (!import.meta.env.DEV || typeof window === 'undefined') return false;
+  try {
+    const p = new URLSearchParams(window.location.search).get('preview-bank');
+    if (p === '1') sessionStorage.setItem('cr-preview-bank', '1');
+    if (p === '0') sessionStorage.removeItem('cr-preview-bank');
+    return sessionStorage.getItem('cr-preview-bank') === '1';
+  } catch {
+    return false;
+  }
+}
+
+function withBankPreview(id: SpecialtyId, content: SpecialtyContent): SpecialtyContent {
+  const bank = bankPreviews[id];
+  if (!bank || !bankPreviewOn()) return content;
+  const have = new Set(content.questions.map((q) => q.id));
+  const subjects = [...(content.subjects ?? []), ...(bank.subjects ?? []).filter((s) => !(content.subjects ?? []).some((x) => x.id === s.id))];
+  return { ...content, subjects, topics: [...content.topics.filter((t) => !bank.topics.some((b) => b.id === t.id)), ...bank.topics], questions: [...content.questions, ...bank.questions.filter((q) => !have.has(q.id))] };
+}
+
 export function allSpecialties(): Specialty[] {
   if (cache) return cache;
   const preview = previewRequested();
   cache = homeCards.map((card) => {
     const fileContent = remote?.[card.id] ?? files[card.id];
     const useFixture = preview && fileContent.questions.length === 0;
-    let content = useFixture ? placeholderContent(card.id) : fileContent;
+    let content = useFixture ? placeholderContent(card.id) : withBankPreview(card.id, fileContent);
     // the preview keeps any real doctors already added, linking its placeholder questions to them
     if (useFixture && fileContent.doctors.length) {
       const real = fileContent.doctors;

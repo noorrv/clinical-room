@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { Specialty } from '../../content';
 import { specialtyArchive, topicPath, type Section } from '../archive/data';
@@ -102,30 +102,16 @@ export function SubjectBoard({ sp }: { sp: Specialty }) {
                   </span>
                   <span className="atlas__name">{n.name}</span>
                   <span className="atlas__count">
-                    {empty ? 'No questions yet' : `${n.count} ${n.count === 1 ? 'question' : 'questions'}${tl.counts.mastered ? ` · ${pct(tl.mastered)} reviewed` : ''}`}
+                    {empty ? 'No questions yet' : `${n.count} ${n.count === 1 ? 'question' : 'questions'}${n.topics.some(isCase) ? ` · ${n.topics.filter(isCase).length} long ${n.topics.filter(isCase).length === 1 ? 'case' : 'cases'}` : ''}${tl.counts.mastered ? ` · ${pct(tl.mastered)} reviewed` : ''}`}
                   </span>
                 </button>
 
                 <div id={`atlas-${n.id}`} className="atlas__topics" hidden={!isOpen}>
                   {shown.length ? (
-                    <ul>
-                      {shown.map((t) => {
-                        const tt = tally(t.questions, st);
-                        return (
-                          <li key={t.id}>
-                            <Link className={`atlas__topic${t.questions.length ? '' : ' is-empty'}`} to={topicPath(sp, t.id)}>
-                              <span className="atlas__topic-name">{t.name}</span>
-                              <span className="atlas__topic-count">{t.questions.length ? `${t.questions.length} ${t.questions.length === 1 ? 'question' : 'questions'}` : 'No questions yet'}</span>
-                              {t.questions.length > 0 && (
-                                <span className="atlas__bar" aria-label={`${tt.counts.mastered} of ${tt.total} reviewed`}>
-                                  <span style={{ width: `${(tt.counts.mastered / Math.max(1, tt.total)) * 100}%` }} />
-                                </span>
-                              )}
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                    <>
+                      {shown.some((t) => !isCase(t)) && <TopicList sp={sp} topics={shown.filter((t) => !isCase(t))} />}
+                      {shown.some(isCase) && <CaseGroup sp={sp} cases={shown.filter(isCase)} forceOpen={q !== ''} />}
+                    </>
                   ) : (
                     <p className="atlas__none">Nothing filed here yet. Questions will appear as they’re added.</p>
                   )}
@@ -138,3 +124,52 @@ export function SubjectBoard({ sp }: { sp: Specialty }) {
     </section>
   );
 }
+
+/** A long case: a topic whose id starts "long-case-" (its scenario is the topic's description). */
+const isCase = (t: Section) => t.id.startsWith('long-case-');
+
+function TopicList({ sp, topics }: { sp: Specialty; topics: Section[] }) {
+  const st = useStudy();
+  return (
+    <ul>
+      {topics.map((t) => {
+        const tt = tally(t.questions, st);
+        return (
+          <li key={t.id}>
+            <Link className={`atlas__topic${t.questions.length ? '' : ' is-empty'}`} to={topicPath(sp, t.id)}>
+              <span className="atlas__topic-name">{t.name}</span>
+              <span className="atlas__topic-count">{t.questions.length ? `${t.questions.length} ${t.questions.length === 1 ? 'question' : 'questions'}` : 'No questions yet'}</span>
+              {t.questions.length > 0 && (
+                <span className="atlas__bar" aria-label={`${tt.counts.mastered} of ${tt.total} reviewed`}>
+                  <span style={{ width: `${(tt.counts.mastered / Math.max(1, tt.total)) * 100}%` }} />
+                </span>
+              )}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** A subject's long cases, folded behind one row so the subject's list stays short. */
+function CaseGroup({ sp, cases, forceOpen }: { sp: Specialty; cases: Section[]; forceOpen: boolean }) {
+  const [open, setOpen] = useState(false);
+  const shown = open || forceOpen;
+  const id = `cases-${cases[0]?.id}`;
+  return (
+    <div className="atlas__cases">
+      <button type="button" className="atlas__cases-toggle" aria-expanded={shown} aria-controls={id} onClick={() => setOpen((v) => !v)}>
+        <span className="atlas__cases-label">Long cases</span>
+        <span className="atlas__cases-count">
+          {cases.length} {cases.length === 1 ? 'case' : 'cases'} · {cases.reduce((n, c) => n + c.questions.length, 0)} questions
+        </span>
+        <span className="atlas__cases-chev" aria-hidden />
+      </button>
+      <div id={id} hidden={!shown}>
+        <TopicList sp={sp} topics={cases} />
+      </div>
+    </div>
+  );
+}
+

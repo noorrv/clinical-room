@@ -1,4 +1,4 @@
-import { createContext, Fragment, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, Fragment, useContext, useId, useMemo, type ReactNode } from 'react';
 import { ClinicalPathway, type PathwayExplanation } from './ClinicalPathway';
 import { findChain, matchStages, stageKind, stems, type Chain, type SheetLink } from './pathway';
 import { LabTerm } from './LabTerm';
@@ -16,7 +16,8 @@ import './studysheet.css';
     | a | b |  tables (first row is the header; <br> breaks a line inside a cell)
     ![Caption](/clinical/photo.jpg)          a captioned photograph or illustration
     :::kind Title                a boxed note, closed by a line with ::: on its own
-      kinds: definition, pearl, remember, important, tip, say, note, reference, group
+      kinds: definition, pearl, remember, important, tip, say, note, reference, group,
+           followup (an examiner follow-up: its title is the question, shown as a toggle)
     :::step 3 Hand positioning   a numbered examination step
     **bold**  *italic*
     [[art:appendicular artery]]  a medical term coloured by what it is (the words stay as written):
@@ -379,10 +380,57 @@ const BOX_LABEL: Record<string, string> = {
   reference: 'Reference',
 };
 
+/** Is this block an examiner follow-up (":::followup Question")? */
+const isFollowUp = (b: Block) => b.t === 'box' && b.kind === 'followup';
+
+/**
+ * The examiner's follow-up questions under an answer: one small heading, then a slim numbered row
+ * for each. Only one opens at a time (the rows share a name), and an open row shows its answer in
+ * smaller type, its key points run together on one line.
+ */
+function FollowUps({ items, term }: { items: Block[]; term: string | null }) {
+  const group = useId();
+  return (
+    <section className="ss-follows" aria-label="Examiner follow-up questions">
+      <p className="ss-follows__head">
+        Examiner follow-ups <span aria-hidden>·</span> {items.length}
+      </p>
+      <ol className="ss-follows__list">
+        {items.map((b, n) =>
+          b.t === 'box' ? (
+            <li key={n}>
+              <details className="ss-follow" name={group}>
+                <summary className="ss-follow__q">
+                  <span className="ss-follow__n" aria-hidden>
+                    {n + 1}
+                  </span>
+                  <span className="ss-follow__text">
+                    <Inline text={b.title} term={term} />
+                  </span>
+                </summary>
+                <div className="ss-follow__a">
+                  <Blocks blocks={b.body} term={term} />
+                </div>
+              </details>
+            </li>
+          ) : null,
+        )}
+      </ol>
+    </section>
+  );
+}
+
 function Blocks({ blocks, term, title }: { blocks: Block[]; term: string | null; title?: string }) {
   return (
     <>
       {blocks.map((b, i) => {
+        // a run of follow-ups is drawn once, as one compact list, at its first block
+        if (isFollowUp(b)) {
+          if (i > 0 && isFollowUp(blocks[i - 1])) return null;
+          let end = i;
+          while (end + 1 < blocks.length && isFollowUp(blocks[end + 1])) end++;
+          return <FollowUps key={i} items={blocks.slice(i, end + 1)} term={term} />;
+        }
         switch (b.t) {
           case 'h2':
             return (
