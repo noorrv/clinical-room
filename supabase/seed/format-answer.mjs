@@ -127,7 +127,7 @@ const LEAD = /^(send|check|do|order|request|look for|ask about|includes?|includi
 // a clause with a verb is a sentence, not a list item ("Torsades … is the classic one")
 const VERB = /\b(is|are|was|were|causes?|caused|potentiates?|means|suggests?|gives?|should|can|may|might|will|has|have|had|occurs?|leads?|makes?|becomes?|needs?|depends?)\b/i;
 // a lead-in hiding in the first item: "In a woman with a breast lump also ask about duration"
-const LEAD_IN = /^(.{12,}?\b(?:ask about|about|include|includes|including|such as|like|consider|check for|look for))\s+(.+)$/i;
+const LEAD_IN = /^(.{3,}?\b(?:ask about|about|include|includes|including|such as|like|consider|check for|look for|determines|affects|influences))\s+(.+)$/i;
 
 /**
  * The items of a run of text, or null when it isn't really a list: fewer than five items, an item
@@ -142,11 +142,21 @@ function listParts(text) {
   items[last] = items[last].replace(/^(?:and|or)\s+/i, '');
   let lead = null;
   const first = items[0].match(LEAD_IN);
-  if (first && plainOf(items[0]).split(/\s+/).length >= 6) {
+  if (first && plainOf(first[1]).split(/\s+/).length >= 2) {
+    // "Causes include appendicolith" → lead-in "Causes include:", first item "Appendicolith"
     lead = first[1];
     items[0] = first[2];
+  } else if (VERB.test(plainOf(items[0])) && items.length >= 5) {
+    // the first part is a sentence that introduces the list: "In infants these signs are unreliable;
+    // look for a bulging fontanelle, …" → lead-in "In infants these signs are unreliable. Look for:"
+    lead = items.shift();
+    const verb = items[0].match(LEAD) ?? items[0].match(/^((?:but\s+)?(?:it|this|they)\s+(?:may|can|could)\s+(?:also\s+)?be)\s+/i);
+    if (verb) {
+      lead = `${stripEnd(lead)}. ${cap(verb[1].replace(/^but\s+/i, ''))}`;
+      items[0] = items[0].slice(verb[0].length);
+    }
   }
-  return { lead, items: items.filter(Boolean) };
+  return { lead, items: items.filter(Boolean).map((i) => cap(i)) };
 }
 
 /** Five or more short items run together with commas or semicolons, outside brackets: the items, else null. */
@@ -219,7 +229,7 @@ export function formatAnswer(raw) {
           blocks.push(decorate(para.join(' ')));
           para = [];
         }
-        if (packed.lead) blocks.push(decorate(`${cap(packed.lead)}:`));
+        if (packed.lead) blocks.push(`**${decorate(cap(packed.lead)).replace(/:$/, '')}:**`);
         blocks.push(listOf(packed.items));
         continue;
       }
@@ -301,10 +311,13 @@ export function unpack(markup) {
       continue;
     }
     const items = parts.items;
-    const label = lead ? lead[1].replace(/\*\*/g, '').replace(/:$/, '').trim() : parts.lead ? cap(parts.lead) : null;
+    const label = lead ? lead[1].replace(/\*\*/g, '').replace(/:$/, '').trim() : null;
     const list = items.map((i) => `- ${cap(i)}`).join('\n');
-    if (bullet) out.push('', label ? `**${label}**` : '', '', list, '');
-    else out.push(label ? `**${label}:**` : '', '', list, '');
+    const heads = [];
+    if (label) heads.push(bullet ? `**${label}**` : `**${label}:**`);
+    // a sentence that introduces the list stands above it in bold, ending in a colon
+    if (parts.lead) heads.push(`**${cap(parts.lead).replace(/[:.]$/, '')}:**`);
+    out.push('', ...heads.flatMap((h) => [h, '']), list, '');
   }
   return out
     .join('\n')

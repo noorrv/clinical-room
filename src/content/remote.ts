@@ -1,3 +1,4 @@
+import { allRows } from '../lib/allRows';
 import { supabase } from '../lib/supabase';
 import type { Doctor, Question, QuestionType, SpecialtyContent, SpecialtyId, Subject, Topic } from './types';
 
@@ -56,16 +57,14 @@ export async function fetchContent(): Promise<Record<SpecialtyId, SpecialtyConte
     supabase.from('specialties').select('id, description'),
     supabase.from('doctors').select('specialty_id, id, name, role, note').order('sort').order('name'),
     // subject_id arrived with the subjects migration; until it has run, topics load without it
-    supabase
-      .from('topics')
-      .select('specialty_id, id, name, description, subject_id')
-      .order('sort')
-      .order('name')
-      .then((r) => (r.error ? supabase.from('topics').select('specialty_id, id, name, description').order('sort').order('name') : r)),
-    // drafts stay in the admin dashboard; only published questions reach the study pages
-    supabase.from('questions').select('*').eq('status', 'published').order('sort').order('title'),
-    supabase.from('question_doctors').select('specialty_id, question_id, doctor_id'),
-    supabase.from('question_topics').select('specialty_id, question_id, topic_id'),
+    allRows(() => supabase.from('topics').select('specialty_id, id, name, description, subject_id').order('sort').order('name').order('id')).then((r) =>
+      r.error ? allRows(() => supabase.from('topics').select('specialty_id, id, name, description').order('sort').order('name').order('id')) : r,
+    ),
+    // drafts stay in the admin dashboard; only published questions reach the study pages.
+    // Each list is read a page at a time: one request stops at 1,000 rows without saying so.
+    allRows<QuestionRow>(() => supabase.from('questions').select('*').eq('status', 'published').order('sort').order('title').order('id')),
+    allRows(() => supabase.from('question_doctors').select('specialty_id, question_id, doctor_id').order('specialty_id').order('question_id').order('doctor_id')),
+    allRows(() => supabase.from('question_topics').select('specialty_id, question_id, topic_id').order('specialty_id').order('question_id').order('topic_id')),
   ]);
   // subjects are optional: a site without the subjects table yet still loads everything else
   const subs = await supabase.from('subjects').select('specialty_id, id, name, description').order('sort').order('name');

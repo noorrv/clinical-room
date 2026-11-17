@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { allSpecialties } from '../../content';
 import type { SpecialtyId } from '../../content/types';
+import { allRows } from '../../lib/allRows';
 import { supabase } from '../../lib/supabase';
 import type { AdminOutletContext } from './AdminLayout';
 import { ACCESS_OPTIONS, AccessStamp, Dialog, friendlyError, SelectField, TextField, useNotify } from './ui';
@@ -38,7 +39,7 @@ export function SpecialtiesPage() {
       supabase.from('specialties').select('id, description, access'),
       supabase.from('doctors').select('specialty_id'),
       supabase.from('topics').select('specialty_id'),
-      supabase.from('questions').select('specialty_id, status'),
+      allRows(() => supabase.from('questions').select('specialty_id, status').order('specialty_id').order('id')), // over 1,000 rows: paged
     ]);
     const failed = [s, d, t, q].find((r) => r.error);
     if (failed?.error) {

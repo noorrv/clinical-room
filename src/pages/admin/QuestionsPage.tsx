@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useOutletContext, useSearchParams } from 'react-router-dom';
 import { questionPath, specialtyById } from '../../content';
 import type { SpecialtyId } from '../../content/types';
+import { allRows } from '../../lib/allRows';
 import { supabase } from '../../lib/supabase';
 import type { AdminOutletContext } from './AdminLayout';
 import { loadLookups, TYPE_OPTIONS, type Lookups, type QStatus, type QuestionRow } from './questionData';
@@ -55,9 +56,10 @@ export function QuestionsPage() {
     setError('');
     try {
       const [r, qd, qt, lk] = await Promise.all([
-        supabase.from('questions').select('specialty_id, id, title, type, status, access, updated_at, sort'),
-        supabase.from('question_doctors').select('specialty_id, question_id, doctor_id'),
-        supabase.from('question_topics').select('specialty_id, question_id, topic_id'),
+        // read a page at a time: one request stops at 1,000 rows without saying so
+        allRows(() => supabase.from('questions').select('specialty_id, id, title, type, status, access, updated_at, sort').order('specialty_id').order('id')),
+        allRows(() => supabase.from('question_doctors').select('specialty_id, question_id, doctor_id').order('specialty_id').order('question_id').order('doctor_id')),
+        allRows(() => supabase.from('question_topics').select('specialty_id, question_id, topic_id').order('specialty_id').order('question_id').order('topic_id')),
         loadLookups(),
       ]);
       const failed = [r, qd, qt].find((x) => x.error);

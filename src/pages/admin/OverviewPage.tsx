@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { LanternBooks } from '../../components/art/WidgetArt';
 import { allSpecialties } from '../../content';
 import type { SpecialtyId } from '../../content/types';
+import { allRows } from '../../lib/allRows';
 import { supabase } from '../../lib/supabase';
 import { timeAgo } from '../../study/derive';
 
@@ -61,7 +62,7 @@ function who(a: Activity, names: Record<string, string>): string {
 async function load(): Promise<OverviewData> {
   const [profiles, questions, doctors, topics, notices, activity] = await Promise.all([
     supabase.from('profiles').select('id, full_name, status, email_confirmed_at'),
-    supabase.from('questions').select('specialty_id, status'),
+    allRows(() => supabase.from('questions').select('specialty_id, status').order('specialty_id').order('id')), // over 1,000 rows: paged
     supabase.from('doctors').select('specialty_id'),
     supabase.from('topics').select('specialty_id'),
     supabase.from('announcements').select('published'),
