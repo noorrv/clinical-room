@@ -16,6 +16,8 @@
 
 .fc-wrap {
   display: grid;
+  /* one column that can't grow past the screen, whatever its contents want */
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   width: min(820px, 100%);
   margin: 0 auto;
@@ -550,6 +552,7 @@
 .fc-panel,
 .fc-resume {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   padding: clamp(16px, 3vw, 26px);
   border-radius: 14px;
@@ -622,6 +625,11 @@
 }
 
 .fc-picker select {
+  /* fill the column; a long option (some case titles run to 80+ characters) is cut off with an
+     ellipsis here instead of stretching the drop-down, and the page, past the screen */
+  width: 100%;
+  min-width: 0;
+  text-overflow: ellipsis;
   min-height: 44px;
   padding: 0 10px;
   border: 1px solid rgba(34, 52, 79, 0.3);
