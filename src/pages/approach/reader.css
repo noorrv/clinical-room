@@ -221,6 +221,9 @@
 
 .apx-page {
   margin-top: 0;
+  /* the page is a grid: one column that can't be pushed wider than the screen by a wide table
+     (the table scrolls sideways inside its own frame instead) */
+  grid-template-columns: minmax(0, 1fr);
   animation: apx-turn 260ms ease-out;
 }
 

@@ -19,6 +19,9 @@
   /* roomy leading and clear gaps between ideas, so a long answer reads like a page, not a block */
   line-height: 1.8;
   display: grid;
+  /* one column that never grows past the page: a wide table inside a box (a colours table) then
+     scrolls sideways in its own frame instead of pushing the whole page off the screen */
+  grid-template-columns: minmax(0, 1fr);
   gap: 22px;
 }
 
