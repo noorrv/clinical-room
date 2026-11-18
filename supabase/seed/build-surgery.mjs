@@ -10,7 +10,7 @@
 // topics sit under the existing Surgery subjects plus four new ones. Run: node supabase/seed/build-surgery.mjs
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { decorate, formatAnswer, unpack } from './format-answer.mjs';
+import { boldLabel, decorate, formatAnswer, unpack } from './format-answer.mjs';
 import { FIXES, PICTURES, REWRITES } from './content/surgery-extra.mjs';
 import { LONGER } from './content/longer-answers.mjs';
 
@@ -113,7 +113,7 @@ function layout(text) {
   for (const line of text.split('\n').map((l) => l.trim()).filter(Boolean)) {
     const bullet = line.match(/^[-•]\s+(.+)$/);
     const step = line.match(/^([A-E])\s+[-–]\s+(.+)$/); // ATLS "A - Airway …"
-    if (bullet) list.push(bullet[1].replace(/^([^:]{2,60}):\s+/, '**$1:** '));
+    if (bullet) list.push(boldLabel(bullet[1]));
     else if (step) list.push(`**${step[1]}:** ${step[2].replace(/\.$/, '')}`);
     else {
       flush();

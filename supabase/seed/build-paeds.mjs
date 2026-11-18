@@ -11,7 +11,7 @@
 // Run: node supabase/seed/build-paeds.mjs
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { decorate, formatAnswer, unpack } from './format-answer.mjs';
+import { boldLabel, decorate, formatAnswer, unpack } from './format-answer.mjs';
 import { ANSWERS, MARKUP, PATCHES } from './content/paeds-fixes.mjs';
 
 const [, ...raw] = JSON.parse(readFileSync('supabase/seed/content/paeds-sheets.json', 'utf8'))['Q&A'];
@@ -102,7 +102,7 @@ function layout(text) {
       const k = bullet ? 'ul' : 'ol';
       if (kind && kind !== k) flush();
       kind = k;
-      const body = (bullet ? bullet[1] : step[2]).replace(/^([^:]{2,60}):\s+/, '**$1:** ');
+      const body = boldLabel(bullet ? bullet[1] : step[2]);
       list.push(`${bullet ? '-' : `${step[1]}.`} ${decorate(body.replace(/[.;]\s*$/, ''))}`);
       continue;
     }

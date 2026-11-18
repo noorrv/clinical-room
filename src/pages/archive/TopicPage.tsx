@@ -117,8 +117,8 @@ export function TopicPage({ sp }: { sp: Specialty }) {
   const section = sectionIndex >= 0 ? archive.sections[sectionIndex] : null;
   const subject = sp.subjects?.find((x) => x.id === section?.subjectId);
   const card = section ? cardFor(sp.id, section.id) : null;
-  // long cases carry their clinical scenario as the topic's description
-  const scenario = section && section.id.startsWith('long-case-') ? sp.topics.find((t) => t.id === section.id)?.description : undefined;
+  // long cases (Medicine "long-case-…", OBGYN "case-…") carry their clinical scenario as the topic's description
+  const scenario = section && /^(long-)?case-/.test(section.id) ? sp.topics.find((t) => t.id === section.id)?.description : undefined;
   // every topic its own combination of the palettes, in board order so neighbours never match
   const palette = themePalette(pageThemeAt(Math.max(0, sectionIndex), SPECIALTY_OFFSET[sp.id] ?? 0));
 
@@ -386,7 +386,8 @@ export function TopicPage({ sp }: { sp: Specialty }) {
               const r = record(st, q.key);
               const done = isReviewed(st, q.key);
               const open = allOpen || revealed.has(q.key);
-              const given = GIVEN.filter((s) => filled(q, s.key));
+              // a case page shows its scenario once at the top, so its questions don't repeat it
+              const given = GIVEN.filter((s) => filled(q, s.key) && !(s.key === 'scenario' && scenario && q.scenario === scenario));
               const answer = ANSWER_ORDER[q.type].filter((s) => filled(q, s.key));
               return (
                 <li key={q.key} id={`q-${q.id}`} className={`da-q${flash === q.key ? ' is-flash' : ''}${done ? ' is-done' : ''}`}>

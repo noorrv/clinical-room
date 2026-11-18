@@ -136,7 +136,9 @@ const LEAD_IN = /^(.{3,}?\b(?:ask about|about|include|includes|including|such as
  */
 function listParts(text) {
   const items = splitTop(stripEnd(text), ';').flatMap((part) => splitTop(part, ', '));
-  if (items.length < 5 || items.some((i) => plainOf(i).length > 120)) return null;
+  // an item's length is judged without its bracketed explanation, which can be long
+  const core = (i) => plainOf(i).replace(/\([^()]*(\([^()]*\)[^()]*)*\)/g, '').trim();
+  if (items.length < 5 || items.some((i) => core(i).length > 120 || plainOf(i).length > 260)) return null;
   if (items.filter((i) => VERB.test(plainOf(i))).length > items.length / 3) return null;
   const last = items.length - 1;
   items[last] = items[last].replace(/^(?:and|or)\s+/i, '');
@@ -150,6 +152,12 @@ function listParts(text) {
     // the first part is a sentence that introduces the list: "In infants these signs are unreliable;
     // look for a bulging fontanelle, …" → lead-in "In infants these signs are unreliable. Look for:"
     lead = items.shift();
+    // "… is a medical emergency: admit" → lead-in "… is a medical emergency", first step "admit"
+    const colon = splitTop(lead, ': ');
+    if (colon.length === 2) {
+      lead = colon[0];
+      items.unshift(colon[1]);
+    }
     const verb = items[0].match(LEAD) ?? items[0].match(/^((?:but\s+)?(?:it|this|they)\s+(?:may|can|could)\s+(?:also\s+)?be)\s+/i);
     if (verb) {
       lead = `${stripEnd(lead)}. ${cap(verb[1].replace(/^but\s+/i, ''))}`;
@@ -157,6 +165,13 @@ function listParts(text) {
     }
   }
   return { lead, items: items.filter(Boolean).map((i) => cap(i)) };
+}
+
+/** Three or more clauses separated by semicolons ("Admit; take cultures; give antibiotics"): steps, as a list. */
+function stepParts(text) {
+  const parts = splitTop(stripEnd(text), ';');
+  if (parts.length < 3 || parts.some((p) => plainOf(p).length > 200)) return null;
+  return { lead: null, items: parts.map((p) => cap(p)) };
 }
 
 /** Five or more short items run together with commas or semicolons, outside brackets: the items, else null. */
@@ -229,7 +244,8 @@ export function formatAnswer(raw) {
           blocks.push(decorate(para.join(' ')));
           para = [];
         }
-        if (packed.lead) blocks.push(`**${decorate(cap(packed.lead)).replace(/:$/, '')}:**`);
+        // the lead-in is bold as a whole, so no bold doses inside it
+        if (packed.lead) blocks.push(`**${decorate(cap(packed.lead).replace(/\*\*/g, '')).replace(/\*\*/g, '').replace(/:$/, '')}:**`);
         blocks.push(listOf(packed.items));
         continue;
       }
@@ -280,12 +296,12 @@ export function unpack(markup) {
     const t = line.trim();
     if (!t || /^(\||#|:::|!\[|-\s|\d+\.\s|\*\*Key points)/.test(t)) return [line];
     const ss = sentences(t);
-    if (ss.length < 2 || !ss.some((x) => listParts(x))) return [line];
+    if (ss.length < 2 || !ss.some((x) => listParts(x) || stepParts(x))) return [line];
     // keep plain sentences together; a packed one stands alone so it can become a list
     const parts = [];
     let run = [];
     for (const x of ss) {
-      if (listParts(x)) {
+      if (listParts(x) || stepParts(x)) {
         if (run.length) parts.push(run.join(' '), '');
         parts.push(x, '');
         run = [];
@@ -294,9 +310,13 @@ export function unpack(markup) {
     if (run.length) parts.push(run.join(' '));
     return parts;
   });
+  let inTip = false;
   for (const line of lines) {
     const t = line.trim();
-    if (!t || /^(\||#|:::|!\[)/.test(t) || /^\*\*Key points:\*\*/.test(t)) {
+    // a tip box holds one piece of advice: leave it as written
+    if (/^:::(tip|say)\b/.test(t)) inTip = true;
+    else if (t === ':::') inTip = false;
+    if (inTip || !t || /^(\||#|:::|!\[)/.test(t) || /^\*\*Key points:\*\*/.test(t)) {
       out.push(line);
       continue;
     }
@@ -305,7 +325,7 @@ export function unpack(markup) {
     // a lead-in ending in a colon, outside brackets: "**CNS:** …", "Common precipitants: …"
     const lead = body.match(/^(\*\*[^*]{1,60}?:\*\*|[A-Z(][^:[\]]{1,60}?:)\s+(.+)$/s);
     const rest = lead ? lead[2] : body;
-    const parts = listParts(rest);
+    const parts = listParts(rest) ?? stepParts(rest);
     if (!parts) {
       out.push(line);
       continue;
@@ -316,11 +336,19 @@ export function unpack(markup) {
     const heads = [];
     if (label) heads.push(bullet ? `**${label}**` : `**${label}:**`);
     // a sentence that introduces the list stands above it in bold, ending in a colon
-    if (parts.lead) heads.push(`**${cap(parts.lead).replace(/[:.]$/, '')}:**`);
+    if (parts.lead) heads.push(`**${cap(parts.lead).replace(/\*\*/g, '').replace(/[:.]$/, '')}:**`);
     out.push('', ...heads.flatMap((h) => [h, '']), list, '');
   }
   return out
     .join('\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+}
+
+/** "Label: rest" → "**Label:** rest", unless the colon sits inside a bracket ("Control BP (NICE: …"). */
+export function boldLabel(text) {
+  const m = text.match(/^([^:]{2,60}):\s+(.+)$/s);
+  if (!m) return text;
+  if ((m[1].match(/\(/g) ?? []).length !== (m[1].match(/\)/g) ?? []).length) return text;
+  return `**${m[1]}:** ${m[2]}`;
 }
