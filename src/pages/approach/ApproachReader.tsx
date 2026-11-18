@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { StudySheet } from '../archive/StudySheet';
 import './reader.css';
@@ -152,17 +152,7 @@ export function ApproachReader({ approachId, title, sheet }: { approachId: strin
           <button type="button" className="apx-bar__step" onClick={() => go(at - 1)} disabled={at === 0} aria-label="Previous section">
             ‹
           </button>
-          <label className="apx-bar__pick">
-            <span className="visually-hidden">Go to section</span>
-            <select value={at} onChange={(e) => go(Number(e.target.value))}>
-              <option value={0}>Overview</option>
-              {sections.map((s, i) => (
-                <option key={s.title} value={i + 1}>
-                  {s.num}. {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <SectionPicker sections={sections} at={at} seen={seen} onPick={go} />
           <button type="button" className="apx-bar__step" onClick={() => go(at + 1)} disabled={at === sections.length} aria-label="Next section">
             ›
           </button>
@@ -261,6 +251,126 @@ export function ApproachReader({ approachId, title, sheet }: { approachId: strin
           </article>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * The narrow-screen section list: a button showing where you are, opening a paper card of every
+ * section with its number in the section's colour, a tick on what you've read and the current one
+ * marked. Drawn by the page rather than the browser, so it matches the approach. Keyboard: arrows,
+ * Home, End, Enter or Space to choose, Escape to close.
+ */
+function SectionPicker({ sections, at, seen, onPick }: { sections: Section[]; at: number; seen: number[]; onPick: (n: number) => void }) {
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(at);
+  const wrap = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  const list = useRef<HTMLUListElement>(null);
+  const id = useId();
+  const items = [{ num: '·', name: 'Overview', tone: 'plain' as Tone }, ...sections.map((s) => ({ num: s.num, name: s.name, tone: toneOf(s.title) }))];
+  const here = items[at] ?? items[0];
+
+  const close = (refocus = true) => {
+    setOpen(false);
+    if (refocus) button.current?.focus();
+  };
+  const pick = (n: number) => {
+    close();
+    if (n !== at) onPick(n);
+  };
+
+  // opening puts you on the current section; clicks outside close it
+  useEffect(() => {
+    if (!open) return;
+    setActive(at);
+    list.current?.focus();
+    const onDown = (e: PointerEvent) => {
+      if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false);
+    };
+    window.addEventListener('pointerdown', onDown);
+    return () => window.removeEventListener('pointerdown', onDown);
+  }, [open, at]);
+
+  // keep the highlighted row in view
+  useEffect(() => {
+    if (open) list.current?.querySelector(`[data-n="${active}"]`)?.scrollIntoView({ block: 'nearest' });
+  }, [open, active]);
+
+  const onListKey = (e: KeyboardEvent) => {
+    const last = items.length - 1;
+    if (e.key === 'ArrowDown') setActive((a) => Math.min(last, a + 1));
+    else if (e.key === 'ArrowUp') setActive((a) => Math.max(0, a - 1));
+    else if (e.key === 'Home') setActive(0);
+    else if (e.key === 'End') setActive(last);
+    else if (e.key === 'Enter' || e.key === ' ') pick(active);
+    else if (e.key === 'Escape') close();
+    else if (e.key === 'Tab') close(false);
+    else return;
+    e.preventDefault();
+  };
+
+  return (
+    <div className="apx-pick" ref={wrap}>
+      <button
+        type="button"
+        ref={button}
+        className={`apx-pick__btn apx-tone--${here.tone}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={`${id}-list`}
+        aria-label={`Go to section. Now: ${here.name}`}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            setOpen(true);
+          }
+        }}
+      >
+        <span className="apx-pick__num" aria-hidden>
+          {here.num}
+        </span>
+        <span className="apx-pick__name">{here.name}</span>
+        <span className={`apx-pick__chev${open ? ' is-open' : ''}`} aria-hidden>
+          ▾
+        </span>
+      </button>
+      {open && (
+        <ul
+          id={`${id}-list`}
+          ref={list}
+          className="apx-pick__list"
+          role="listbox"
+          aria-label="Sections"
+          tabIndex={-1}
+          aria-activedescendant={`${id}-o${active}`}
+          onKeyDown={onListKey}
+        >
+          {items.map((it, n) => (
+            <li
+              key={n}
+              id={`${id}-o${n}`}
+              data-n={n}
+              role="option"
+              aria-selected={n === at}
+              className={`apx-toc__item apx-tone--${it.tone}${n === at ? ' is-here' : ''}${seen.includes(n) ? ' is-read' : ''}${n === active ? ' is-active' : ''}`}
+              onClick={() => pick(n)}
+              onPointerMove={() => setActive(n)}
+            >
+              <span className="apx-toc__num">{it.num}</span>
+              <span className="apx-toc__name">{it.name}</span>
+              {seen.includes(n) ? (
+                <span className="apx-toc__tick" aria-label="read">
+                  ✓
+                </span>
+              ) : (
+                <span />
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

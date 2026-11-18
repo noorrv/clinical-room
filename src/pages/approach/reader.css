@@ -204,8 +204,7 @@
 .apx-foot button:focus-visible,
 .apx-sub__head:focus-visible,
 .apx-page__toggle:focus-visible,
-.apx-bar button:focus-visible,
-.apx-bar select:focus-visible {
+.apx-bar button:focus-visible {
   outline: 2px solid #4f5c3e;
   outline-offset: 2px;
 }
@@ -503,16 +502,129 @@
     cursor: default;
   }
 
-  .apx-bar__pick select {
+  /* the section picker: the button shows where you are; the list opens as a paper card under the bar */
+  .apx-bar {
+    position: relative;
+  }
+
+  .apx-pick {
+    min-width: 0;
+  }
+
+  .apx-pick__btn {
+    display: grid;
+    grid-template-columns: 1.9em minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
     width: 100%;
     height: 44px;
     padding: 0 10px;
     border: 1px solid rgba(64, 56, 47, 0.25);
+    border-left: 3px solid var(--tone, #687653);
     border-radius: 8px;
     background: #fffdf6;
     color: var(--apx-ink);
-    font: 600 1rem/1 'EB Garamond', Georgia, serif;
+    font: 600 1rem/1.2 'EB Garamond', Georgia, serif;
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .apx-pick__name {
+    overflow: hidden;
+    white-space: nowrap;
     text-overflow: ellipsis;
+  }
+
+  .apx-pick__chev {
+    color: var(--apx-muted);
+    transition: transform 160ms ease;
+  }
+
+  .apx-pick__chev.is-open {
+    transform: rotate(180deg);
+  }
+
+  .apx-pick__list {
+    position: absolute;
+    top: calc(100% - 2px);
+    left: 8px;
+    right: 8px;
+    z-index: 30;
+    display: grid;
+    gap: 1px;
+    max-height: min(62vh, 520px);
+    margin: 0;
+    padding: 8px 6px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    list-style: none;
+    border-radius: 10px;
+    background: var(--t-paper, #fbf6ea);
+    box-shadow:
+      inset 0 0 0 1px rgba(168, 134, 74, 0.35),
+      0 18px 30px -18px rgba(46, 34, 20, 0.55);
+    animation: apx-pick-open 140ms ease-out;
+  }
+
+  .apx-pick__list:focus {
+    outline: none;
+  }
+
+  .apx-pick__list .apx-toc__item {
+    grid-template-columns: 1.9em minmax(0, 1fr) auto;
+    gap: 9px;
+    min-height: 44px;
+    align-items: start;
+    padding: 8px 8px 8px 6px;
+    font-size: 1rem;
+  }
+
+  /* each section number as a disc in the section's colour */
+  .apx-pick__list .apx-toc__num,
+  .apx-pick__num {
+    display: inline-grid;
+    place-items: center;
+    width: 1.7em;
+    height: 1.7em;
+    border: 1.5px solid var(--tone, #687653);
+    border-radius: 50%;
+    font: 600 0.88rem/1 'Cormorant Garamond', Georgia, serif;
+    color: var(--tone, #687653);
+    text-align: center;
+  }
+
+  .apx-pick__list .apx-toc__item.is-here .apx-toc__num {
+    background: var(--tone, #687653);
+    color: #fffdf6;
+  }
+
+  .apx-pick__list .apx-toc__name {
+    padding-top: 0.15em;
+  }
+
+  .apx-pick__list .apx-toc__tick {
+    padding-top: 0.2em;
+  }
+
+  .apx-pick__list .apx-toc__item.is-active {
+    background: rgba(168, 134, 74, 0.14);
+    box-shadow: inset 0 0 0 2px rgba(79, 92, 62, 0.35);
+  }
+
+  @keyframes apx-pick-open {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .apx-pick__list {
+      animation: none;
+    }
+    .apx-pick__chev {
+      transition: none;
+    }
   }
 
   .apx-bar__progress {
