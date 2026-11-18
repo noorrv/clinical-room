@@ -73,6 +73,34 @@ export function SiteHeader() {
   const dueCards = feed.allowed ? Object.values(study.cards ?? {}).filter((c) => isDue(c)).length : 0;
   const bellNews = [feed.unreadCount ? `${feed.unreadCount} unread` : '', dueCards ? `${dueCards} flashcards due` : ''].filter(Boolean);
 
+  // Opening the bell counts as seeing what's in it: the red dot goes, and comes back only for
+  // something new (a new notification, or more flashcards due than when the bell was last opened).
+  // While the panel is open, what was new keeps its "unread" look so it can still be told apart.
+  // due cards are remembered by card and due date, so a card reviewed and due again counts as new
+  const dueKeys = feed.allowed ? Object.entries(study.cards ?? {}).filter(([, c]) => isDue(c)).map(([k, c]) => `${k}@${c.due}`) : [];
+  const [seenDue, setSeenDue] = useState<Set<string>>(() => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem(SEEN_DUE_KEY) ?? '[]'));
+    } catch {
+      return new Set();
+    }
+  });
+  const [fresh, setFresh] = useState<Set<string>>(() => new Set());
+  const markedThisOpen = useRef(false);
+  useEffect(() => {
+    if (open !== 'alerts') {
+      markedThisOpen.current = false;
+      return;
+    }
+    if (markedThisOpen.current || !feed.loaded) return;
+    markedThisOpen.current = true;
+    setFresh(new Set(feed.items.filter((i) => i.unread).map((i) => i.key)));
+    if (feed.unreadCount > 0) feed.markAllRead();
+    setSeenDue(new Set(dueKeys));
+    localStorage.setItem(SEEN_DUE_KEY, JSON.stringify(dueKeys));
+  }, [open, feed, dueKeys]);
+  const showDot = feed.unreadCount > 0 || dueKeys.some((k) => !seenDue.has(k));
+
   // Esc and clicks outside close whichever panel is open
   useEffect(() => {
     if (!open) return;
@@ -123,7 +151,7 @@ export function SiteHeader() {
             onClick={() => toggle('alerts')}
           >
             <AntiqueBell />
-            {(feed.unreadCount > 0 || dueCards > 0) && <span className="icon-btn__dot" aria-hidden />}
+            {showDot && <span className="icon-btn__dot" aria-hidden />}
           </button>
           <span className="header-actions__rule" aria-hidden />
           <button
@@ -239,7 +267,7 @@ export function SiteHeader() {
           <>
             <ul className="alerts-list">
               {feed.items.map((n) => (
-                <li key={n.key} className={n.unread ? 'is-unread' : undefined}>
+                <li key={n.key} className={n.unread || fresh.has(n.key) ? 'is-unread' : undefined}>
                   <AppLink href={n.href} onClick={() => setOpen(null)}>
                     <span className={`alerts-panel__badge alerts-panel__badge--${n.kind}`}>{KIND_WORD[n.kind]}</span>
                     <span className="alerts-list__text">
@@ -248,7 +276,7 @@ export function SiteHeader() {
                         <bdi>{n.detail}</bdi> · <time dateTime={n.at.toISOString()}>{whenText(n.at)}</time>
                       </span>
                     </span>
-                    {n.unread && <span className="visually-hidden">(unread)</span>}
+                    {(n.unread || fresh.has(n.key)) && <span className="visually-hidden">(new)</span>}
                   </AppLink>
                 </li>
               ))}
@@ -268,6 +296,8 @@ export function SiteHeader() {
     </header>
   );
 }
+
+const SEEN_DUE_KEY = 'cr-bell-seen-due';
 
 const KIND_WORD = { 'new-topic': 'New topic', 'new-questions': 'New', updated: 'Updated', announcement: 'Notice' } as const;
 
