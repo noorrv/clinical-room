@@ -19,7 +19,8 @@ import './studysheet.css';
     ![Caption](/clinical/photo.jpg)          a captioned photograph or illustration
     :::kind Title                a boxed note, closed by a line with ::: on its own
       kinds: definition, pearl, remember, important, tip, say, note, reference, group,
-           followup (an examiner follow-up: its title is the question, shown as a toggle)
+           followup (an examiner follow-up: its title is the question, shown as a toggle),
+           colours (no frame: each row of the table inside gets its own colour)
     :::step 3 Hand positioning   a numbered examination step
     **bold**  *italic*
     [[art:appendicular artery]]  a medical term coloured by what it is (the words stay as written):
@@ -586,6 +587,13 @@ function Blocks({ blocks, term, title }: { blocks: Block[]; term: string | null;
                 <p key={i} className="ss-group">
                   <Inline text={b.body.map((x) => ('text' in x ? x.text : '')).join(' ')} term={term} />
                 </p>
+              );
+            // :::colours … ::: gives each row of the table inside it a colour of its own (no frame)
+            if (b.kind === 'colours')
+              return (
+                <div key={i} className="ss-colours">
+                  <Blocks blocks={b.body} term={term} />
+                </div>
               );
             if (b.kind === 'step')
               return (

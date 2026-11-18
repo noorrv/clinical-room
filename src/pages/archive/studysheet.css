@@ -491,6 +491,25 @@
   font-weight: 600;
 }
 
+/* a table whose rows each have a colour of their own (:::colours), in the sheet's muted inks */
+.ss-colours .ss-table tbody tr:nth-child(n) {
+  background: var(--row-bg);
+  border-left: 5px solid var(--row-ink);
+}
+.ss-colours .ss-table tbody tr > th,
+.ss-colours .ss-table tbody tr > th strong {
+  color: var(--row-ink);
+}
+.ss-colours .ss-table tbody tr:nth-child(9n + 1) { --row-bg: #eef3ea; --row-ink: #5e7a52; }
+.ss-colours .ss-table tbody tr:nth-child(9n + 2) { --row-bg: #f6efe0; --row-ink: #9a7330; }
+.ss-colours .ss-table tbody tr:nth-child(9n + 3) { --row-bg: #f6e9e6; --row-ink: #9c4f45; }
+.ss-colours .ss-table tbody tr:nth-child(9n + 4) { --row-bg: #e9f0f4; --row-ink: #4c6f86; }
+.ss-colours .ss-table tbody tr:nth-child(9n + 5) { --row-bg: #f3ece4; --row-ink: #85603f; }
+.ss-colours .ss-table tbody tr:nth-child(9n + 6) { --row-bg: #e8f1ee; --row-ink: #3f7466; }
+.ss-colours .ss-table tbody tr:nth-child(9n + 7) { --row-bg: #f5eaee; --row-ink: #8e4a62; }
+.ss-colours .ss-table tbody tr:nth-child(9n + 8) { --row-bg: #f1f0e2; --row-ink: #6e6a36; }
+.ss-colours .ss-table tbody tr:nth-child(9n + 9) { --row-bg: #eceaf1; --row-ink: #5a5a78; }
+
 /* ── plates: photographs and illustrations ── */
 .ss-fig {
   margin: 6px auto;
