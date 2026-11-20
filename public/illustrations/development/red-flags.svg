@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 730" width="800" height="730" role="img" aria-label="Developmental red flags: limit ages">
+<title>Developmental red flags: limit ages</title>
+<rect x="14" y="14" width="772" height="702" rx="10" fill="none" stroke="#8e3b3b" stroke-width="2.5"/>
+<rect x="24" y="24" width="752" height="682" rx="6" fill="none" stroke="#8e3b3b" stroke-width="1" opacity="0.6"/>
+<text x="400.0" y="78" font-family="Georgia, 'Times New Roman', serif" font-size="38" font-weight="bold" fill="#8e3b3b" text-anchor="middle">Refer if…</text>
+<text x="400.0" y="110" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-style="italic" fill="#8a6a3a" text-anchor="middle">limit ages: most children can do these well before</text>
+<path d="M60,178 L740,178" stroke="#8a6a3a" stroke-width="1" stroke-dasharray="2 6" opacity="0.7"/>
+<text x="70" y="166" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="bold" fill="#8e3b3b">8 weeks</text>
+<text x="290" y="166" font-family="Georgia, 'Times New Roman', serif" font-size="25" fill="#2b3a52">Not smiling</text>
+<path d="M60,236 L740,236" stroke="#8a6a3a" stroke-width="1" stroke-dasharray="2 6" opacity="0.7"/>
+<text x="70" y="224" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="bold" fill="#8e3b3b">3 months</text>
+<text x="290" y="224" font-family="Georgia, 'Times New Roman', serif" font-size="25" fill="#2b3a52">Not fixing and following with the eyes</text>
+<path d="M60,294 L740,294" stroke="#8a6a3a" stroke-width="1" stroke-dasharray="2 6" opacity="0.7"/>
+<text x="70" y="282" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="bold" fill="#8e3b3b">4 months</text>
+<text x="290" y="282" font-family="Georgia, 'Times New Roman', serif" font-size="25" fill="#2b3a52">No head control</text>
+<path d="M60,352 L740,352" stroke="#8a6a3a" stroke-width="1" stroke-dasharray="2 6" opacity="0.7"/>
+<text x="70" y="340" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="bold" fill="#8e3b3b">6 months</text>
+<text x="290" y="340" font-family="Georgia, 'Times New Roman', serif" font-size="25" fill="#2b3a52">Not reaching for toys</text>
+<path d="M60,410 L740,410" stroke="#8a6a3a" stroke-width="1" stroke-dasharray="2 6" opacity="0.7"/>
+<text x="70" y="398" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="bold" fill="#8e3b3b">9 months</text>
+<text x="290" y="398" font-family="Georgia, 'Times New Roman', serif" font-size="25" fill="#2b3a52">Not sitting without support</text>
+<path d="M60,468 L740,468" stroke="#8a6a3a" stroke-width="1" stroke-dasharray="2 6" opacity="0.7"/>
+<text x="70" y="456" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="bold" fill="#8e3b3b">12 months</text>
+<text x="290" y="456" font-family="Georgia, 'Times New Roman', serif" font-size="25" fill="#2b3a52">No pincer grip, or a hand preference</text>
+<path d="M60,526 L740,526" stroke="#8a6a3a" stroke-width="1" stroke-dasharray="2 6" opacity="0.7"/>
+<text x="70" y="514" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="bold" fill="#8e3b3b">18 months</text>
+<text x="290" y="514" font-family="Georgia, 'Times New Roman', serif" font-size="25" fill="#2b3a52">Not walking (CK in boys); no words</text>
+<path d="M60,584 L740,584" stroke="#8a6a3a" stroke-width="1" stroke-dasharray="2 6" opacity="0.7"/>
+<text x="70" y="572" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="bold" fill="#8e3b3b">2 years</text>
+<text x="290" y="572" font-family="Georgia, 'Times New Roman', serif" font-size="25" fill="#2b3a52">Not joining two words</text>
+<path d="M60,642 L740,642" stroke="#8a6a3a" stroke-width="1" stroke-dasharray="2 6" opacity="0.7"/>
+<text x="70" y="630" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="bold" fill="#8e3b3b">Any age</text>
+<text x="290" y="630" font-family="Georgia, 'Times New Roman', serif" font-size="25" fill="#2b3a52">Losing skills already gained</text>
+<path d="M60,700 L740,700" stroke="#8a6a3a" stroke-width="1" stroke-dasharray="2 6" opacity="0.7"/>
+<text x="70" y="688" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="bold" fill="#8e3b3b">Over 6 months</text>
+<text x="290" y="688" font-family="Georgia, 'Times New Roman', serif" font-size="25" fill="#2b3a52">Primitive reflexes still present</text>
+</svg>
