@@ -227,23 +227,40 @@ def moro():
 
 def grasp():
     p = Panel()
-    p.curve('M60,150 L250,150', w=26, c=INK)               # an adult finger
-    p.curve('M60,150 L250,150', w=16, c=PAPER)
-    p.curve('M246,142 q14,8 0,16', w=4)
-    p.curve('M150,112 C196,104 226,120 228,150 C226,180 196,196 150,188 C126,182 118,164 120,150 C122,132 132,116 150,112 Z', w=5, fill=PAPER)   # baby's fist around it
-    for fy in (134, 150, 166):
-        p.curve(f'M150,{fy - 16} q30,4 48,{16 if fy < 150 else 12}', w=3)
-    p.curve('M60,150 L250,150', w=26, c='none')
+    # the adult's finger coming in from the right, with its nail
+    p.torso(110, 132, 340, 132, w=30)
+    p.add(f'<rect x="312" y="121" width="22" height="22" rx="9" fill="{PAPER}" stroke="{INK}" stroke-width="3"/>')
+    p.curve('M150,120 q6,12 0,24 M180,120 q6,12 0,24', w=2.5, c=SEPIA)   # knuckle creases
+    # the baby's forearm and sleeve, rising from below
+    p.torso(150, 238, 186, 186, w=30)
+    p.add(f'<path d="M122,228 l46,30 M138,206 l46,30" stroke="{SEPIA}" stroke-width="3" stroke-linecap="round"/>')
+    # the palm under the finger
+    p.add(f'<ellipse cx="214" cy="168" rx="40" ry="26" fill="{PAPER}" stroke="{INK}" stroke-width="5"/>')
+    # four little fingers wrapped over the top of the adult's finger
+    for fx in (196, 214, 232, 250):
+        p.torso(fx, 166, fx - 4, 112, w=12)
+    # the thumb, curled round the other side
+    p.torso(184, 160, 196, 134, w=13)
     p.labels('Palmar grasp', 'Finger in the palm: baby grips.', 'Gone by 4-6 months')
     return p
 
 def rooting():
     p = Panel()
-    p.head(210, 150, r=62, look=-1)
-    p.curve('M128,190 C116,186 100,190 90,198', w=6)          # adult finger stroking the cheek
-    p.curve('M90,198 L40,214', w=18, c=INK); p.curve('M90,198 L40,214', w=10, c=PAPER)
-    p.curve('M150,108 C126,92 104,98 92,118', w=3, c=RED)
-    p.add(f'<path d="M92,118 l-2,-14 m2,14 l12,-6" stroke="{RED}" stroke-width="3" stroke-linecap="round" fill="none"/>')
+    # shoulders and the baby's head in profile, facing left
+    p.curve('M200,232 C214,200 262,190 318,210 L330,232', w=6, fill=PAPER)
+    p.add(f'<circle cx="250" cy="140" r="56" fill="{PAPER}" stroke="{INK}" stroke-width="5"/>')
+    p.curve('M196,138 q-8,6 -2,14', w=4)                         # nose
+    p.add(f'<circle cx="222" cy="124" r="3.4" fill="{INK}"/>')    # eye
+    p.add(f'<ellipse cx="208" cy="166" rx="9" ry="7" fill="{PAPER}" stroke="{INK}" stroke-width="4"/>')   # open mouth
+    p.curve('M276,128 c14,-2 18,24 2,26', w=4)                   # ear
+    p.curve('M232,86 q12,-12 26,-4', w=2.6)                       # wisp of hair
+    # the adult's finger stroking the cheek near the mouth
+    p.torso(60, 196, 182, 178, w=18)
+    p.add(f'<rect x="166" y="170" width="16" height="15" rx="6" fill="{PAPER}" stroke="{INK}" stroke-width="3" transform="rotate(-8 174 177)"/>')
+    p.curve('M196,192 q8,6 16,4 M190,204 q10,6 20,2', w=2.5, c=SEPIA)   # stroking marks
+    # the head turns towards the touch
+    p.curve('M296,70 C276,48 232,46 206,66', w=3.5, c=RED)
+    p.add(f'<path d="M206,66 l3,-15 M206,66 l15,3" stroke="{RED}" stroke-width="3.5" stroke-linecap="round" fill="none"/>')
     p.labels('Rooting', 'Stroke cheek: turns, opens mouth.', 'Gone by 4 months')
     return p
 
