@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { authErrorMessage, useAuth } from '../../auth/AuthProvider';
+import { KICKED_KEY, LOGIN_PENDING_KEY, authErrorMessage, useAuth } from '../../auth/AuthProvider';
 import { enterGuest, leaveGuest } from '../../auth/guest';
 import { supabase } from '../../lib/supabase';
 import { AuthShell, Field, FormMessage, SetupNotice } from './AuthShell';
@@ -63,6 +63,7 @@ export function LoginPage() {
   const [resent, setResent] = useState(false);
   const [busy, setBusy] = useState(false);
   const next = safeNext(params.get('next'));
+  const [kicked] = useState(() => localStorage.getItem(KICKED_KEY) === '1');
 
   if (!configured) return <SetupNotice />;
 
@@ -75,9 +76,13 @@ export function LoginPage() {
       return;
     }
     setBusy(true);
+    // a real sign-in makes this device the active one (see AuthProvider)
+    localStorage.setItem(LOGIN_PENDING_KEY, '1');
+    localStorage.removeItem(KICKED_KEY);
     const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setBusy(false);
     if (err) {
+      localStorage.removeItem(LOGIN_PENDING_KEY);
       setUnconfirmed(err.code === 'email_not_confirmed' || /not confirmed/i.test(err.message));
       setError(authErrorMessage(err));
       return;
@@ -97,6 +102,7 @@ export function LoginPage() {
       <form className="auth-form" onSubmit={submit} noValidate>
         <Field label="Email address" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <Field label="Password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        {kicked && !error && <FormMessage tone="info">This account was signed in on another device, so this one was signed out. Each account can be used on one device at a time.</FormMessage>}
         {error && <FormMessage tone="error">{error}</FormMessage>}
         {unconfirmed && !resent && (
           <button type="button" className="auth-link-btn" onClick={resend}>

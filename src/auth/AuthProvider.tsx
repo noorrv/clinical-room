@@ -40,6 +40,17 @@ interface AuthState {
 
 const AuthContext = createContext<AuthState | null>(null);
 
+/*
+  One device per account: the device that signed in last stays signed in, older ones are signed out.
+  The database keeps the id of the active device (migration 015); each device keeps its own copy here.
+  This is enforced by the site, not by the database. Admin accounts are exempt.
+*/
+const DEVICE_KEY = (uid: string) => `cr-device-${uid}`;
+export const LOGIN_PENDING_KEY = 'cr-login-pending';
+export const KICKED_KEY = 'cr-signed-out-elsewhere';
+
+const newToken = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -97,10 +108,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadAccount]);
 
   const signOut = useCallback(async () => {
+    const uid = loadedFor.current;
+    if (uid) localStorage.removeItem(DEVICE_KEY(uid));
     await supabase.auth.signOut();
     setSession(null);
     await loadAccount(null);
   }, [loadAccount]);
+
+  // one device per account (not for admins)
+  const guardUser = !loading && !isAdmin && profile ? session?.user.id ?? null : null;
+  useEffect(() => {
+    if (!supabaseConfigured || !guardUser) return;
+    const uid = guardUser;
+    let alive = true;
+    let kicked = false;
+
+    const kick = async () => {
+      if (!alive || kicked) return;
+      kicked = true;
+      localStorage.removeItem(DEVICE_KEY(uid));
+      try {
+        localStorage.setItem(KICKED_KEY, '1');
+      } catch {
+        /* storage blocked: the sign-out still happens */
+      }
+      await signOut();
+    };
+
+    const check = async () => {
+      const token = localStorage.getItem(DEVICE_KEY(uid));
+      if (!token) return;
+      const { data, error } = await supabase.rpc('device_ok', { p_token: token });
+      // a network or server error never signs anyone out
+      if (!error && data === false) await kick();
+    };
+
+    const start = async () => {
+      let token = localStorage.getItem(DEVICE_KEY(uid));
+      const fresh = localStorage.getItem(LOGIN_PENDING_KEY) === '1';
+      if (fresh || !token) {
+        token = newToken();
+        const { error } = await supabase.rpc('claim_device', { p_token: token });
+        if (error) return; // the table is not set up yet, or offline: do nothing
+        localStorage.setItem(DEVICE_KEY(uid), token);
+        localStorage.removeItem(LOGIN_PENDING_KEY);
+      } else {
+        await check();
+      }
+    };
+
+    start();
+    const timer = setInterval(check, 60_000);
+    const onFocus = () => document.visibilityState !== 'hidden' && check();
+    document.addEventListener('visibilitychange', onFocus);
+    window.addEventListener('focus', onFocus);
+    const channel = supabase
+      .channel(`device-${uid}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'active_sessions', filter: `user_id=eq.${uid}` }, check)
+      .subscribe();
+
+    return () => {
+      alive = false;
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onFocus);
+      window.removeEventListener('focus', onFocus);
+      supabase.removeChannel(channel);
+    };
+  }, [guardUser, signOut]);
 
   const value = useMemo<AuthState>(
     () => ({
