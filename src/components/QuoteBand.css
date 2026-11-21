@@ -4,8 +4,8 @@
   min-height: clamp(350px, 31vw, 440px);
   margin-top: -72px;
   padding: 96px var(--gutter) var(--s-7);
-  overflow: clip;
-  overflow-clip-margin: 160px;
+  /* clip sideways only: the blue ground reaches up past the band's top to fade in (Safari has no overflow-clip-margin) */
+  overflow-x: clip;
 }
 
 /* a faded powder-blue ground, like old ribbon or a printed menu card. It's one layer, grain and all,
