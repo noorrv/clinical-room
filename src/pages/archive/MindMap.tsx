@@ -42,9 +42,11 @@ function words(text: string): Word[] {
   text
     .replace(/\[\[\w+:([^\]]+)\]\]/g, '$1')
     .split('**')
-    .forEach((part, i) => {
+    .forEach((part, i, parts) => {
       const toks = part.split(/\s+/).filter(Boolean);
-      toks.forEach((w, n) => out.push({ w, bold: i % 2 === 1, glue: n === 0 && out.length > 0 && !/^\s/.test(part) }));
+      // a run that starts straight after the previous one, with no space between, sticks to it ("**JVP**:" or "a**b**")
+      const touching = i > 0 && !/^\s/.test(part) && !/\s$/.test(parts[i - 1]);
+      toks.forEach((w, n) => out.push({ w, bold: i % 2 === 1, glue: n === 0 && out.length > 0 && touching }));
     });
   return out;
 }
