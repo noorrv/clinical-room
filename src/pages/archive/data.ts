@@ -74,6 +74,16 @@ export const archivePath = (sp: Specialty) => `/specialties/${sp.slug}?tab=subje
 
 /** The subject that holds the clinical examination stations: shown in its own tab, not on the subject board. */
 export const STATIONS_SUBJECT = 'clinical-stations';
+
+/** The subject that holds the focused history sheets: also in a tab of its own. */
+export const HISTORY_SUBJECT = 'focused-history';
+
+/** Subjects shown in a tab of their own (by the tab's ?tab= value), not on the subject board. */
+export const TAB_SUBJECTS: Record<string, string> = { [STATIONS_SUBJECT]: 'stations', [HISTORY_SUBJECT]: 'history' };
+
+/** Where a link to a subject goes: its own tab, or the subject board opened at it. */
+export const subjectHref = (slug: string, subjectId: string) =>
+  TAB_SUBJECTS[subjectId] ? `/specialties/${slug}?tab=${TAB_SUBJECTS[subjectId]}` : `/specialties/${slug}?tab=subjects&subject=${subjectId}`;
 export const topicPath = (sp: Specialty, sectionId: string) => `/specialties/${sp.slug}/topics/${sectionId}`;
 
 /* ───────────────────────── search ───────────────────────── */

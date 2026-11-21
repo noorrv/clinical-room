@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Bow, Star } from './art';
-import { searchArchives, topicPath } from './data';
+import { searchArchives, subjectHref, topicPath } from './data';
 import { ArchiveRoom, Highlight } from './shared';
 
 /*
@@ -64,7 +64,7 @@ export function ArchiveSearch() {
                 <ul>
                   {res.subjects.map((x) => (
                     <li key={`${x.sp.id}/${x.subject.id}`}>
-                      <Link to={x.subject.id === 'clinical-stations' ? `/specialties/${x.sp.slug}?tab=stations` : `/specialties/${x.sp.slug}?tab=subjects&subject=${x.subject.id}`}>
+                      <Link to={subjectHref(x.sp.slug, x.subject.id)}>
                         <strong>
                           <bdi>
                             <Highlight text={x.subject.name} term={t} />

@@ -478,3 +478,27 @@
     transition: none;
   }
 }
+
+
+/* the focused history tab: the blush and wine of the history sheets */
+.atlas--history {
+  --t-paper: #f8ede6;
+  --t-ink: #2e2a36;
+  --t-heading: #6b1f2c;
+  --t-muted: #7c5d58;
+  --t-accent: #b0525b;
+  --node: #6b1f2c;
+  background-color: #f8ede6;
+  background-image: repeating-linear-gradient(180deg, transparent 0 31px, rgba(47, 74, 109, 0.09) 31px 32px);
+  background-size: auto;
+}
+
+.atlas--history .atlas__title {
+  font-style: italic;
+  font-weight: 600;
+}
+
+.atlas--history .atlas__plate {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  letter-spacing: 0.18em;
+}

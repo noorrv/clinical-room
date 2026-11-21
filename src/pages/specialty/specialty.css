@@ -458,6 +458,10 @@
   background: #d9dccb;
 }
 
+.tabs__tab--history {
+  background: #efd9d0;
+}
+
 .tabs__short {
   display: none;
 }
@@ -1486,16 +1490,16 @@ table.gtable {
   }
 
   /* three tabs: short labels so they fit a phone */
-  .tabs:has(.tabs__tab--stations) {
+  .tabs:has(.tabs__tab:nth-child(3)) {
     padding-left: 4px;
   }
 
-  .tabs:has(.tabs__tab--stations) .tabs__tab {
+  .tabs:has(.tabs__tab:nth-child(3)) .tabs__tab {
     flex: 1 1 auto;
     padding-inline: 16px;
   }
 
-  .tabs:has(.tabs__tab--stations) .tabs__long {
+  .tabs:has(.tabs__tab:nth-child(3)) .tabs__long {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -1504,7 +1508,7 @@ table.gtable {
     white-space: nowrap;
   }
 
-  .tabs:has(.tabs__tab--stations) .tabs__short {
+  .tabs:has(.tabs__tab:nth-child(3)) .tabs__short {
     display: inline;
   }
 

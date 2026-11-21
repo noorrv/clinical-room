@@ -7,13 +7,14 @@ import { useStudy } from '../../study/store';
 import { useGuestBrowsing } from '../../auth/guest';
 import { useApproaches } from '../../content/approaches';
 import { topicPath } from '../archive/data';
-import { STATIONS_SUBJECT, StationsBoard, SubjectBoard, useStations } from './SubjectBoard';
+import { HISTORY_SUBJECT, HistoryBoard, STATIONS_SUBJECT, StationsBoard, SubjectBoard, useTabTopics } from './SubjectBoard';
+import { subjectHref } from '../archive/data';
 import { ModeSwitch } from '../../components/ModeSwitch';
 import { isDue } from '../../flashcards/categories';
 import '../approach/approach.css';
 import { EmptyState, Ledger, PreviewBanner, QuestionRow, StatusLegend } from './ui';
 
-type Tab = 'subjects' | 'approaches' | 'stations';
+type Tab = 'subjects' | 'approaches' | 'stations' | 'history';
 
 export function Masthead({ sp, children }: { sp: Specialty; children?: ReactNode }) {
   return (
@@ -43,8 +44,16 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
   const [params, setParams] = useSearchParams();
   const tabParam = params.get('tab');
   // old links (?tab=doctors, ?tab=topics) land on the subject board
-  const stations = useStations(sp);
-  const tab: Tab = tabParam === 'approaches' ? 'approaches' : tabParam === 'stations' && stations.length ? 'stations' : 'subjects';
+  const stations = useTabTopics(sp, STATIONS_SUBJECT);
+  const histories = useTabTopics(sp, HISTORY_SUBJECT);
+  const tab: Tab =
+    tabParam === 'approaches'
+      ? 'approaches'
+      : tabParam === 'stations' && stations.length
+        ? 'stations'
+        : tabParam === 'history' && histories.length
+          ? 'history'
+          : 'subjects';
   const approaches = useApproaches(sp.id);
   const open = params.get('open');
   const query = params.get('q') ?? '';
@@ -65,7 +74,7 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
   const needle = query.trim().toLowerCase();
   const groupHits = needle
     ? [
-        ...(sp.subjects ?? []).filter((x) => x.name.toLowerCase().includes(needle)).map((x) => ({ key: `s-${x.id}`, name: x.name, label: 'Subject', to: x.id === STATIONS_SUBJECT ? '?tab=stations' : `?tab=subjects&subject=${x.id}` })),
+        ...(sp.subjects ?? []).filter((x) => x.name.toLowerCase().includes(needle)).map((x) => ({ key: `s-${x.id}`, name: x.name, label: 'Subject', to: subjectHref(sp.slug, x.id) })),
         ...topics.filter((t) => t.name.toLowerCase().includes(needle)).map((t) => ({ key: `t-${t.id}`, name: t.name, label: 'Topic', to: topicPath(sp, t.id) })),
       ]
     : [];
@@ -162,6 +171,7 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
               ['subjects', 'Browse by subject', 'Subjects'],
               ['approaches', 'Browse by approach', 'Approaches'],
               ...(stations.length ? [['stations', 'Clinical examination', 'Clinical exam']] : []),
+              ...(histories.length ? [['history', 'Focused history', 'History']] : []),
             ] as Array<[Tab, string, string]>
           ).map(([t, label, short]) => (
             <button
@@ -184,6 +194,8 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
         <div className="tabs__panel" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
           {tab === 'stations' ? (
             <StationsBoard sp={sp} stations={stations} />
+          ) : tab === 'history' ? (
+            <HistoryBoard sp={sp} cases={histories} />
           ) : tab === 'approaches' ? (
             approaches.data === undefined ? (
               <p className="approaches__wait">Opening the approaches…</p>

@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { Specialty } from '../../content';
-import { STATIONS_SUBJECT, specialtyArchive, topicPath, type Section } from '../archive/data';
+import { STATIONS_SUBJECT, TAB_SUBJECTS, specialtyArchive, topicPath, type Section } from '../archive/data';
 import { specialtyTheme, themeVars } from '../approach/palettes';
 import { pct, tally } from '../../study/derive';
 import { useStudy } from '../../study/store';
@@ -26,6 +26,7 @@ interface Node {
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
 export { STATIONS_SUBJECT };
+export { HISTORY_SUBJECT } from '../archive/data';
 
 export function SubjectBoard({ sp }: { sp: Specialty }) {
   const st = useStudy();
@@ -36,8 +37,8 @@ export function SubjectBoard({ sp }: { sp: Specialty }) {
   const theme = specialtyTheme(sp.id);
 
   const nodes: Node[] = useMemo(() => {
-    const subjects = (sp.subjects ?? []).filter((x) => x.id !== STATIONS_SUBJECT);
-    const sections = archive.sections.filter((s) => s.subjectId !== STATIONS_SUBJECT);
+    const subjects = (sp.subjects ?? []).filter((x) => !TAB_SUBJECTS[x.id]);
+    const sections = archive.sections.filter((s) => !s.subjectId || !TAB_SUBJECTS[s.subjectId]);
     const filed = (id: string) => sections.filter((s) => s.subjectId === id);
     const list: Node[] = subjects.map((x) => {
       const topics = filed(x.id);
@@ -128,10 +129,10 @@ export function SubjectBoard({ sp }: { sp: Specialty }) {
   );
 }
 
-/** The stations of the clinical examination tab: each a topic page of short-case questions. */
-export function useStations(sp: Specialty): Section[] {
+/** The topics of a subject that has a tab of its own (the clinical examination stations, the focused histories). */
+export function useTabTopics(sp: Specialty, subjectId: string): Section[] {
   const archive = useMemo(() => specialtyArchive(sp), [sp]);
-  return useMemo(() => archive.sections.filter((s) => s.subjectId === STATIONS_SUBJECT), [archive]);
+  return useMemo(() => archive.sections.filter((s) => s.subjectId === subjectId), [archive, subjectId]);
 }
 
 export function StationsBoard({ sp, stations }: { sp: Specialty; stations: Section[] }) {
@@ -149,6 +150,25 @@ export function StationsBoard({ sp, stations }: { sp: Specialty; stations: Secti
       </header>
       <div className="atlas__stations" style={{ '--node': theme.accent } as CSSProperties}>
         <TopicList sp={sp} topics={stations} />
+      </div>
+    </section>
+  );
+}
+
+/** The focused history tab: its cases on the blush and wine of the history sheets. */
+export function HistoryBoard({ sp, cases }: { sp: Specialty; cases: Section[] }) {
+  return (
+    <section className="atlas atlas--history" aria-label="Focused history">
+      <header className="atlas__head">
+        <p className="atlas__plate">History sheets</p>
+        <h2 className="atlas__title">Focused history</h2>
+        <p className="atlas__meta">
+          {cases.length} {cases.length === 1 ? 'case' : 'cases'}
+        </p>
+        <p className="atlas__intro">Each case is a history clerked from the parent, with what to ask, why it matters, and the red flags in the margin.</p>
+      </header>
+      <div className="atlas__stations">
+        <TopicList sp={sp} topics={cases} />
       </div>
     </section>
   );

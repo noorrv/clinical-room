@@ -9,6 +9,7 @@ import { allSpecialties, questionPath, questionsOf, TYPE_LABEL, useContentVersio
 import { navLinks, specialties } from '../data/homepage';
 import { useNotifications } from '../notifications/useNotifications';
 import { AntiqueBell, CloseLines, Garland, IvT, MenuLines, SearchGlass } from './HeaderArt';
+import { subjectHref } from '../pages/archive/data';
 import './SiteHeader.css';
 
 type Panel = 'menu' | 'search' | 'alerts' | 'account' | null;
@@ -33,7 +34,7 @@ function useSearchIndex() {
     () => [
       ...allSpecialties().flatMap((sp) => [
         ...questionsOf(sp).map((q) => ({ title: q.title, hint: `${sp.shortName} · ${TYPE_LABEL[q.type]}`, href: questionPath(sp, q.id) })),
-        ...(sp.subjects ?? []).map((x) => ({ title: x.name, hint: `${sp.shortName} subject`, href: x.id === 'clinical-stations' ? `/specialties/${sp.slug}?tab=stations` : `/specialties/${sp.slug}?tab=subjects&subject=${x.id}` })),
+        ...(sp.subjects ?? []).map((x) => ({ title: x.name, hint: `${sp.shortName} subject`, href: subjectHref(sp.slug, x.id) })),
         ...sp.topics.map((t) => ({ title: t.name, hint: `${sp.shortName} topic`, href: `/specialties/${sp.slug}/topics/${t.id}` })),
       ]),
       ...specialties.flatMap((s) => [

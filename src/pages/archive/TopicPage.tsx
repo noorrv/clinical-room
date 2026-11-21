@@ -6,7 +6,7 @@ import { record, study, useStudy, type PositionFilter, type TopicMarkState } fro
 import { ANSWER_ORDER, GIVEN } from '../specialty/QuestionPage';
 import { Ribbon } from '../specialty/ui';
 import { Bow, CheckSeal, Star } from './art';
-import { STATIONS_SUBJECT, archivePath, isReviewed, OTHER, pad, sectionProgress, specialtyArchive, topicPath } from './data';
+import { HISTORY_SUBJECT, STATIONS_SUBJECT, archivePath, isReviewed, OTHER, pad, sectionProgress, specialtyArchive, topicPath } from './data';
 import { pageThemeAt, SPECIALTY_OFFSET, themePalette } from '../approach/palettes';
 import { cardFor } from './cards';
 import { ArchiveRoom, Highlight } from './shared';
@@ -124,7 +124,8 @@ export function TopicPage({ sp }: { sp: Specialty }) {
   const chartTopic = !!section && section.questions.length > 0 && section.questions.every((x) => isHistoryChart(x.modelAnswer));
   // a clinical examination station goes back to its own tab, not the subject board
   const isStation = section?.subjectId === STATIONS_SUBJECT;
-  const backTo = isStation ? `/specialties/${sp.slug}?tab=stations` : archivePath(sp);
+  const isHistory = section?.subjectId === HISTORY_SUBJECT;
+  const backTo = isStation ? `/specialties/${sp.slug}?tab=stations` : isHistory ? `/specialties/${sp.slug}?tab=history` : archivePath(sp);
   // long cases (Medicine "long-case-…", OBGYN "case-…") carry their clinical scenario as the topic's description
   const scenario = section && /^(long-)?case-/.test(section.id) ? sp.topics.find((t) => t.id === section.id)?.description : undefined;
   // every topic its own combination of the palettes, in board order so neighbours never match
@@ -265,7 +266,7 @@ export function TopicPage({ sp }: { sp: Specialty }) {
     <ArchiveRoom className="da-enter da--plain" palette={palette}>
       <div className="da-wrap">
         <nav className="da-crumbs" aria-label="Breadcrumb">
-          <Link to={backTo}>← {isStation ? 'Clinical examination stations' : `${sp.title} subjects`}</Link>
+          <Link to={backTo}>← {isStation ? 'Clinical examination stations' : isHistory ? 'Focused history' : `${sp.title} subjects`}</Link>
           <span aria-hidden> · </span>
           <Link to="/archive/search">Search every subject</Link>
         </nav>
