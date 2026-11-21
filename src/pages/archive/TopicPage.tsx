@@ -6,7 +6,7 @@ import { record, study, useStudy, type PositionFilter, type TopicMarkState } fro
 import { ANSWER_ORDER, GIVEN } from '../specialty/QuestionPage';
 import { Ribbon } from '../specialty/ui';
 import { Bow, CheckSeal, Star } from './art';
-import { archivePath, isReviewed, OTHER, pad, sectionProgress, specialtyArchive, topicPath } from './data';
+import { STATIONS_SUBJECT, archivePath, isReviewed, OTHER, pad, sectionProgress, specialtyArchive, topicPath } from './data';
 import { pageThemeAt, SPECIALTY_OFFSET, themePalette } from '../approach/palettes';
 import { cardFor } from './cards';
 import { ArchiveRoom, Highlight } from './shared';
@@ -119,6 +119,9 @@ export function TopicPage({ sp }: { sp: Specialty }) {
   const section = sectionIndex >= 0 ? archive.sections[sectionIndex] : null;
   const subject = sp.subjects?.find((x) => x.id === section?.subjectId);
   const card = section ? cardFor(sp.id, section.id) : null;
+  // a clinical examination station goes back to its own tab, not the subject board
+  const isStation = section?.subjectId === STATIONS_SUBJECT;
+  const backTo = isStation ? `/specialties/${sp.slug}?tab=stations` : archivePath(sp);
   // long cases (Medicine "long-case-…", OBGYN "case-…") carry their clinical scenario as the topic's description
   const scenario = section && /^(long-)?case-/.test(section.id) ? sp.topics.find((t) => t.id === section.id)?.description : undefined;
   // every topic its own combination of the palettes, in board order so neighbours never match
@@ -259,7 +262,7 @@ export function TopicPage({ sp }: { sp: Specialty }) {
     <ArchiveRoom className="da-enter da--plain" palette={palette}>
       <div className="da-wrap">
         <nav className="da-crumbs" aria-label="Breadcrumb">
-          <Link to={archivePath(sp)}>← {sp.title} subjects</Link>
+          <Link to={backTo}>← {isStation ? 'Clinical examination stations' : `${sp.title} subjects`}</Link>
           <span aria-hidden> · </span>
           <Link to="/archive/search">Search every subject</Link>
         </nav>
@@ -511,7 +514,7 @@ export function TopicPage({ sp }: { sp: Specialty }) {
               <bdi>{nextTopic.name}</bdi> ›
             </Link>
           ) : (
-            <button type="button" className="da-pager__step" onClick={() => navigate(archivePath(sp))}>
+            <button type="button" className="da-pager__step" onClick={() => navigate(backTo)}>
               Contents ›
             </button>
           )}

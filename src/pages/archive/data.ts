@@ -71,6 +71,9 @@ export const pad = (n: number) => String(n).padStart(2, '0');
 
 /** The specialty's subject board. */
 export const archivePath = (sp: Specialty) => `/specialties/${sp.slug}?tab=subjects`;
+
+/** The subject that holds the clinical examination stations: shown in its own tab, not on the subject board. */
+export const STATIONS_SUBJECT = 'clinical-stations';
 export const topicPath = (sp: Specialty, sectionId: string) => `/specialties/${sp.slug}/topics/${sectionId}`;
 
 /* ───────────────────────── search ───────────────────────── */

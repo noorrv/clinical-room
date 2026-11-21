@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { Specialty } from '../../content';
-import { specialtyArchive, topicPath, type Section } from '../archive/data';
+import { STATIONS_SUBJECT, specialtyArchive, topicPath, type Section } from '../archive/data';
 import { specialtyTheme, themeVars } from '../approach/palettes';
 import { pct, tally } from '../../study/derive';
 import { useStudy } from '../../study/store';
@@ -25,8 +25,7 @@ interface Node {
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
-/** The subject that holds the clinical examination stations: shown in its own tab, not on the board. */
-export const STATIONS_SUBJECT = 'clinical-stations';
+export { STATIONS_SUBJECT };
 
 export function SubjectBoard({ sp }: { sp: Specialty }) {
   const st = useStudy();
