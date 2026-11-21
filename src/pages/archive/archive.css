@@ -1632,3 +1632,11 @@
   line-height: 1.45;
   color: var(--da-olive);
 }
+
+/* a focused history: the history sheet is the whole card */
+.da-q.da-q--chart {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}

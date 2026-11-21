@@ -1,0 +1,408 @@
+/* ───────────────────────────────────────────────────────────────
+   A focused history as a vintage hospital history sheet: blush
+   ruled paper in a wine and gold frame, a typed patient label,
+   clerking notes with handwritten margin notes, key words picked
+   out with a gold marker, a stamped red-flag block and a summary
+   set as a pull-quote. Its own palette, unlike the rest of the site.
+   ─────────────────────────────────────────────────────────────── */
+
+.hx {
+  --hx-paper: #f8ede6;
+  --hx-paper-2: #f1e0d6;
+  --hx-wine: #6b1f2c;
+  --hx-rose: #b0525b;
+  --hx-gold: #c39a3e;
+  --hx-sage: #5f7048;
+  --hx-ink: #2e2a36;
+  --hx-pen: #2f4a6d;
+  --hx-rule: rgba(47, 74, 109, 0.12);
+  --hx-type: 'Courier Prime', 'Courier New', ui-monospace, monospace;
+  --hx-hand: 'Caveat', 'Segoe Print', cursive;
+
+  margin: 4px 0 8px;
+  padding: 8px;
+  border-radius: 4px;
+  background: var(--hx-wine);
+  box-shadow: 0 14px 30px -20px rgba(40, 10, 16, 0.7);
+}
+
+.hx__frame {
+  position: relative;
+  padding: clamp(18px, 3.4vw, 40px) clamp(14px, 3.4vw, 44px) 22px;
+  border: 2px solid var(--hx-gold);
+  border-radius: 2px;
+  background-color: var(--hx-paper);
+  background-image:
+    linear-gradient(90deg, transparent 0, transparent calc(clamp(10px, 2.4vw, 30px) - 1px), rgba(176, 82, 91, 0.35) calc(clamp(10px, 2.4vw, 30px) - 1px), rgba(176, 82, 91, 0.35) clamp(10px, 2.4vw, 30px), transparent clamp(10px, 2.4vw, 30px)),
+    repeating-linear-gradient(180deg, transparent 0 31px, var(--hx-rule) 31px 32px);
+  box-shadow: inset 0 0 0 5px var(--hx-paper), inset 0 0 0 6px rgba(195, 154, 62, 0.55);
+  color: var(--hx-ink);
+}
+
+/* small gold corner flourishes */
+.hx__frame::before,
+.hx__frame::after {
+  content: '';
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--hx-gold);
+  pointer-events: none;
+}
+
+.hx__frame::before {
+  top: 12px;
+  left: 12px;
+  border-right: 0;
+  border-bottom: 0;
+  border-radius: 14px 0 0 0;
+}
+
+.hx__frame::after {
+  right: 12px;
+  bottom: 12px;
+  border-left: 0;
+  border-top: 0;
+  border-radius: 0 0 14px 0;
+}
+
+/* the printed heading */
+.hx__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 4px 16px;
+  padding-bottom: 12px;
+  border-bottom: 3px double var(--hx-wine);
+}
+
+.hx__dept {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-family: var(--hx-type);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--hx-rose);
+}
+
+.hx__title {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem);
+  line-height: 1;
+  color: var(--hx-wine);
+}
+
+.hx__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* the typed patient label, like a sticker on the notes */
+.hx-label {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin: 18px 0 8px;
+  border: 1.5px solid var(--hx-ink);
+  background: #fffaf4;
+  box-shadow: 3px 3px 0 rgba(107, 31, 44, 0.18);
+  font-family: var(--hx-type);
+  transform: rotate(-0.4deg);
+}
+
+.hx-label__row {
+  padding: 8px 12px;
+  border-right: 1px dashed rgba(46, 42, 54, 0.35);
+  border-bottom: 1px dashed rgba(46, 42, 54, 0.35);
+}
+
+.hx-label__row--wide {
+  grid-column: 1 / -1;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.hx-label dt {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hx-rose);
+}
+
+.hx-label dd {
+  margin: 2px 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--hx-ink);
+}
+
+/* inside the sheet, the study-sheet text takes the chart's colours */
+.hx .ss {
+  --ss-ink: var(--hx-ink);
+  --ss-sage: var(--hx-sage);
+  --ss-sage-deep: var(--hx-wine);
+  --ss-rule: rgba(107, 31, 44, 0.25);
+  --ss-paper: var(--hx-paper);
+  --ss-paper-2: var(--hx-paper-2);
+  font-size: 1.04rem;
+}
+
+/* key words picked out with a gold marker */
+.hx .ss strong {
+  background: linear-gradient(180deg, transparent 52%, rgba(195, 154, 62, 0.38) 52%, rgba(195, 154, 62, 0.38) 92%, transparent 92%);
+  font-weight: 600;
+}
+
+/* each section: notes on the left, handwritten margin notes on the right */
+.hx-sec {
+  padding: 16px 0 6px;
+  border-bottom: 1px solid rgba(107, 31, 44, 0.16);
+}
+
+.hx-sec__title {
+  margin: 0 0 8px;
+  font-family: var(--hx-type);
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hx-wine);
+}
+
+.hx-sec__title span {
+  padding: 1px 6px;
+  background: rgba(195, 154, 62, 0.22);
+}
+
+.hx-sec__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.62fr);
+  gap: 10px 26px;
+}
+
+.hx-sec__row--solo {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.hx-margin {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding-left: 16px;
+  border-left: 2px solid rgba(176, 82, 91, 0.4);
+}
+
+.hx-note {
+  margin: 0;
+  font-family: var(--hx-hand);
+  font-size: 1.24rem;
+  line-height: 1.15;
+  color: var(--hx-pen);
+}
+
+.hx-note .ss {
+  font-family: var(--hx-hand);
+  font-size: 1.24rem;
+  line-height: 1.15;
+  --ss-ink: var(--hx-pen);
+}
+
+.hx-note .ss p,
+.hx-note .ss .ss-p {
+  margin: 0;
+}
+
+.hx-note .ss *:not(.hx-note__tag) {
+  font-family: var(--hx-hand);
+  font-style: normal;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.hx-note__tag {
+  font-size: 0.72rem !important;
+}
+
+.hx-note .ss strong {
+  font-weight: 700;
+  background: none;
+  text-decoration: underline;
+  text-decoration-color: rgba(176, 82, 91, 0.6);
+  text-underline-offset: 3px;
+}
+
+.hx-note__tag {
+  display: inline-block;
+  margin: 0 0 2px;
+  padding: 0 7px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+  font-family: var(--hx-type);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+}
+
+.hx-note--ask {
+  color: var(--hx-pen);
+}
+
+.hx-note--why {
+  color: var(--hx-sage);
+}
+
+.hx-note--why .ss {
+  --ss-ink: #4a5a36;
+}
+
+/* red flags: a stamped block */
+.hx-flags {
+  position: relative;
+  margin: 22px 0 6px;
+  padding: 18px clamp(12px, 2vw, 22px) 10px;
+  border: 2px solid var(--hx-wine);
+  border-radius: 3px;
+  background: #f6dcd8;
+}
+
+.hx-flags__stamp {
+  position: absolute;
+  top: -15px;
+  right: 18px;
+  margin: 0;
+  padding: 2px 12px;
+  border: 2.5px double var(--hx-wine);
+  background: var(--hx-paper);
+  font-family: var(--hx-type);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--hx-wine);
+  transform: rotate(3deg);
+}
+
+.hx-flags__title {
+  margin: 0 0 6px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--hx-wine);
+}
+
+.hx-flags .ss {
+  --ss-paper: #fbeeec;
+  --ss-paper-2: #f3d7d3;
+}
+
+/* the summary, as a pull-quote */
+.hx-summary {
+  margin: 22px 0 4px;
+}
+
+.hx-summary__title,
+.hx-impression__title {
+  margin: 0 0 8px;
+  font-family: var(--hx-type);
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hx-wine);
+}
+
+.hx-summary__quote {
+  position: relative;
+  margin: 0;
+  padding: 14px 18px 12px 52px;
+  border-left: 4px solid var(--hx-sage);
+  background: rgba(95, 112, 72, 0.1);
+}
+
+.hx-summary__quote::before {
+  content: '\201C';
+  position: absolute;
+  left: 12px;
+  top: -6px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 4rem;
+  line-height: 1;
+  color: var(--hx-sage);
+}
+
+.hx-summary__quote .ss {
+  font-style: italic;
+  font-size: 1.08rem;
+}
+
+/* the impression: the DDx in order, on a small card */
+.hx-impression {
+  margin: 18px 0 8px;
+  padding: 14px 18px 8px;
+  border: 1.5px dashed var(--hx-gold);
+  background: #fffaf2;
+}
+
+.hx__after {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 3px double var(--hx-wine);
+}
+
+.hx__foot {
+  margin: 18px 0 0;
+  font-family: var(--hx-type);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-align: right;
+  text-transform: uppercase;
+  color: var(--hx-rose);
+}
+
+/* on narrow screens the margin notes drop under each section's notes */
+@media (max-width: 720px) {
+  .hx-sec__row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hx-margin {
+    padding: 8px 0 4px 14px;
+  }
+
+  .hx-label {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hx__head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hx__frame::before,
+  .hx__frame::after {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* a comment bubble reads in the sheet's normal type, even inside a handwritten margin note */
+.hx .ss .ss-comment__bubble,
+.hx .hx-note .ss .ss-comment__bubble,
+.hx .hx-note .ss .ss-comment__bubble * {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: #3b2c28;
+}
+
+.hx .ss .ss-comment__bubble strong {
+  background: none;
+  text-decoration: none;
+  font-weight: 700;
+}

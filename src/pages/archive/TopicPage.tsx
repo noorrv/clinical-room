@@ -12,6 +12,7 @@ import { cardFor } from './cards';
 import { ArchiveRoom, Highlight } from './shared';
 import { StudySheet } from './StudySheet';
 import { isFinals, isShortCase, SourceMark } from './FinalsMark';
+import { HistoryChart, isHistoryChart } from './HistoryChart';
 import { ModeSwitch } from '../../components/ModeSwitch';
 import { isDue } from '../../flashcards/categories';
 
@@ -119,6 +120,8 @@ export function TopicPage({ sp }: { sp: Specialty }) {
   const section = sectionIndex >= 0 ? archive.sections[sectionIndex] : null;
   const subject = sp.subjects?.find((x) => x.id === section?.subjectId);
   const card = section ? cardFor(sp.id, section.id) : null;
+  // a topic made only of history sheets starts straight with the sheet: no title card, mode switch or navigator
+  const chartTopic = !!section && section.questions.length > 0 && section.questions.every((x) => isHistoryChart(x.modelAnswer));
   // a clinical examination station goes back to its own tab, not the subject board
   const isStation = section?.subjectId === STATIONS_SUBJECT;
   const backTo = isStation ? `/specialties/${sp.slug}?tab=stations` : archivePath(sp);
@@ -267,6 +270,13 @@ export function TopicPage({ sp }: { sp: Specialty }) {
           <Link to="/archive/search">Search every subject</Link>
         </nav>
 
+        {chartTopic && (
+          <h1 className="visually-hidden">
+            <bdi>{section.name}</bdi>
+          </h1>
+        )}
+        {!chartTopic && (
+          <>
         <header className="da-frame da-topic-head">
           <Bow className="da-bow da-bow--tl" />
           <Bow className="da-bow da-bow--tr" flip />
@@ -396,6 +406,9 @@ export function TopicPage({ sp }: { sp: Specialty }) {
           </div>
         </div>
 
+          </>
+        )}
+
         {list.length === 0 ? (
           <p className="da-card da-quiet">{filter === 'marked' ? 'No bookmarked questions in this topic yet.' : filter === 'all' ? 'No questions here yet.' : filter === 'finals' ? 'No finals questions in this topic.' : filter === 'short' ? 'No short-case questions in this topic.' : `No ${LEVEL[filter].toLowerCase()} questions in this topic.`}</p>
         ) : (
@@ -408,6 +421,33 @@ export function TopicPage({ sp }: { sp: Specialty }) {
               // a case page shows its scenario once at the top, so its questions don't repeat it
               const given = GIVEN.filter((s) => filled(q, s.key) && !(s.key === 'scenario' && scenario && q.scenario === scenario));
               const answer = ANSWER_ORDER[q.type].filter((s) => filled(q, s.key));
+              // a focused history is drawn as a history sheet, open straight away, not as a question to reveal
+              if (isHistoryChart(q.modelAnswer))
+                return (
+                  <li key={q.key} id={`q-${q.id}`} className={`da-q da-q--chart${flash === q.key ? ' is-flash' : ''}${done ? ' is-done' : ''}`}>
+                    <h2 className="visually-hidden">{unnumbered(q.title)}</h2>
+                    <HistoryChart
+                      topic={section.name}
+                      text={q.modelAnswer ?? ''}
+                      term={term}
+                      actions={
+                        <>
+                          <button
+                            type="button"
+                            className={`da-tick${done ? ' is-on' : ''}`}
+                            aria-pressed={done}
+                            onClick={() => study.setStatus(q.key, done ? 'in-progress' : 'mastered')}
+                          >
+                            <span aria-hidden>{done ? '✓' : '○'}</span> {done ? 'Reviewed' : 'Mark reviewed'}
+                          </button>
+                          <button type="button" className={`da-mark${r.bookmarked ? ' is-on' : ''}`} aria-pressed={r.bookmarked} onClick={() => study.toggleBookmark(q.key)}>
+                            <Ribbon filled={r.bookmarked} /> <span className="visually-hidden">{r.bookmarked ? 'Remove bookmark' : 'Bookmark'}</span>
+                          </button>
+                        </>
+                      }
+                    />
+                  </li>
+                );
               return (
                 <li key={q.key} id={`q-${q.id}`} className={`da-q${flash === q.key ? ' is-flash' : ''}${done ? ' is-done' : ''}`}>
                   <header className="da-q__head">

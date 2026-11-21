@@ -1010,3 +1010,112 @@
     animation: none;
   }
 }
+
+
+/* ── a comment pinned to some words: a small icon that opens a note bubble ── */
+.ss-comment {
+  position: relative;
+}
+
+.ss-comment__pin {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin: 0 1px 0 3px;
+  padding: 0;
+  vertical-align: 0.1em;
+  border: 0;
+  border-radius: 6px;
+  background: #f3d9c9;
+  color: #a04b3c;
+  cursor: pointer;
+  transition: background-color 140ms ease, transform 140ms ease;
+}
+
+/* a bigger invisible target for fingers */
+.ss-comment__pin::before {
+  content: '';
+  position: absolute;
+  inset: -11px -9px;
+}
+
+.ss-comment__pin {
+  position: relative;
+}
+
+.ss-comment__pin svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ss-comment__pin:hover,
+.ss-comment.is-open .ss-comment__pin {
+  background: #a04b3c;
+  color: #fff6ee;
+}
+
+.ss-comment__pin:focus-visible {
+  outline: 2px solid #a04b3c;
+  outline-offset: 2px;
+}
+
+.ss-comment__bubble {
+  position: absolute;
+  z-index: 60;
+  display: block;
+  font-family: 'EB Garamond', Georgia, serif;
+  width: max-content;
+  max-width: min(300px, 84vw);
+  padding: 10px 12px;
+  border: 1px solid #e2b9a3;
+  border-radius: 8px;
+  background: #fff8ec;
+  box-shadow: 0 10px 24px -12px rgba(60, 30, 20, 0.55);
+  font-size: 0.95rem;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.4;
+  color: #3b2c28;
+  text-align: left;
+  white-space: normal;
+  animation: ss-comment-in 160ms ease-out;
+}
+
+.ss-comment__bubble::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: calc(var(--arrow, 20px) - 5px);
+  width: 10px;
+  height: 10px;
+  border-top: 1px solid #e2b9a3;
+  border-left: 1px solid #e2b9a3;
+  background: #fff8ec;
+  transform: rotate(45deg);
+}
+
+.ss-comment__bubble strong {
+  background: none;
+  font-weight: 700;
+}
+
+.ss-comment__bubble em {
+  font-style: italic;
+}
+
+@keyframes ss-comment-in {
+  from {
+    opacity: 0;
+    translate: 0 -3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-comment__bubble {
+    animation: none;
+  }
+}

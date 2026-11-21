@@ -1,4 +1,5 @@
-import { createContext, Fragment, useContext, useId, useMemo, type ReactNode } from 'react';
+import { createContext, Fragment, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { ClinicalPathway, type PathwayExplanation } from './ClinicalPathway';
 import { findChain, matchStages, stageKind, stems, type Chain, type SheetLink } from './pathway';
 import { LabTerm } from './LabTerm';
@@ -26,6 +27,8 @@ import './studysheet.css';
            colours (no frame: each row of the table inside gets its own colour)
     :::step 3 Hand positioning   a numbered examination step
     **bold**  *italic*
+    {{words::a note}}            the words with a small comment icon after them: choosing it opens the
+                                 note in a bubble (like a comment in a notes app), for extra detail
     [[art:appendicular artery]]  a medical term coloured by what it is (the words stay as written):
       art = arteries, blood, ischaemia, necrosis · vein = veins, venous drainage, oxygenation
       anat = normal anatomy and physiology · nerve = nerves and innervation
@@ -260,18 +263,114 @@ function Terms({ text, term }: { text: string; term: string | null }) {
   return <>{out}</>;
 }
 
+const COMMENT = /(\{\{[^{}]+?::[^{}]+\}\})/;
+
+/** **bold** and *italic* within a run of text */
+function Styled({ text, term }: { text: string; term: string | null }) {
+  return (
+    <>
+      {text.split(/(\*\*[^*]+\*\*|\*[^*\s][^*]*\*)/g).map((part, pi) => {
+        if (/^\*\*[^*]+\*\*$/.test(part)) return <strong key={pi}><Terms text={part.slice(2, -2)} term={term} /></strong>;
+        if (/^\*[^*\s][^*]*\*$/.test(part)) return <em key={pi}><Terms text={part.slice(1, -1)} term={term} /></em>;
+        return <Terms key={pi} text={part} term={term} />;
+      })}
+    </>
+  );
+}
+
+/**
+ * Words with a small comment icon after them, like a comment pinned in a notes app: choosing the
+ * icon opens the note in a bubble beside it, kept on screen; a click elsewhere or Escape closes it.
+ */
+function Comment({ label, note, term }: { label: string; note: string; term: string | null }) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number; arrow: number } | null>(null);
+  const id = useId();
+  const wrap = useRef<HTMLSpanElement>(null);
+  const pin = useRef<HTMLButtonElement>(null);
+  const bubble = useRef<HTMLSpanElement>(null);
+
+  // the bubble is drawn on top of the page (so a scrolling table can't clip it), under its pin and on screen
+  const place = () => {
+    const p = pin.current?.getBoundingClientRect();
+    const b = bubble.current;
+    if (!p || !b) return;
+    const vw = document.documentElement.clientWidth;
+    const w = b.offsetWidth;
+    const left = Math.min(Math.max(8, p.left + p.width / 2 - 22), vw - w - 8);
+    setPos({ top: p.bottom + window.scrollY + 8, left: left + window.scrollX, arrow: p.left + p.width / 2 - left });
+  };
+  useLayoutEffect(() => {
+    if (open) place();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: Event) => {
+      const t = e.target as Node;
+      if (!wrap.current?.contains(t) && !bubble.current?.contains(t)) setOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        pin.current?.focus();
+      }
+    };
+    document.addEventListener('pointerdown', away);
+    document.addEventListener('keydown', esc);
+    window.addEventListener('resize', place);
+    return () => {
+      document.removeEventListener('pointerdown', away);
+      document.removeEventListener('keydown', esc);
+      window.removeEventListener('resize', place);
+    };
+  }, [open]);
+
+  return (
+    <span ref={wrap} className={`ss-comment${open ? ' is-open' : ''}`}>
+      <Styled text={label} term={term} />
+      <button
+        ref={pin}
+        type="button"
+        className="ss-comment__pin"
+        aria-expanded={open}
+        aria-controls={id}
+        aria-label={`More about ${label.replace(/\*/g, '')}`}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden>
+          <path d="M2.5 2.5h11a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7l-3 2.6v-2.6H2.5a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1Z" />
+          <path d="M4.5 5.6h7M4.5 8.2h4.6" />
+        </svg>
+      </button>
+      {open &&
+        createPortal(
+          <span
+            ref={bubble}
+            id={id}
+            role="note"
+            className="ss-comment__bubble"
+            style={{ top: pos?.top ?? -9999, left: pos?.left ?? 0, visibility: pos ? 'visible' : 'hidden', ['--arrow' as string]: `${pos?.arrow ?? 20}px` }}
+          >
+            <Styled text={note} term={term} />
+          </span>,
+          document.body,
+        )}
+    </span>
+  );
+}
+
 function Inline({ text, term }: { text: string; term: string | null }) {
-  // line breaks inside a paragraph or cell, then **bold** and *italic*
+  // line breaks inside a paragraph or cell, then {{comments}}, **bold** and *italic*
   const lines = text.split(/\n|<br>/);
   return (
     <>
       {lines.map((ln, li) => (
         <Fragment key={li}>
           {li > 0 && <br />}
-          {ln.split(/(\*\*[^*]+\*\*|\*[^*\s][^*]*\*)/g).map((part, pi) => {
-            if (/^\*\*[^*]+\*\*$/.test(part)) return <strong key={pi}><Terms text={part.slice(2, -2)} term={term} /></strong>;
-            if (/^\*[^*\s][^*]*\*$/.test(part)) return <em key={pi}><Terms text={part.slice(1, -1)} term={term} /></em>;
-            return <Terms key={pi} text={part} term={term} />;
+          {ln.split(COMMENT).map((part, ci) => {
+            const c = part.match(/^\{\{([^{}]+?)::([^{}]+)\}\}$/);
+            return c ? <Comment key={ci} label={c[1].trim()} note={c[2].trim()} term={term} /> : <Styled key={ci} text={part} term={term} />;
           })}
         </Fragment>
       ))}
