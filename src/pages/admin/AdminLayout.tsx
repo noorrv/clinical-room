@@ -32,6 +32,7 @@ const SECTIONS: Array<{ to: string; label: string; end?: boolean; count?: keyof 
   { to: '/admin/specialties', label: 'Specialties' },
   { to: '/admin/announcements', label: 'Announcements' },
   { to: '/admin/registrations', label: 'Registrations', count: 'pending' },
+  { to: '/admin/activity', label: 'Activity' },
 ];
 
 /** Shared with the pages inside, so a change on one page refreshes the badges in the index. */

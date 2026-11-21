@@ -40,6 +40,7 @@ const DirectoryPage = lazy(() => adminModule().then((m) => ({ default: m.Directo
 const SpecialtiesPage = lazy(() => adminModule().then((m) => ({ default: m.SpecialtiesPage })));
 const RegistrationsPage = lazy(() => adminModule().then((m) => ({ default: m.RegistrationsPage })));
 const AnnouncementsPage = lazy(() => adminModule().then((m) => ({ default: m.AnnouncementsPage })));
+const ActivityPage = lazy(() => adminModule().then((m) => ({ default: m.ActivityPage })));
 
 // development-only comparison page; dropped from the built site
 const StreakPreview = import.meta.env.DEV ? lazy(() => import('./pages/StreakPreview').then((m) => ({ default: m.StreakPreview }))) : null;
@@ -168,6 +169,7 @@ export default function App() {
             <Route path="specialties" element={<SpecialtiesPage />} />
             <Route path="registrations" element={<RegistrationsPage />} />
             <Route path="announcements" element={<AnnouncementsPage />} />
+            <Route path="activity" element={<ActivityPage />} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Route>
           {StreakPreview && (

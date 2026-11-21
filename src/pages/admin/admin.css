@@ -322,6 +322,125 @@
   }
 }
 
+/* ── activity: who has been studying ── */
+.activity-sum {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.activity-sum__item {
+  padding: 12px 14px;
+  background: rgba(255, 252, 244, 0.7);
+  border: 1px solid rgba(138, 44, 52, 0.22);
+  border-radius: 4px;
+}
+
+.activity-sum__item dt {
+  font-size: 0.82rem;
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+.activity-sum__item dd {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1.1;
+  color: var(--ink);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.activity-sum__item--now dd {
+  color: #2f6b4f;
+}
+
+.activity-row dd {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.activity-row {
+  grid-template-columns: minmax(0, 1.4fr) auto minmax(150px, auto);
+  grid-template-areas: 'who dates when';
+}
+
+.activity-when {
+  grid-area: when;
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+}
+
+.activity-pill {
+  padding: 0 10px;
+  font-size: 0.82rem;
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+  line-height: 22px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+
+.activity-pill--now {
+  color: #f4efe2;
+  background: #2f6b4f;
+  border-color: #2f6b4f;
+}
+
+.activity-pill--today {
+  color: #2f6b4f;
+}
+
+.activity-pill--week {
+  color: var(--teal-deep);
+}
+
+.activity-pill--earlier,
+.activity-pill--never {
+  color: var(--ink-faint);
+}
+
+.admin-badge--muted {
+  color: var(--ink-faint);
+  border-color: rgba(60, 50, 40, 0.35);
+}
+
+.activity-foot {
+  margin: 14px 0 0;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--ink-faint);
+}
+
+@media (max-width: 760px) {
+  .activity-tabs {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .activity-sum {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .activity-row {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'who' 'dates' 'when';
+  }
+
+  .activity-when {
+    justify-items: start;
+    grid-auto-flow: column;
+    justify-content: start;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
 /* ── inside the archive (admin dashboard) ── */
 .admin-archive .index__vol {
   font-family: var(--font-display);
