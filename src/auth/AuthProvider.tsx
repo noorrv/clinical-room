@@ -132,7 +132,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {
         /* storage blocked: the sign-out still happens */
       }
-      await signOut();
+      // 'local' signs out this device only: the default would also cancel the new device's session
+      await supabase.auth.signOut({ scope: 'local' });
+      setSession(null);
+      await loadAccount(null);
     };
 
     const check = async () => {
@@ -174,7 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('focus', onFocus);
       supabase.removeChannel(channel);
     };
-  }, [guardUser, signOut]);
+  }, [guardUser, loadAccount]);
 
   const value = useMemo<AuthState>(
     () => ({
