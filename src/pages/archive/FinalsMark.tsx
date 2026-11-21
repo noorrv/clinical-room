@@ -23,3 +23,37 @@ export function FinalsMark() {
     </span>
   );
 }
+
+/*
+  The "Short case" mark: questions from the clinical examination (short-case oral) collection, the kind an
+  examiner asks at the bedside. Same shape as the Finals mark, in sage, with a small stethoscope.
+*/
+
+export const SHORT_CASE_SOURCE = 'Short-case oral question';
+
+const SHORT_LABEL = 'Short-case oral question: asked at the bedside in clinical examination stations';
+
+export function isShortCase(q: { source?: string | null }): boolean {
+  return q.source === SHORT_CASE_SOURCE;
+}
+
+export function ShortCaseMark() {
+  return (
+    <span className="da-finals da-finals--short" title={SHORT_LABEL}>
+      <svg className="da-finals__star" viewBox="0 0 16 16" width="13" height="13" aria-hidden focusable="false">
+        <path d="M4 1.5v4a3 3 0 0 0 6 0v-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        <path d="M7 8.5v2.2a3.3 3.3 0 0 0 6.6 0V9.4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        <circle cx="13.6" cy="7.6" r="1.6" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      </svg>
+      <span className="da-finals__text" aria-hidden>Short case</span>
+      <span className="visually-hidden">{SHORT_LABEL}</span>
+    </span>
+  );
+}
+
+/** Whichever source mark a question carries (Finals or Short case), or nothing. */
+export function SourceMark({ q }: { q: { source?: string | null } }) {
+  if (isFinals(q)) return <FinalsMark />;
+  if (isShortCase(q)) return <ShortCaseMark />;
+  return null;
+}

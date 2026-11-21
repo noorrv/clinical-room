@@ -64,7 +64,7 @@ export function ArchiveSearch() {
                 <ul>
                   {res.subjects.map((x) => (
                     <li key={`${x.sp.id}/${x.subject.id}`}>
-                      <Link to={`/specialties/${x.sp.slug}?tab=subjects&subject=${x.subject.id}`}>
+                      <Link to={x.subject.id === 'clinical-stations' ? `/specialties/${x.sp.slug}?tab=stations` : `/specialties/${x.sp.slug}?tab=subjects&subject=${x.subject.id}`}>
                         <strong>
                           <bdi>
                             <Highlight text={x.subject.name} term={t} />

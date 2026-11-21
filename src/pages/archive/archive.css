@@ -1558,6 +1558,11 @@
   vertical-align: -1px;
 }
 
+.da-finals--short {
+  background: rgba(63, 111, 106, 0.13);
+  color: #3f6a62;
+}
+
 .da-finals__star {
   fill: currentColor;
   flex: none;

@@ -454,6 +454,14 @@
     color var(--dur-quick) ease;
 }
 
+.tabs__tab--stations {
+  background: #d9dccb;
+}
+
+.tabs__short {
+  display: none;
+}
+
 .tabs__tab--topics {
   background: #e6c6c0;
 }
@@ -1475,6 +1483,29 @@ table.gtable {
   .tabs__tab {
     padding-inline: 20px;
     font-size: 1.05rem;
+  }
+
+  /* three tabs: short labels so they fit a phone */
+  .tabs:has(.tabs__tab--stations) {
+    padding-left: 4px;
+  }
+
+  .tabs:has(.tabs__tab--stations) .tabs__tab {
+    flex: 1 1 auto;
+    padding-inline: 16px;
+  }
+
+  .tabs:has(.tabs__tab--stations) .tabs__long {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .tabs:has(.tabs__tab--stations) .tabs__short {
+    display: inline;
   }
 
   .drawer__head {

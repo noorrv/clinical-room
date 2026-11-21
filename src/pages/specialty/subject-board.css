@@ -243,6 +243,23 @@
   opacity: 0.35;
 }
 
+/* the clinical examination tab: the stations as one list, two columns when there's room */
+.atlas__intro {
+  max-width: 46ch;
+  margin: 6px 0 0;
+  color: var(--atlas-muted);
+}
+
+.atlas__stations ul {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 860px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 6px 18px;
+}
+
 /* a subject's topics unfold beneath it */
 .atlas__topics {
   margin: 6px 0 4px;

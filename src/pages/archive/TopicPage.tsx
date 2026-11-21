@@ -11,7 +11,7 @@ import { pageThemeAt, SPECIALTY_OFFSET, themePalette } from '../approach/palette
 import { cardFor } from './cards';
 import { ArchiveRoom, Highlight } from './shared';
 import { StudySheet } from './StudySheet';
-import { FinalsMark, isFinals } from './FinalsMark';
+import { isFinals, isShortCase, SourceMark } from './FinalsMark';
 import { ModeSwitch } from '../../components/ModeSwitch';
 import { isDue } from '../../flashcards/categories';
 
@@ -48,11 +48,11 @@ const unnumbered = (title: string) => title.replace(/^\s*(?:Q\s*)?\d+\s*[.)]\s+/
 
 const LEVEL = { 1: 'Easy', 2: 'Moderate', 3: 'Difficult' } as const;
 
-type Filter = 'all' | 1 | 2 | 3 | 'marked' | 'finals';
+type Filter = 'all' | 1 | 2 | 3 | 'marked' | 'finals' | 'short';
 
 /* the navigator's filter as it is saved in the student's position, and back */
 // the finals filter isn't saved with the student's place (it falls back to all)
-const TO_SAVED: Record<string, PositionFilter> = { all: 'all', 1: 'easy', 2: 'moderate', 3: 'difficult', marked: 'bookmarked', finals: 'all' };
+const TO_SAVED: Record<string, PositionFilter> = { all: 'all', 1: 'easy', 2: 'moderate', 3: 'difficult', marked: 'bookmarked', finals: 'all', short: 'all' };
 const FROM_SAVED: Record<string, Filter> = { all: 'all', easy: 1, moderate: 2, difficult: 3, bookmarked: 'marked' };
 const NAV_KEY = 'cr.topic-navigator';
 
@@ -139,6 +139,7 @@ export function TopicPage({ sp }: { sp: Specialty }) {
     if (filter === 'all') return section.questions;
     if (filter === 'marked') return section.questions.filter((q) => record(st, q.key).bookmarked);
     if (filter === 'finals') return section.questions.filter(isFinals);
+    if (filter === 'short') return section.questions.filter(isShortCase);
     return section.questions.filter((q) => q.difficulty === filter);
   }, [section, filter, st]);
   // every question keeps its own number in the topic, whatever the filter shows
@@ -213,7 +214,7 @@ export function TopicPage({ sp }: { sp: Specialty }) {
   const prog = sectionProgress(st, section);
   const rated = section.questions.filter((q) => q.difficulty).length;
   const count = (f: Filter) =>
-    f === 'all' ? section.questions.length : f === 'marked' ? section.questions.filter((q) => record(st, q.key).bookmarked).length : f === 'finals' ? section.questions.filter(isFinals).length : section.questions.filter((q) => q.difficulty === f).length;
+    f === 'all' ? section.questions.length : f === 'marked' ? section.questions.filter((q) => record(st, q.key).bookmarked).length : f === 'finals' ? section.questions.filter(isFinals).length : f === 'short' ? section.questions.filter(isShortCase).length : section.questions.filter((q) => q.difficulty === f).length;
   // difficulty filters appear once the topic's questions are rated
   const filters: Array<{ id: Filter; label: string; count: number }> = [
     { id: 'all', label: 'All', count: count('all') },
@@ -221,6 +222,8 @@ export function TopicPage({ sp }: { sp: Specialty }) {
     { id: 'marked', label: 'Bookmarked', count: count('marked') },
     // only in topics that have questions frequently asked in the OSCE finals
     ...(count('finals') > 0 ? [{ id: 'finals' as Filter, label: 'Finals', count: count('finals') }] : []),
+    // and topics with questions from the clinical examination (short-case) collection
+    ...(count('short') > 0 ? [{ id: 'short' as Filter, label: 'Short case', count: count('short') }] : []),
   ];
   const prevTopic = sections[sectionIndex - 1];
   const nextTopic = sections[sectionIndex + 1];
@@ -358,6 +361,7 @@ export function TopicPage({ sp }: { sp: Specialty }) {
                     )}
                     {f.label}
                     {f.id === 'finals' && <span className="visually-hidden"> (frequently asked in OSCE finals)</span>}
+                    {f.id === 'short' && <span className="visually-hidden"> (short-case oral questions)</span>}
                     <span className="da-nav__n">{f.count}</span>
                   </button>
                 ))}
@@ -390,7 +394,7 @@ export function TopicPage({ sp }: { sp: Specialty }) {
         </div>
 
         {list.length === 0 ? (
-          <p className="da-card da-quiet">{filter === 'marked' ? 'No bookmarked questions in this topic yet.' : filter === 'all' ? 'No questions here yet.' : filter === 'finals' ? 'No finals questions in this topic.' : `No ${LEVEL[filter].toLowerCase()} questions in this topic.`}</p>
+          <p className="da-card da-quiet">{filter === 'marked' ? 'No bookmarked questions in this topic yet.' : filter === 'all' ? 'No questions here yet.' : filter === 'finals' ? 'No finals questions in this topic.' : filter === 'short' ? 'No short-case questions in this topic.' : `No ${LEVEL[filter].toLowerCase()} questions in this topic.`}</p>
         ) : (
           <ol className="da-questions" start={(page - 1) * PAGE + 1}>
             {shown.map((q, idx) => {
@@ -409,7 +413,7 @@ export function TopicPage({ sp }: { sp: Specialty }) {
                       <p className="da-q__type">
                         {TYPE_LABEL[q.type]}
                         {q.difficulty && <Level n={q.difficulty} />}
-                        {isFinals(q) && <FinalsMark />}
+                        <SourceMark q={q} />
                       </p>
                       <h2 className="da-q__title">
                         {answer.length > 0 ? (

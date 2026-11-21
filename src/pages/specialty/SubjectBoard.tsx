@@ -25,6 +25,9 @@ interface Node {
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
+/** The subject that holds the clinical examination stations: shown in its own tab, not on the board. */
+export const STATIONS_SUBJECT = 'clinical-stations';
+
 export function SubjectBoard({ sp }: { sp: Specialty }) {
   const st = useStudy();
   const [params, setParams] = useSearchParams();
@@ -34,14 +37,15 @@ export function SubjectBoard({ sp }: { sp: Specialty }) {
   const theme = specialtyTheme(sp.id);
 
   const nodes: Node[] = useMemo(() => {
-    const subjects = sp.subjects ?? [];
-    const filed = (id: string) => archive.sections.filter((s) => s.subjectId === id);
+    const subjects = (sp.subjects ?? []).filter((x) => x.id !== STATIONS_SUBJECT);
+    const sections = archive.sections.filter((s) => s.subjectId !== STATIONS_SUBJECT);
+    const filed = (id: string) => sections.filter((s) => s.subjectId === id);
     const list: Node[] = subjects.map((x) => {
       const topics = filed(x.id);
       return { id: x.id, name: x.name, topics, count: topics.reduce((n, t) => n + t.questions.length, 0) };
     });
     // topics not yet filed under a subject (or every topic, before subjects exist) still have a home
-    const loose = archive.sections.filter((s) => !s.subjectId || !subjects.some((x) => x.id === s.subjectId));
+    const loose = sections.filter((s) => !s.subjectId || !subjects.some((x) => x.id === s.subjectId));
     if (loose.length) list.push({ id: 'other', name: subjects.length ? 'Other topics' : 'Topics', topics: loose, count: loose.reduce((n, t) => n + t.questions.length, 0) });
     return list;
   }, [sp, archive]);
@@ -121,6 +125,32 @@ export function SubjectBoard({ sp }: { sp: Specialty }) {
           })}
         </ol>
       )}
+    </section>
+  );
+}
+
+/** The stations of the clinical examination tab: each a topic page of short-case questions. */
+export function useStations(sp: Specialty): Section[] {
+  const archive = useMemo(() => specialtyArchive(sp), [sp]);
+  return useMemo(() => archive.sections.filter((s) => s.subjectId === STATIONS_SUBJECT), [archive]);
+}
+
+export function StationsBoard({ sp, stations }: { sp: Specialty; stations: Section[] }) {
+  const theme = specialtyTheme(sp.id);
+  const total = stations.reduce((n, t) => n + t.questions.length, 0);
+  return (
+    <section className="atlas" style={themeVars(theme)} aria-label="Clinical examination stations">
+      <header className="atlas__head">
+        <p className="atlas__plate">Short cases</p>
+        <h2 className="atlas__title">Clinical examination stations</h2>
+        <p className="atlas__meta">
+          {stations.length} {stations.length === 1 ? 'station' : 'stations'} · {total} {total === 1 ? 'question' : 'questions'}
+        </p>
+        <p className="atlas__intro">Each station is a short case at the bedside: how to examine, then the questions the examiner asks.</p>
+      </header>
+      <div className="atlas__stations" style={{ '--node': theme.accent } as CSSProperties}>
+        <TopicList sp={sp} topics={stations} />
+      </div>
     </section>
   );
 }

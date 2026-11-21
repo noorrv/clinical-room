@@ -7,7 +7,7 @@ import type { Question } from '../content/types';
 import { record, study, useStudy, type FlashFilters, type FlashSession as Session } from '../study/store';
 import { ArchiveRoom } from '../pages/archive/shared';
 import { StudySheet } from '../pages/archive/StudySheet';
-import { FinalsMark, isFinals } from '../pages/archive/FinalsMark';
+import { isFinals, isShortCase, SourceMark } from '../pages/archive/FinalsMark';
 import { ANSWER_ORDER, GIVEN } from '../pages/specialty/QuestionPage';
 import { Ribbon } from '../pages/specialty/ui';
 import { themePalette, type ApproachTheme } from '../pages/approach/palettes';
@@ -301,9 +301,9 @@ function Front({ p, onReveal }: { p: Placed; onReveal: () => void }) {
   const given = GIVEN.filter((s) => filled(p.q, s.key));
   return (
     <div className="fc-card__body">
-      {isFinals(p.q) && (
+      {(isFinals(p.q) || isShortCase(p.q)) && (
         <p className="fc-card__finals">
-          <FinalsMark />
+          <SourceMark q={p.q} />
         </p>
       )}
       <h1 className="fc-card__q">
