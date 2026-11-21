@@ -1,5 +1,5 @@
 /*
-  Paper, lace and cloth textures are drawn as SVG: vector line work and feTurbulence noise filters.
+  Paper and cloth textures are drawn as SVG: vector line work and feTurbulence noise filters.
   The browser redraws an SVG background for every tile it paints, so on long pages scrolling kept
   re-running the noise filters and re-stroking thousands of paths (measured: 30–60 dropped frames a
   scroll on the homepage, the specialty directory and the admin pages).
@@ -18,7 +18,6 @@ const TEXTURES = [
   '--paper-specks',
   '--tex-cloth-weave',
   '--paper-fibres',
-  '--tex-lace',
   '--tex-stripe',
   '--fibers',
   '--tex-cloth-fade',

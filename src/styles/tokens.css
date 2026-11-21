@@ -80,7 +80,6 @@
 
   /* Drawn textures kept as files. lib/textures.ts swaps each of these (and the paper noise above)
      for a bitmap drawn once, so scrolling copies pixels instead of redrawing vectors and noise filters. */
-  --tex-lace: url('/textures/lace-border.svg');
   --tex-emboss: url('/textures/emboss-botanical.svg');
   --tex-archive-border: url('/textures/archive-border.svg');
   --tex-stripe: url('/textures/stripe-cotton.svg');

@@ -1,4 +1,4 @@
-/* ── sign-in screens: a lace-edged card lying on the striped cotton ── */
+/* ── sign-in screens: a printed card lying on the striped cotton ── */
 .auth-page {
   position: relative;
   isolation: isolate;
@@ -31,8 +31,15 @@
   position: relative;
   width: min(100%, 560px);
   padding: clamp(30px, 5vw, 48px) clamp(26px, 5vw, 52px);
-  border: clamp(44px, 7vw, 76px) solid transparent;
-  border-image: var(--tex-lace) 90 round;
+  border: clamp(10px, 1.4vw, 14px) solid #2b3a24;
+  border-radius: 3px;
+  outline: 1px solid rgba(214, 178, 104, 0.85);
+  outline-offset: calc(-1 * clamp(5px, 0.7vw, 7px));
+  box-shadow:
+    inset 0 0 0 1px rgba(138, 44, 52, 0.75),
+    inset 0 0 0 4px #ede4d2,
+    inset 0 0 0 5px rgba(138, 44, 52, 0.45),
+    0 14px 30px -18px rgba(20, 14, 6, 0.6);
   background:
     url('/textures/card-corner-tl.svg') left 8px top 8px / 74px 74px no-repeat,
     url('/textures/card-corner-tr.svg') right 8px top 8px / 74px 74px no-repeat,
@@ -335,7 +342,6 @@
 
 @media (max-width: 560px) {
   .auth-card {
-    border-width: 40px;
     padding: 30px 20px;
     background-size: 56px 56px, 56px 56px, 56px 56px, 56px 56px, 360px, 260px, 900px, auto;
   }
