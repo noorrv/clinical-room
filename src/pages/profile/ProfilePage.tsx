@@ -7,8 +7,8 @@ import { allSpecialties, questionsOf } from '../../content';
 import { supabase } from '../../lib/supabase';
 import { computeStreak } from '../../study/streak';
 import { localDay, record, useStudy, type StudyState } from '../../study/store';
-import { ContinueStudyingCard } from '../../components/ContinueCard';
 import { MeNav } from './MeNav';
+import { Garden, Meadow, VineDivider, type GardenDay } from './ProfileArt';
 import { isDue, isMastered } from '../../flashcards/categories';
 import '../auth/auth.css';
 import './profile.css';
@@ -70,10 +70,13 @@ export function ProfilePage() {
   const first = profile.full_name.split(' ')[0];
 
   return (
-    <div className="profile-page">
+    <div className="profile-page profile-page--salmon">
       <div className="profile container">
         <MeNav />
         <section className="profile-card" aria-labelledby="profile-name">
+          <div className="profile-card__window">
+            <Meadow />
+          </div>
           <div className="profile-card__pic">
             <UserAvatar profile={profile} size={128} label={`${profile.full_name}’s picture`} />
           </div>
@@ -82,12 +85,16 @@ export function ProfilePage() {
             <h1 id="profile-name" className="profile-card__name">
               <bdi>{profile.full_name}</bdi>
             </h1>
+            <VineDivider />
             <p className="profile-card__meta">
-              {profile.email} · with us since{' '}
-              {new Date(profile.created_at).toLocaleDateString(undefined, {
-                month: 'long',
-                year: 'numeric',
-              })}
+              <span>{profile.email}</span>
+              <span>
+                with us since{' '}
+                {new Date(profile.created_at).toLocaleDateString(undefined, {
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </span>
             </p>
             <button type="button" className="auth-btn profile-card__edit" onClick={() => setEditing(true)}>
               Edit profile
@@ -147,9 +154,7 @@ export function ProfilePage() {
           <WeekActivity st={st} />
         </section>
 
-        <section className="profile-continue" aria-label="Continue studying">
-          <ContinueStudyingCard />
-        </section>
+        <StudyGarden st={st} first={first} streak={stats.streak} />
 
         {/* account details are for administrators; students see only their card and study */}
         {isAdmin && (
@@ -400,6 +405,40 @@ function EditProfile({ profile, onClose }: { profile: Profile; onClose: () => vo
  * The last seven days, one column each: questions worked on that day (the same count as the
  * streak: marked or noted, each question once) and the minutes of study sessions begun that day.
  */
+/** The last 30 days as a garden bed: a flower for every day studied (a different one each weekday). */
+function StudyGarden({ st, first, streak }: { st: StudyState; first: string; streak: number }) {
+  const days = useMemo(() => {
+    const out: GardenDay[] = [];
+    const today = localDay();
+    for (let i = 29; i >= 0; i--) {
+      const at = new Date();
+      at.setDate(at.getDate() - i);
+      const day = localDay(at.getTime());
+      out.push({
+        day,
+        label: at.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }),
+        questions: st.days[day]?.length ?? 0,
+        today: day === today,
+      });
+    }
+    return out;
+  }, [st.days]);
+  const blooms = days.filter((d) => d.questions).length;
+  return (
+    <section className="profile-section garden" aria-labelledby="profile-garden">
+      <h2 id="profile-garden" className="profile-section__title">
+        {first}’s garden
+      </h2>
+      <p className="garden__intro">
+        One flower for every day you studied in the last 30 days: {blooms} {blooms === 1 ? 'flower' : 'flowers'} so far
+        {streak > 1 ? `, and a ${streak}-day streak` : ''}.
+      </p>
+      <Garden days={days} />
+      <p className="profile-note">Each day of the week grows its own flower. Study today to plant one in the last plot.</p>
+    </section>
+  );
+}
+
 function WeekActivity({ st }: { st: StudyState }) {
   const days = useMemo(() => {
     const out: Array<{ day: string; label: string; questions: number; minutes: number; today: boolean }> = [];
