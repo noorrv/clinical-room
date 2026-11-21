@@ -1,10 +1,28 @@
 .band {
   position: relative;
   isolation: isolate;
-  min-height: clamp(260px, 24vw, 340px);
+  min-height: clamp(350px, 31vw, 440px);
   margin-top: -72px;
   padding: 96px var(--gutter) var(--s-7);
-  overflow: hidden;
+  overflow: clip;
+  overflow-clip-margin: 160px;
+}
+
+/* a faded powder-blue ground, like old ribbon or a printed menu card. It's one layer, grain and all,
+   reaching up beside the card's lower edge and fading in there, so the stripes and the blue meet with no seam. */
+.band::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -160px 0 0;
+  background:
+    radial-gradient(130% 100% at 50% 60%, rgba(255, 255, 255, 0) 55%, rgba(38, 62, 80, 0.22)),
+    var(--grain),
+    #b2d0e2;
+  background-blend-mode: normal, multiply, normal;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 160px);
+  mask-image: linear-gradient(180deg, transparent 0, #000 160px);
+  pointer-events: none;
 }
 
 .band__art {
@@ -46,120 +64,165 @@
   }
 }
 
-/* ── soft sparkle: slow four-point glints that twinkle a few times, then rest; hover the band to replay ── */
-.band__sparkles {
+/* ── small flickering lights: warm points that glow and dim at their own pace ── */
+.band__lights {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
 }
 
-.band__sparkles span {
+.band__lights span {
   position: absolute;
   translate: -50% -50%;
-  background: radial-gradient(circle, #fff6dc 0 18%, rgba(255, 238, 196, 0.55) 30%, transparent 62%);
-  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
-  filter: drop-shadow(0 0 4px rgba(255, 232, 170, 0.7));
-  opacity: 0.25;
-  animation: band-twinkle 4.4s ease-in-out 6 both;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffdf3 0 32%, #ffe6a8 58%, rgba(255, 214, 140, 0) 74%);
+  box-shadow: 0 0 8px 3px rgba(255, 236, 190, 0.85), 0 0 18px 6px rgba(255, 220, 150, 0.35);
+  animation: band-flicker 3s ease-in-out infinite;
 }
 
-.band:hover .band__sparkles span {
-  animation-name: band-twinkle-again;
+@keyframes band-flicker {
+  0%, 100% { opacity: 0.35; }
+  20% { opacity: 0.95; }
+  35% { opacity: 0.55; }
+  50% { opacity: 1; }
+  70% { opacity: 0.45; }
 }
 
-@keyframes band-twinkle {
-  0%, 100% { opacity: 0.15; transform: scale(0.6) rotate(0deg); }
-  50% { opacity: 0.9; transform: scale(1) rotate(20deg); }
-}
-
-@keyframes band-twinkle-again {
-  0%, 100% { opacity: 0.15; transform: scale(0.6) rotate(0deg); }
-  50% { opacity: 0.9; transform: scale(1) rotate(20deg); }
-}
-
-/* ── the Telegram label: an old cream luggage tag with a stitched edge ── */
-.tg-label {
+/* ── the Telegram envelope: an arched folk card rising out of an open envelope ── */
+.tg-env-wrap {
   position: absolute;
   z-index: 1;
-  right: clamp(16px, 22vw, 360px);
-  bottom: clamp(28px, 4vw, 56px);
-  display: inline-flex;
+  right: 50%;
+  translate: 50% 0;
+  bottom: clamp(14px, 2.4vw, 32px);
+  display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 0;
-  padding: 14px 26px 14px 18px;
-  color: #3b2330;
-  text-decoration: none;
-  background:
-    var(--grain),
-    linear-gradient(180deg, #f7ecd3, #ead8b2);
-  background-blend-mode: multiply, normal;
-  border-radius: 4px;
-  box-shadow:
-    inset 0 0 0 4px #f3e5c6,
-    inset 0 0 0 5px rgba(130, 38, 42, 0.45),
-    0 10px 22px -8px rgba(16, 23, 15, 0.6);
-  outline: 1px dashed rgba(130, 38, 42, 0.35);
-  outline-offset: -9px;
-  rotate: -2deg;
-  transition: translate 220ms var(--ease-out, ease), box-shadow 220ms var(--ease-out, ease);
+  gap: 6px;
 }
 
-a.tg-label:hover {
-  translate: 0 -2px;
-  box-shadow:
-    inset 0 0 0 4px #f3e5c6,
-    inset 0 0 0 5px rgba(130, 38, 42, 0.55),
-    0 14px 26px -8px rgba(16, 23, 15, 0.65);
-}
-
-a.tg-label:focus-visible {
-  outline: 2px solid #f3e5c6;
-  outline-offset: 3px;
-}
-
-.tg-label__mark {
-  flex: none;
-  color: #82262a;
-}
-
-.tg-label__text {
+.tg-note {
   display: grid;
-  line-height: 1.1;
-}
-
-.tg-label__kicker {
-  font-size: 0.9rem;
+  justify-items: end;
+  margin: 0 0 40px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.5rem;
+  line-height: 1;
   white-space: nowrap;
-  font-variant: small-caps;
-  letter-spacing: 0.08em;
-  color: #6b4a3a;
+  color: #5a2230;
+  rotate: -6deg;
 }
 
-.tg-label__handle {
+.tg-note__arrow {
+  width: 62px;
+  height: 36px;
+  margin-right: -14px;
+}
+
+.tg-env {
+  position: relative;
+  display: block;
+  width: clamp(200px, 17vw, 240px);
+  aspect-ratio: 240 / 230;
+  rotate: 3deg;
+  filter: drop-shadow(0 12px 14px rgba(12, 18, 10, 0.5));
+  transition: translate 300ms var(--ease-out, ease);
+}
+
+.tg-env svg {
+  display: block;
+}
+
+.tg-env__back,
+.tg-env__front {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.tg-env__front {
+  z-index: 2;
+}
+
+/* the card sits in the pocket: its lower part hidden behind the front */
+.tg-env__card {
+  position: absolute;
+  z-index: 1;
+  left: 13%;
+  width: 74%;
+  bottom: 4%;
+  transition: transform 480ms cubic-bezier(0.2, 0.8, 0.2, 1.1);
+}
+
+.tg-env__card-art {
+  width: 100%;
+  height: auto;
+}
+
+.tg-env:hover,
+.tg-env:focus-visible {
+  translate: 0 -3px;
+}
+
+.tg-env:hover .tg-env__card,
+.tg-env:focus-visible .tg-env__card {
+  transform: translateY(-18%) rotate(-3deg);
+}
+
+.tg-env:active .tg-env__card {
+  transform: translateY(-15%) rotate(-3deg);
+}
+
+.tg-env:focus-visible {
+  outline: 2px solid #5a2230;
+  outline-offset: 6px;
+  border-radius: 6px;
+}
+
+.tg-env__kicker {
+  font-family: var(--font-body);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  fill: #4e5a2e;
+}
+
+.tg-env__name {
   font-family: var(--font-display);
   font-style: italic;
   font-weight: 600;
-  font-size: clamp(1.4rem, 1.1rem + 0.7vw, 1.75rem);
+  font-size: 25px;
+  fill: #6e2a3a;
+}
+
+.tg-env__handle {
+  font-family: var(--font-body);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  fill: #4e5a2e;
 }
 
 @media (max-width: 720px) {
-  .tg-label {
-    right: 14px;
-    padding: 10px 18px 10px 14px;
-    gap: 10px;
+  .tg-env {
+    width: 160px;
   }
 
-  .tg-label__mark {
-    width: 24px;
-    height: 24px;
+  .tg-note {
+    font-size: 1.15rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .band__sparkles span {
+  .tg-env,
+  .tg-env__card {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .band__lights span {
     animation: none;
-    opacity: 0.45;
+    opacity: 0.8;
   }
 }

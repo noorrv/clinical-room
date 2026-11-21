@@ -1,62 +1,50 @@
 import { useRef } from 'react';
 import { telegramHandle } from '../data/homepage';
 import { useLoopsInView } from '../lib/motion';
-import { StudyStillLife } from './art/WidgetArt';
+import { TelegramEnvelope } from './TelegramEnvelope';
 import './QuoteBand.css';
 
-/* soft four-point glints scattered over the cloth; positions in % of the band */
-const SPARKLES = [
-  { x: 8, y: 30, s: 21, d: 0 },
-  { x: 19, y: 72, s: 14, d: 1.6 },
-  { x: 27, y: 44, s: 16, d: 3.1 },
-  { x: 36, y: 82, s: 12, d: 0.8 },
-  { x: 44, y: 38, s: 20, d: 2.4 },
-  { x: 53, y: 70, s: 14, d: 3.8 },
-  { x: 61, y: 46, s: 18, d: 1.1 },
-  { x: 70, y: 80, s: 12, d: 2.9 },
-  { x: 79, y: 34, s: 15, d: 0.4 },
-  { x: 88, y: 64, s: 20, d: 2.0 },
-  { x: 95, y: 40, s: 12, d: 3.4 },
+/* small warm lights flickering on the blue, like fairy lights in a window; positions in % of the band */
+const LIGHTS = [
+  { x: 4, y: 30, s: 8, d: 0.0 },
+  { x: 9, y: 68, s: 7, d: 1.3 },
+  { x: 14, y: 42, s: 9, d: 2.1 },
+  { x: 19, y: 82, s: 7, d: 0.6 },
+  { x: 24, y: 24, s: 8, d: 1.8 },
+  { x: 29, y: 58, s: 7, d: 0.2 },
+  { x: 34, y: 36, s: 9, d: 2.6 },
+  { x: 39, y: 76, s: 8, d: 1.0 },
+  { x: 45, y: 20, s: 7, d: 2.2 },
+  { x: 50, y: 62, s: 8, d: 0.4 },
+  { x: 55, y: 40, s: 7, d: 1.6 },
+  { x: 60, y: 84, s: 9, d: 2.9 },
+  { x: 65, y: 26, s: 7, d: 0.8 },
+  { x: 70, y: 54, s: 8, d: 2.4 },
+  { x: 75, y: 74, s: 7, d: 1.2 },
+  { x: 80, y: 34, s: 9, d: 0.1 },
+  { x: 85, y: 64, s: 7, d: 2.0 },
+  { x: 90, y: 22, s: 8, d: 1.5 },
+  { x: 95, y: 50, s: 7, d: 0.7 },
+  { x: 98, y: 80, s: 8, d: 2.7 },
+  { x: 12, y: 92, s: 7, d: 1.9 },
+  { x: 42, y: 92, s: 8, d: 0.5 },
+  { x: 58, y: 12, s: 7, d: 2.3 },
+  { x: 88, y: 90, s: 8, d: 1.1 },
 ];
-
-function PaperPlane() {
-  return (
-    <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden className="tg-label__mark">
-      <circle cx="12" cy="12" r="11" fill="currentColor" />
-      <path d="M5.4 11.7 17.2 7.1c.55-.2 1.03.13.85.96l-2 9.44c-.15.67-.55.83-1.1.52l-3.05-2.25-1.47 1.42c-.16.16-.3.3-.62.3l.22-3.1 5.64-5.1c.25-.22-.05-.34-.38-.12l-6.97 4.39-3-.94c-.65-.2-.66-.65.14-.97Z" fill="#f6ecd6" />
-    </svg>
-  );
-}
 
 export function QuoteBand() {
   const band = useRef<HTMLDivElement>(null);
   useLoopsInView(band);
   const handle = telegramHandle.replace(/^@/, '').trim();
-  const inner = (
-    <>
-      <PaperPlane />
-      <span className="tg-label__text">
-        <span className="tg-label__kicker">Find us on Telegram</span>
-        <span className="tg-label__handle">@{handle}</span>
-      </span>
-    </>
-  );
   return (
     <div className="band" ref={band} data-loops>
-      <div className="band__art">
-        <StudyStillLife />
-      </div>
-      <div className="band__sparkles" aria-hidden>
-        {SPARKLES.map((p, i) => (
-          <span key={i} style={{ left: `${p.x}%`, top: `${p.y}%`, width: p.s, height: p.s, animationDelay: `${p.d}s` }} />
+      <div className="band__lights" aria-hidden>
+        {LIGHTS.map((p, i) => (
+          <span key={i} style={{ left: `${p.x}%`, top: `${p.y}%`, width: p.s, height: p.s, animationDelay: `${p.d}s`, animationDuration: `${2.4 + (i % 5) * 0.45}s` }} />
         ))}
       </div>
-      {/* the Telegram label appears only once there is an official handle */}
-      {handle && (
-        <a className="tg-label" href={`https://t.me/${handle}`} target="_blank" rel="noopener noreferrer">
-          {inner}
-        </a>
-      )}
+      {/* the Telegram envelope appears only once there is an official handle */}
+      {handle && <TelegramEnvelope handle={handle} />}
     </div>
   );
 }

@@ -53,7 +53,7 @@ export const navLinks = [
 ];
 
 /**
- * Telegram handle shown on the label in the bottom band, without the "@" (e.g. 'clinicalroom').
- * Leave it empty until it's ready: the Telegram label is then hidden entirely.
+ * Telegram handle shown on the envelope card in the bottom band, without the "@" (e.g. 'clinicalroom').
+ * Leave it empty until it's ready: the envelope is then hidden entirely.
  */
-export const telegramHandle = '';
+export const telegramHandle = 'clinicalroom';
