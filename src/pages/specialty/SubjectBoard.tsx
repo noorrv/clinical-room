@@ -168,7 +168,7 @@ export function HistoryBoard({ sp, cases }: { sp: Specialty; cases: Section[] })
         <p className="atlas__intro">Each case is a history clerked from the parent, with what to ask, why it matters, and the red flags in the margin.</p>
       </header>
       <div className="atlas__stations">
-        <TopicList sp={sp} topics={cases} />
+        <TopicList sp={sp} topics={cases} countLabel="History sheet" />
       </div>
     </section>
   );
@@ -177,7 +177,7 @@ export function HistoryBoard({ sp, cases }: { sp: Specialty; cases: Section[] })
 /** A long case: a topic whose id starts "long-case-" (its scenario is the topic's description). */
 const isCase = (t: Section) => t.id.startsWith('long-case-');
 
-function TopicList({ sp, topics }: { sp: Specialty; topics: Section[] }) {
+function TopicList({ sp, topics, countLabel }: { sp: Specialty; topics: Section[]; countLabel?: string }) {
   const st = useStudy();
   return (
     <ul>
@@ -187,7 +187,7 @@ function TopicList({ sp, topics }: { sp: Specialty; topics: Section[] }) {
           <li key={t.id}>
             <Link className={`atlas__topic${t.questions.length ? '' : ' is-empty'}`} to={topicPath(sp, t.id)}>
               <span className="atlas__topic-name">{t.name}</span>
-              <span className="atlas__topic-count">{t.questions.length ? `${t.questions.length} ${t.questions.length === 1 ? 'question' : 'questions'}` : 'No questions yet'}</span>
+              <span className="atlas__topic-count">{countLabel && t.questions.length ? countLabel : t.questions.length ? `${t.questions.length} ${t.questions.length === 1 ? 'question' : 'questions'}` : 'No questions yet'}</span>
               {t.questions.length > 0 && (
                 <span className="atlas__bar" aria-label={`${tt.counts.mastered} of ${tt.total} reviewed`}>
                   <span style={{ width: `${(tt.counts.mastered / Math.max(1, tt.total)) * 100}%` }} />
