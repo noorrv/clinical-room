@@ -12,6 +12,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { PEDS_HISTORY1 } from './content/peds-history-1.mjs';
 import { PEDS_HISTORY2 } from './content/peds-history-2.mjs';
 import { PEDS_HISTORY3 } from './content/peds-history-3.mjs';
+import { PEDS_HISTORY4 } from './content/peds-history-4.mjs';
 
 const SPECIALTY = 'paediatrics';
 const SOURCE = 'Focused history station';
@@ -30,11 +31,16 @@ const TOPICS = [
   ['ph-cardiac', 'Infant with suspected congenital heart disease', 'A 3-month-old with tachypnoea and feeding difficulty: heart failure from a left-to-right shunt, red flags, maternal and family history.'],
   ['ph-vomit', 'Vomiting in an infant', 'A 5-week-old with vomiting after feeds: pyloric stenosis, bilious vomiting, reflux, dehydration and family history.'],
   ['ph-floppy', 'Poor feeding and hypotonia in a neonate', 'A 3-week-old with poor feeding, lethargy and hypotonia: neonatal sepsis, hypoglycaemia, metabolic disease, neuromuscular causes.'],
+  ['ph-abdopain', 'Acute abdominal pain', 'A 9-year-old boy with acute abdominal pain: appendicitis, the pain-vomiting sequence, mimics, red flags and intussusception.'],
+  ['ph-constip', 'Constipation', 'A 3-year-old with constipation: functional constipation and overflow, red flags for Hirschsprung disease, NICE treatment.'],
+  ['ph-oedema', 'Periorbital and generalised oedema', 'A 4-year-old with periorbital swelling and oedema: nephrotic vs nephritic syndrome, complications, varicella status.'],
+  ['ph-haematuria', 'Macroscopic haematuria', 'A 7-year-old with cola-coloured urine after a sore throat: post-streptococcal glomerulonephritis and the differential.'],
+  ['ph-growth', 'Faltering growth', 'A 2-year-old with faltering growth: diet and mealtime history, malabsorption, parental heights, psychosocial factors.'],
 ];
 
 const topicIds = new Set(TOPICS.map((t) => t[0]));
 const seen = new Set();
-const cases = [...PEDS_HISTORY1, ...PEDS_HISTORY2, ...PEDS_HISTORY3].map(([id, topicId, difficulty, title, answer], i) => {
+const cases = [...PEDS_HISTORY1, ...PEDS_HISTORY2, ...PEDS_HISTORY3, ...PEDS_HISTORY4].map(([id, topicId, difficulty, title, answer], i) => {
   if (seen.has(id)) throw new Error(`Duplicate id ${id}`);
   seen.add(id);
   if (!topicIds.has(topicId)) throw new Error(`${id}: unknown topic ${topicId}`);

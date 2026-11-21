@@ -78,8 +78,11 @@ export const STATIONS_SUBJECT = 'clinical-stations';
 /** The subject that holds the focused history sheets: also in a tab of its own. */
 export const HISTORY_SUBJECT = 'focused-history';
 
+/** The subject that holds the counselling sheets: also in a tab of its own. */
+export const COUNSEL_SUBJECT = 'counselling';
+
 /** Subjects shown in a tab of their own (by the tab's ?tab= value), not on the subject board. */
-export const TAB_SUBJECTS: Record<string, string> = { [STATIONS_SUBJECT]: 'stations', [HISTORY_SUBJECT]: 'history' };
+export const TAB_SUBJECTS: Record<string, string> = { [STATIONS_SUBJECT]: 'stations', [HISTORY_SUBJECT]: 'history', [COUNSEL_SUBJECT]: 'counselling' };
 
 /** Where a link to a subject goes: its own tab, or the subject board opened at it. */
 export const subjectHref = (slug: string, subjectId: string) =>

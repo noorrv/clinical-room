@@ -502,3 +502,27 @@
   font-family: 'Courier Prime', 'Courier New', monospace;
   letter-spacing: 0.18em;
 }
+
+
+/* the counselling tab: the teal and cream of the counselling sheets */
+.atlas--counsel {
+  --t-paper: #f4f2e8;
+  --t-ink: #25302e;
+  --t-heading: #1f4f54;
+  --t-muted: #54706f;
+  --t-accent: #4a8587;
+  --node: #1f4f54;
+  background-color: #f4f2e8;
+  background-image: repeating-linear-gradient(180deg, transparent 0 31px, rgba(31, 79, 84, 0.1) 31px 32px);
+  background-size: auto;
+}
+
+.atlas--counsel .atlas__title {
+  font-style: italic;
+  font-weight: 600;
+}
+
+.atlas--counsel .atlas__plate {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  letter-spacing: 0.18em;
+}

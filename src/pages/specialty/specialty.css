@@ -462,6 +462,10 @@
   background: #efd9d0;
 }
 
+.tabs__tab--counselling {
+  background: #d4e4dd;
+}
+
 .tabs__short {
   display: none;
 }

@@ -7,14 +7,14 @@ import { useStudy } from '../../study/store';
 import { useGuestBrowsing } from '../../auth/guest';
 import { useApproaches } from '../../content/approaches';
 import { topicPath } from '../archive/data';
-import { HISTORY_SUBJECT, HistoryBoard, STATIONS_SUBJECT, StationsBoard, SubjectBoard, useTabTopics } from './SubjectBoard';
+import { ChartBoard, COUNSEL_SUBJECT, HISTORY_SUBJECT, STATIONS_SUBJECT, StationsBoard, SubjectBoard, useTabTopics } from './SubjectBoard';
 import { subjectHref } from '../archive/data';
 import { ModeSwitch } from '../../components/ModeSwitch';
 import { isDue } from '../../flashcards/categories';
 import '../approach/approach.css';
 import { EmptyState, Ledger, PreviewBanner, QuestionRow, StatusLegend } from './ui';
 
-type Tab = 'subjects' | 'approaches' | 'stations' | 'history';
+type Tab = 'subjects' | 'approaches' | 'stations' | 'history' | 'counselling';
 
 export function Masthead({ sp, children }: { sp: Specialty; children?: ReactNode }) {
   return (
@@ -46,6 +46,7 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
   // old links (?tab=doctors, ?tab=topics) land on the subject board
   const stations = useTabTopics(sp, STATIONS_SUBJECT);
   const histories = useTabTopics(sp, HISTORY_SUBJECT);
+  const counsels = useTabTopics(sp, COUNSEL_SUBJECT);
   const tab: Tab =
     tabParam === 'approaches'
       ? 'approaches'
@@ -53,7 +54,9 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
         ? 'stations'
         : tabParam === 'history' && histories.length
           ? 'history'
-          : 'subjects';
+          : tabParam === 'counselling' && counsels.length
+            ? 'counselling'
+            : 'subjects';
   const approaches = useApproaches(sp.id);
   const open = params.get('open');
   const query = params.get('q') ?? '';
@@ -172,6 +175,7 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
               ['approaches', 'Browse by approach', 'Approaches'],
               ...(stations.length ? [['stations', 'Clinical examination', 'Clinical exam']] : []),
               ...(histories.length ? [['history', 'Focused history', 'History']] : []),
+              ...(counsels.length ? [['counselling', 'Counselling', 'Counsel']] : []),
             ] as Array<[Tab, string, string]>
           ).map(([t, label, short]) => (
             <button
@@ -195,7 +199,9 @@ export function DashboardHome({ sp }: { sp: Specialty }) {
           {tab === 'stations' ? (
             <StationsBoard sp={sp} stations={stations} />
           ) : tab === 'history' ? (
-            <HistoryBoard sp={sp} cases={histories} />
+            <ChartBoard sp={sp} cases={histories} kind="history" />
+          ) : tab === 'counselling' ? (
+            <ChartBoard sp={sp} cases={counsels} kind="counsel" />
           ) : tab === 'approaches' ? (
             approaches.data === undefined ? (
               <p className="approaches__wait">Opening the approaches…</p>

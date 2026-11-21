@@ -406,3 +406,88 @@
   text-decoration: none;
   font-weight: 700;
 }
+
+/* ───────────────────────────────────────────────────────────────
+   The counselling sheet: the same chart in a clinic-leaflet palette,
+   deep teal and cream with a coral "seek help" stamp, so it reads
+   as a different kind of sheet from the blush and wine history sheets.
+   ─────────────────────────────────────────────────────────────── */
+.hx--counsel {
+  --hx-paper: #f4f2e8;
+  --hx-paper-2: #e3ede6;
+  --hx-wine: #1f4f54;
+  --hx-rose: #4a8587;
+  --hx-gold: #bf9748;
+  --hx-sage: #4f6f4a;
+  --hx-ink: #25302e;
+  --hx-pen: #2c4a6a;
+  --hx-rule: rgba(31, 79, 84, 0.12);
+  box-shadow: 0 14px 30px -20px rgba(10, 40, 44, 0.7);
+}
+
+.hx--counsel .hx__frame {
+  background-image:
+    linear-gradient(90deg, transparent 0, transparent calc(clamp(10px, 2.4vw, 30px) - 1px), rgba(74, 133, 135, 0.4) calc(clamp(10px, 2.4vw, 30px) - 1px), rgba(74, 133, 135, 0.4) clamp(10px, 2.4vw, 30px), transparent clamp(10px, 2.4vw, 30px)),
+    repeating-linear-gradient(180deg, transparent 0 31px, var(--hx-rule) 31px 32px);
+}
+
+.hx--counsel .hx-label {
+  box-shadow: 3px 3px 0 rgba(31, 79, 84, 0.18);
+}
+
+.hx--counsel .hx-sec {
+  border-bottom-color: rgba(31, 79, 84, 0.18);
+}
+
+.hx--counsel .hx-sec__title span {
+  background: rgba(74, 133, 135, 0.2);
+}
+
+.hx--counsel .hx-margin {
+  border-left-color: rgba(74, 133, 135, 0.5);
+}
+
+.hx--counsel .hx-note .ss strong {
+  text-decoration-color: rgba(74, 133, 135, 0.7);
+}
+
+/* "when to seek help" in coral, so it still jumps out against the teal */
+.hx--counsel .hx-flags {
+  border-color: #a8452d;
+  background: #f9e4d6;
+}
+
+.hx--counsel .hx-flags__stamp {
+  color: #a8452d;
+  border-color: #a8452d;
+}
+
+.hx--counsel .hx-flags__title {
+  color: #a8452d;
+}
+
+.hx--counsel .hx-flags .ss {
+  --ss-sage-deep: #a8452d;
+  --ss-paper: #fcefe4;
+  --ss-paper-2: #f6d9c6;
+}
+
+.hx--counsel .hx-summary__quote {
+  background: rgba(79, 111, 74, 0.1);
+}
+
+.hx--counsel .hx-impression {
+  background: #fbf9ef;
+}
+
+
+/* a section that holds a table: the table across the full width, its margin notes below it in two columns */
+.hx-sec__row--stack {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.hx-sec__row--stack .hx-margin {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px 26px;
+  padding: 8px 0 4px 16px;
+}

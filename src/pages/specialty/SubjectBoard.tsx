@@ -26,7 +26,7 @@ interface Node {
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
 export { STATIONS_SUBJECT };
-export { HISTORY_SUBJECT } from '../archive/data';
+export { COUNSEL_SUBJECT, HISTORY_SUBJECT } from '../archive/data';
 
 export function SubjectBoard({ sp }: { sp: Specialty }) {
   const st = useStudy();
@@ -155,20 +155,25 @@ export function StationsBoard({ sp, stations }: { sp: Specialty; stations: Secti
   );
 }
 
-/** The focused history tab: its cases on the blush and wine of the history sheets. */
-export function HistoryBoard({ sp, cases }: { sp: Specialty; cases: Section[] }) {
+/** The focused history and counselling tabs: their sheets listed on the palette of the sheets themselves. */
+export function ChartBoard({ sp, cases, kind }: { sp: Specialty; cases: Section[]; kind: 'history' | 'counsel' }) {
+  const counsel = kind === 'counsel';
   return (
-    <section className="atlas atlas--history" aria-label="Focused history">
+    <section className={`atlas atlas--${counsel ? 'counsel' : 'history'}`} aria-label={counsel ? 'Counselling' : 'Focused history'}>
       <header className="atlas__head">
-        <p className="atlas__plate">History sheets</p>
-        <h2 className="atlas__title">Focused history</h2>
+        <p className="atlas__plate">{counsel ? 'Counselling sheets' : 'History sheets'}</p>
+        <h2 className="atlas__title">{counsel ? 'Counselling' : 'Focused history'}</h2>
         <p className="atlas__meta">
-          {cases.length} {cases.length === 1 ? 'case' : 'cases'}
+          {cases.length} {counsel ? (cases.length === 1 ? 'sheet' : 'sheets') : cases.length === 1 ? 'case' : 'cases'}
         </p>
-        <p className="atlas__intro">Each case is a structured paediatric history from the parent: the key questions, the clinical reasoning behind them and the red flags, with the differential diagnosis and examiner follow-ups.</p>
+        <p className="atlas__intro">
+          {counsel
+            ? 'Each sheet is a counselling consultation: how to open, what to ask first, what to explain and the options, when she should seek help, and how to close, with the clinical reasoning and examiner follow-ups.'
+            : 'Each case is a structured paediatric history from the parent: the key questions, the clinical reasoning behind them and the red flags, with the differential diagnosis and examiner follow-ups.'}
+        </p>
       </header>
       <div className="atlas__stations">
-        <TopicList sp={sp} topics={cases} countLabel="History sheet" />
+        <TopicList sp={sp} topics={cases} countLabel={counsel ? 'Counselling sheet' : 'History sheet'} />
       </div>
     </section>
   );
