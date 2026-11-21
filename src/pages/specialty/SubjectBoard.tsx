@@ -165,7 +165,7 @@ export function HistoryBoard({ sp, cases }: { sp: Specialty; cases: Section[] })
         <p className="atlas__meta">
           {cases.length} {cases.length === 1 ? 'case' : 'cases'}
         </p>
-        <p className="atlas__intro">Each case is a history clerked from the parent, with what to ask, why it matters, and the red flags in the margin.</p>
+        <p className="atlas__intro">Each case is a structured paediatric history from the parent: the key questions, the clinical reasoning behind them and the red flags, with the differential diagnosis and examiner follow-ups.</p>
       </header>
       <div className="atlas__stations">
         <TopicList sp={sp} topics={cases} countLabel="History sheet" />
