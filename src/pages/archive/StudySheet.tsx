@@ -2,6 +2,7 @@ import { createContext, Fragment, useContext, useId, useMemo, type ReactNode } f
 import { ClinicalPathway, type PathwayExplanation } from './ClinicalPathway';
 import { findChain, matchStages, stageKind, stems, type Chain, type SheetLink } from './pathway';
 import { LabTerm } from './LabTerm';
+import { MindMap } from './MindMap';
 import { FIRST, markFirstLabs, splitLabs } from './labs';
 import { Highlight } from './shared';
 import './studysheet.css';
@@ -20,6 +21,8 @@ import './studysheet.css';
     :::kind Title                a boxed note, closed by a line with ::: on its own
       kinds: definition, pearl, remember, important, tip, say, note, reference, group,
            followup (an examiner follow-up: its title is the question, shown as a toggle),
+           mindmap (an optional mind map behind a toggle, written as an indented "- " list:
+             top-level items are the branches, indented items hang under them),
            colours (no frame: each row of the table inside gets its own colour)
     :::step 3 Hand positioning   a numbered examination step
     **bold**  *italic*
@@ -42,7 +45,7 @@ type Block =
   | { t: 'ul' | 'ol'; items: string[]; start: number }
   | { t: 'table'; head: string[]; rows: string[][]; align: Array<'left' | 'right' | 'center'> }
   | { t: 'img'; src: string; caption: string; attrs: Record<string, string> }
-  | { t: 'box'; kind: string; title: string; body: Block[]; num?: string };
+  | { t: 'box'; kind: string; title: string; body: Block[]; num?: string; raw?: string };
 
 const LIST_UL = /^\s*[-•]\s+(.*)$/;
 const LIST_OL = /^\s*(\d+)\.\s+(.*)$/;
@@ -111,7 +114,7 @@ export function parseSheet(src: string): Block[] {
         num = m?.[1];
         title = m?.[2] ?? '';
       }
-      out.push({ t: 'box', kind: open[1], title, num, body: parseSheet(inner.join('\n')) });
+      out.push({ t: 'box', kind: open[1], title, num, body: parseSheet(inner.join('\n')), raw: open[1] === 'mindmap' ? inner.join('\n') : undefined });
       continue;
     }
 
@@ -582,6 +585,7 @@ function Blocks({ blocks, term, title }: { blocks: Block[]; term: string | null;
             );
           }
           case 'box':
+            if (b.kind === 'mindmap') return <MindMap key={i} title={b.title || 'Mind map'} raw={b.raw ?? ''} />;
             if (b.kind === 'group')
               return (
                 <p key={i} className="ss-group">

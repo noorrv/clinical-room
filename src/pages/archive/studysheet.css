@@ -887,3 +887,126 @@
     transition: none;
   }
 }
+
+
+/* ── an optional mind map, closed behind a small toggle under its answer ── */
+.ss-map {
+  margin: 10px 0 18px;
+}
+
+.ss-map__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 16px 6px 12px;
+  list-style: none;
+  cursor: pointer;
+  border: 1px solid var(--ss-rule);
+  border-radius: 999px;
+  background: var(--ss-paper-2);
+  color: var(--ss-sage-deep);
+  font-family: var(--ss-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.ss-map__toggle::-webkit-details-marker {
+  display: none;
+}
+
+.ss-map__toggle:hover {
+  border-color: var(--ss-sage);
+  background: #ebe4d3;
+}
+
+.ss-map__toggle:focus-visible {
+  outline: 2px solid var(--ss-sage-deep);
+  outline-offset: 3px;
+}
+
+.ss-map__icon {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+.ss-map__icon circle {
+  fill: var(--ss-paper);
+}
+
+.ss-map__toggle-hint {
+  font-family: var(--ss-body);
+  font-weight: 400;
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--ss-ink);
+  opacity: 0.75;
+}
+
+.ss-map[open] .ss-map__toggle {
+  border-color: var(--ss-sage);
+}
+
+.ss-map__sheet,
+.ss-mind {
+  margin: 12px 0 0;
+  padding: 20px clamp(12px, 2.4vw, 24px) 22px;
+  border: 1px solid var(--ss-rule);
+  border-radius: 6px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 252, 244, 0.9), rgba(242, 235, 221, 0.9)),
+    var(--ss-paper);
+  animation: ss-map-open 220ms ease-out;
+}
+
+@keyframes ss-map-open {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* the drawing: an ink mind map on the sheet's paper */
+.ss-mind__canvas {
+  width: 100%;
+}
+
+.ss-mind__svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.ss-mind__root {
+  font-family: var(--ss-display);
+  font-weight: 600;
+}
+
+.ss-mind__branch {
+  font-family: var(--ss-display);
+  font-weight: 700;
+}
+
+.ss-mind__leaf {
+  font-family: var(--ss-body);
+}
+
+@media (max-width: 520px) {
+  .ss-map__toggle-hint {
+    display: none;
+  }
+
+  .ss-map__sheet {
+    padding-inline: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-map__sheet,
+  .ss-mind {
+    animation: none;
+  }
+}
