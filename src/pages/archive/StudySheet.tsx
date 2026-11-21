@@ -620,7 +620,7 @@ function Blocks({ blocks, term, title }: { blocks: Block[]; term: string | null;
                                 </th>
                               )
                             ) : (
-                              <td key={n} style={style(n)}>
+                              <td key={n} style={style(n)} data-label={b.head[n]?.replace(/[*_]/g, '')}>
                                 <Inline text={c} term={term} />
                               </td>
                             ),

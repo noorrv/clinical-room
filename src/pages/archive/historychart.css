@@ -491,3 +491,24 @@
   gap: 8px 26px;
   padding: 8px 0 4px 16px;
 }
+
+/* wide tables (4+ columns) become one card per row on narrow screens, so no column hides off to the side */
+@media (max-width: 700px) {
+  .hx .ss-table:has(td:nth-child(4)) { overflow-x: visible; border: 0; background: transparent; }
+  .hx .ss-table:has(td:nth-child(4)) thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .hx .ss-table:has(td:nth-child(4)) table,
+  .hx .ss-table:has(td:nth-child(4)) tbody,
+  .hx .ss-table:has(td:nth-child(4)) tr,
+  .hx .ss-table:has(td:nth-child(4)) th,
+  .hx .ss-table:has(td:nth-child(4)) td { display: block; width: 100%; min-width: 0; }
+  .hx .ss-table:has(td:nth-child(4)) tbody tr { border: 1px solid var(--ss-rule); margin-bottom: 10px; background: var(--ss-paper); }
+  .hx .ss-table:has(td:nth-child(4)) tbody th { background: var(--ss-paper-2); }
+  .hx .ss-table:has(td:nth-child(4)) td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+}

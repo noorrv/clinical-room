@@ -11,6 +11,7 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { OBGYN_COUNSEL1 } from './content/obgyn-counselling-1.mjs';
+import { OBGYN_COUNSEL2 } from './content/obgyn-counselling-2.mjs';
 
 const SPECIALTY = 'obgyn';
 const SOURCE = 'Counselling station';
@@ -23,11 +24,16 @@ const TOPICS = [
   ['oc-tubal', 'Tubal ligation', 'A 38-year-old who wants sterilisation: reasons, regret, alternatives, the procedure, failure and ectopic risk, and consent.'],
   ['oc-age40', 'Pre-pregnancy counselling at age 40', 'A 40-year-old who wants to conceive: fertility and age, risks, early referral, folic acid, medicines and immunity.'],
   ['oc-weight', 'Weight and pregnancy', 'A woman with a BMI of 32 who wants to conceive: PCOS, risks of obesity in pregnancy, folic acid 5 mg, plan; and BMI 16.'],
+  ['oc-infert', 'Infertility', 'A couple with 5 years of infertility: history, causes, tests (semen analysis, ovulation, tubal patency), lifestyle advice and treatment options.'],
+  ['oc-cerclage', 'Recurrent second-trimester miscarriage and cervical cerclage', 'Painless second-trimester losses: cervical insufficiency, indications, timing, procedure, risks, removal and warning signs.'],
+  ['oc-ecv', 'External cephalic version', 'A breech baby at 36 weeks: what ECV involves, contraindications, success rate, risks, anti-D and the alternatives.'],
+  ['oc-vbac', 'Previous caesarean: vaginal birth after caesarean', 'One previous caesarean and a wish for a vaginal birth: success, risk of uterine rupture, repeat caesarean and planning the birth.'],
+  ['oc-postcs', 'Recovery after caesarean section', 'Day 2 after caesarean: wound, bleeding, bladder, clots, feeding, going home, contraception and the interval before the next pregnancy.'],
 ];
 
 const topicIds = new Set(TOPICS.map((t) => t[0]));
 const seen = new Set();
-const cases = [...OBGYN_COUNSEL1].map(([id, topicId, difficulty, title, answer], i) => {
+const cases = [...OBGYN_COUNSEL1, ...OBGYN_COUNSEL2].map(([id, topicId, difficulty, title, answer], i) => {
   if (seen.has(id)) throw new Error(`Duplicate id ${id}`);
   seen.add(id);
   if (!topicIds.has(topicId)) throw new Error(`${id}: unknown topic ${topicId}`);

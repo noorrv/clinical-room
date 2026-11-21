@@ -52,6 +52,7 @@
   width: min(1040px, 100% - 32px);
   margin-inline: auto;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 22px;
 }
 
